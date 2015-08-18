@@ -112,7 +112,19 @@
 require.register("application", function(exports, require, module) {
 module.exports = {
   initialize: function() {
-    var Router;
+    var Router, err, locales;
+    window.app = this;
+    this.locale = window.locale;
+    delete window.locale;
+    this.polyglot = new Polyglot();
+    try {
+      locales = require("locales/" + this.locale);
+    } catch (_error) {
+      err = _error;
+      locales = require('locales/en');
+    }
+    this.polyglot.extend(this.locales);
+    window.t = this.polyglot.t.bind(this.polyglot);
     Router = require('router');
     this.router = new Router();
     Backbone.history.start();
@@ -143,36 +155,12 @@ module.exports = TracksList = (function(_super) {
 });
 
 ;require.register("initialize", function(exports, require, module) {
-var app, initializeLocale;
+var app;
 
 app = require('application');
 
-initializeLocale = function(locale) {
-  var err;
-  this.locales = {};
-  try {
-    this.locales = require("locales/" + locale);
-  } catch (_error) {
-    err = _error;
-    this.locales = require('locales/en');
-  }
-  this.polyglot = new Polyglot();
-  this.polyglot.extend(this.locales);
-  return window.t = this.polyglot.t.bind(this.polyglot);
-};
-
 $(function() {
   require('lib/app_helpers');
-  $.ajax('cozy-locale.json', {
-    success: function(data) {
-      var locale;
-      locale = data.locale;
-      return initializeLocale(locale);
-    },
-    error: function() {
-      return initializeLocale(locale);
-    }
-  });
   return app.initialize();
 });
 });
@@ -348,6 +336,18 @@ module.exports = ViewCollection = (function(_super) {
 })(BaseView);
 });
 
+;require.register("locales/en", function(exports, require, module) {
+module.exports = {
+  'upload-file': 'Upload'
+};
+});
+
+;require.register("locales/fr", function(exports, require, module) {
+module.exports = {
+  'upload-file': 'Upload'
+};
+});
+
 ;require.register("router", function(exports, require, module) {
 var AppView, Router,
   __hasProp = {}.hasOwnProperty,
@@ -507,7 +507,7 @@ var buf = [];
 var jade_mixins = {};
 var jade_interp;
 
-buf.push("<h2>Context menu</h2>");;return buf.join("");
+buf.push("<div id=\"file-manager\" class=\"btn-group\"><button type=\"button\" class=\"btn btn-default\">" + (jade.escape((jade_interp = t('upload')) == null ? '' : jade_interp)) + "</button></div>");;return buf.join("");
 };
 if (typeof define === 'function' && define.amd) {
   define([], function() {
@@ -545,7 +545,7 @@ var buf = [];
 var jade_mixins = {};
 var jade_interp;
 
-buf.push("<div class=\"demo-content-left\"><h1>Left menu</h1><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p></div>");;return buf.join("");
+buf.push("<div class=\"demo-content-left\"><h1>Left menu</h1><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p></div>");;return buf.join("");
 };
 if (typeof define === 'function' && define.amd) {
   define([], function() {
