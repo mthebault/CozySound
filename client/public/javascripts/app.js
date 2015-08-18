@@ -123,6 +123,25 @@ module.exports = {
 };
 });
 
+;require.register("collections/tracks_list", function(exports, require, module) {
+var TracksList,
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+module.exports = TracksList = (function(_super) {
+  __extends(TracksList, _super);
+
+  function TracksList() {
+    return TracksList.__super__.constructor.apply(this, arguments);
+  }
+
+  TracksList.prototype.model = Track;
+
+  return TracksList;
+
+})(Backbone.Collection);
+});
+
 ;require.register("initialize", function(exports, require, module) {
 var app, initializeLocale;
 
@@ -347,6 +366,8 @@ module.exports = Router = (function(_super) {
     '': 'main'
   };
 
+  Router.prototype.initialize = function() {};
+
   Router.prototype.main = function() {
     var mainView;
     mainView = new AppView();
@@ -505,7 +526,7 @@ var buf = [];
 var jade_mixins = {};
 var jade_interp;
 
-buf.push("<div id=\"context-menu\" class=\"navbar navbar-default\"></div><div class=\"row\"><div id=\"left-menu\" class=\"col-md-4\"></div><div id=\"tracks-screen\" class=\"col-md-8\"></div></div><div id=\"player-screen\"></div>");;return buf.join("");
+buf.push("<div id=\"context-menu\" class=\"navbar navbar-fixed-top\"></div><div class=\"container-fluid\"><div class=\"row-fluid columns content\"><div class=\"row\"><div id=\"left-menu\" class=\"col-sm-3 col-md-2 left-menu\"></div><div id=\"tracks-screen\" class=\"col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2\"></div></div></div></div><div id=\"player-screen\" class=\"footer player\"></div>");;return buf.join("");
 };
 if (typeof define === 'function' && define.amd) {
   define([], function() {
@@ -524,7 +545,7 @@ var buf = [];
 var jade_mixins = {};
 var jade_interp;
 
-buf.push("<h1>Left menu</h1>");;return buf.join("");
+buf.push("<div class=\"demo-content-left\"><h1>Left menu</h1><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p></div>");;return buf.join("");
 };
 if (typeof define === 'function' && define.amd) {
   define([], function() {
@@ -543,7 +564,7 @@ var buf = [];
 var jade_mixins = {};
 var jade_interp;
 
-buf.push("<h1>Player screen</h1>");;return buf.join("");
+buf.push("<div class=\"demo-content-player\"><h1>Player screen</h1></div>");;return buf.join("");
 };
 if (typeof define === 'function' && define.amd) {
   define([], function() {
@@ -562,7 +583,7 @@ var buf = [];
 var jade_mixins = {};
 var jade_interp;
 
-buf.push("<h1>Tracks Screen</h1>");;return buf.join("");
+buf.push("<div class=\"demo-content-tracks\"><h1>Tracks Screen</h1><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p></div>");;return buf.join("");
 };
 if (typeof define === 'function' && define.amd) {
   define([], function() {

@@ -1,24 +1,14 @@
 # **************************************************************************** #
 #                                                                              #
 #                                                         :::      ::::::::    #
-#    router.coffee                                      :+:      :+:    :+:    #
+#    tracks_list.coffee                                 :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
-#    Created: 2015/08/18 15:30:33 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/18 19:29:52 by ppeltier         ###   ########.fr        #
+#    Created: 2015/08/18 18:42:03 by ppeltier          #+#    #+#              #
+#    Updated: 2015/08/18 18:51:06 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
-AppView = require 'views/app_view'
-
-module.exports = class Router extends Backbone.Router
-
-    routes:
-        '': 'main'
-
-    initialize: ->
-
-    main: ->
-        mainView = new AppView()
-        mainView.render()
+module.exports = class TracksList extends Backbone.Collection
+    model: Track
