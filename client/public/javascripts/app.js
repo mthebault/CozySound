@@ -112,19 +112,8 @@
 require.register("application", function(exports, require, module) {
 module.exports = {
   initialize: function() {
-    var Router, err, locales;
+    var Router;
     window.app = this;
-    this.locale = window.locale;
-    delete window.locale;
-    this.polyglot = new Polyglot();
-    try {
-      locales = require("locales/" + this.locale);
-    } catch (_error) {
-      err = _error;
-      locales = require('locales/en');
-    }
-    this.polyglot.extend(this.locales);
-    window.t = this.polyglot.t.bind(this.polyglot);
     Router = require('router');
     this.router = new Router();
     Backbone.history.start();
@@ -136,9 +125,11 @@ module.exports = {
 });
 
 ;require.register("collections/tracks_list", function(exports, require, module) {
-var TracksList,
+var Track, TracksList,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+Track = require('./../models/track');
 
 module.exports = TracksList = (function(_super) {
   __extends(TracksList, _super);
@@ -149,18 +140,223 @@ module.exports = TracksList = (function(_super) {
 
   TracksList.prototype.model = Track;
 
+  TracksList.prototype.isTrackStored = function(model) {
+    var existingTrack;
+    existingTrack = this.get(model.get('id'));
+    return existingTrack || null;
+  };
+
   return TracksList;
 
 })(Backbone.Collection);
 });
 
+;require.register("collections/upload_queue", function(exports, require, module) {
+var Track, UploadQueue,
+  __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
+
+Track = require('./../models/track');
+
+module.exports = UploadQueue = (function() {
+  UploadQueue.prototype.model = Track;
+
+  UploadQueue.prototype.loaded = 0;
+
+  function UploadQueue(baseCollection) {
+    this.baseCollection = baseCollection;
+    this.completeUpload = __bind(this.completeUpload, this);
+    this.uploadCollection = new Backbone.Collection();
+    _.extend(this, Backbone.Events);
+    this.asyncQueue = async.queue(this.uploadWorker, 5);
+    this.asyncQueue.drain = this.completeUpload.bind(this);
+  }
+
+  UploadQueue.prototype.retrieveDataBlob = function(blob) {
+    var model, reader;
+    model = new Track({
+      title: blob.name,
+      lastModified: blob.lastModifiedDate,
+      size: blob.size,
+      type: blob.type
+    });
+    ({
+      file: blob,
+      total: blob.size
+    });
+    reader = new FileReader();
+    reader.onload = function(event) {
+      return ID3.loadTags(blob.name, (function() {
+        var tags, _ref;
+        tags = ID3.getAllTags(blob.name);
+        return model.set({
+          title: tags.title != null ? tags.title : void 0,
+          artist: tags.artist != null ? tags.artist : '',
+          album: tags.album != null ? tags.album : '',
+          track: tags.track != null ? tags.track : '',
+          year: tags.year != null ? tags.year : '',
+          genre: tags.genre != null ? tags.genre : '',
+          time: ((_ref = tags.TLEN) != null ? _ref.data : void 0) != null ? tags.TLEN.data : ''
+        });
+      }), {
+        tags: ["title", "artist", "album", "track", "year", "genre", "TLEN"],
+        dataReader: FileAPIReader(blob)
+      });
+    };
+    reader.readAsArrayBuffer(blob);
+    return model;
+  };
+
+  UploadQueue.prototype.addBlobs = function(blobs) {
+    var i, nonBlockingLoop;
+    console.log(blobs);
+    i = 0;
+    return (nonBlockingLoop = (function(_this) {
+      return function() {
+        var blob, existingModel, model;
+        if (!(blob = blobs[i++])) {
+          return;
+        }
+        if (!blob.type.match(/audio\/(mp3|mpeg)/)) {
+          _this.trigger('badFileType');
+        } else {
+          model = _this.retrieveDataBlob(blob);
+          if ((existingModel = _this.isTrackStored(model) != null)) {
+            if (!existingModel.inUploadCycle() || existingModel.isUploaded()) {
+              existingModel.set({
+                size: blob.size,
+                lastModification: blob.lastModifiedDate
+              });
+              existingModel.file = blob;
+              existingModel.loaded = 0;
+              existingModel.total = blob.size;
+              model = existingModel;
+              model.markAsConflict();
+              _this.trigger('conflict', model);
+            } else {
+              model = null;
+            }
+          }
+          if (model != null) {
+            _this.add(model);
+          }
+        }
+        return setTimeout(nonBlockingLoop, 2);
+      };
+    })(this))();
+  };
+
+  UploadQueue.prototype.add = function(model) {
+    window.pendingOperations.upload++;
+    if (!model.isConflict()) {
+      model.markAsUploading();
+    }
+    this.baseCollection.add(model);
+    this.uploadCollection.add(model);
+    return this.asyncQueue.push(model);
+  };
+
+  UploadQueue.prototype._processSave = function(model, done) {
+    if (!model.isErrored() && !mode.isConflic()) {
+      return model.save(null, {
+        success: (function(_this) {
+          return function(model) {
+            model.file = null;
+            model.loaded = model.total;
+            model.markAsUploaded();
+            return done(null);
+          };
+        })(this),
+        error: (function(_this) {
+          return function(_, err) {
+            var body, defaultMessage, e, error, errorKey;
+            model.file = null;
+            body = (function() {
+              try {
+                return JSON.parse(err.responseText);
+              } catch (_error) {
+                e = _error;
+                return {
+                  msg: null
+                };
+              }
+            })();
+            if (err.status === 400 && body.code === 'ESTORAGE') {
+              return model.markAsErrored(body);
+            } else if (err.status === 0 && err.statusText === 'error') {
+
+            } else {
+              model.tries = 1 + (model.tries || 0);
+              if (model.tries > 3) {
+                defaultMessage = "modal error track upload";
+                model.error = t(err.msg || defaultMessage);
+                errorKey = err.msg || defaultMessage;
+                error = t(errorKey);
+                return model.markAsErrored(error);
+              } else {
+                return _this.asyncQueue.push(model);
+              }
+            }
+          };
+        })(this)
+      }, done());
+    } else {
+      return done();
+    }
+  };
+
+  UploadQueue.prototype.uploadWorker = function(model, next) {
+    if (model.error) {
+      return setTimeout(next, 10);
+    } else if (model.isConflict()) {
+      return alert('CONFLIT');
+    } else {
+      return this._processSave(model, next);
+    }
+  };
+
+  UploadQueue.prototype.completeUpload = function() {
+    window.pendingOperations.upload = 0;
+    this.completed = true;
+    return this.trigger('upload-complete');
+  };
+
+  UploadQueue.prototype.isTrackStored = function(model) {
+    return this.baseCollection.isTrackStored(model);
+  };
+
+  return UploadQueue;
+
+})();
+});
+
 ;require.register("initialize", function(exports, require, module) {
-var app;
+var TracksList, UploadQueue, app;
 
 app = require('application');
 
+TracksList = require('./collections/tracks_list');
+
+UploadQueue = require('./collections/upload_queue');
+
 $(function() {
+  var err, locales;
   require('lib/app_helpers');
+  this.locale = window.locale;
+  delete window.locale;
+  this.polyglot = new Polyglot();
+  try {
+    locales = require("locales/" + this.locale);
+  } catch (_error) {
+    err = _error;
+    locales = require('locales/en');
+  }
+  this.polyglot.extend(this.locales);
+  window.t = this.polyglot.t.bind(this.polyglot);
+  window.pendingOperations = {
+    upload: 0
+  };
+  window.mainTracksList = new TracksList;
+  window.uploadQueue = new UploadQueue(window.mainTracksList);
   return app.initialize();
 });
 });
@@ -338,14 +534,111 @@ module.exports = ViewCollection = (function(_super) {
 
 ;require.register("locales/en", function(exports, require, module) {
 module.exports = {
-  'upload-file': 'Upload'
+  'upload-files': 'Upload'
 };
 });
 
 ;require.register("locales/fr", function(exports, require, module) {
 module.exports = {
-  'upload-file': 'Upload'
+  'upload-files': 'Upload'
 };
+});
+
+;require.register("models/track", function(exports, require, module) {
+var Track,
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
+  __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
+
+module.exports = Track = (function(_super) {
+  __extends(Track, _super);
+
+  function Track() {
+    return Track.__super__.constructor.apply(this, arguments);
+  }
+
+  Track.prototype.url = 'track';
+
+  Track.prototype.uploadStatus = null;
+
+  Track.prototype.error = null;
+
+  Track.VALID_STATUSES = [null, 'uploading', 'uploaded', 'errored'];
+
+
+  /*
+   * Getters for the local state.
+   */
+
+  Track.prototype.isUploading = function() {
+    return this.uploadStatus === 'uploading';
+  };
+
+  Track.prototype.isUploaded = function() {
+    return this.uploadStatus === 'uploaded';
+  };
+
+  Track.prototype.isErrored = function() {
+    return this.uploadStatus === 'errored';
+  };
+
+  Track.prototype.isConflict = function() {
+    return this.uploadStatus === 'conflict';
+  };
+
+
+  /*
+   * Setters for the local state. Semantic wrapper for _setUploadStatus.
+   */
+
+  Track.prototype.markAsUploading = function() {
+    return this._setUploadStatus('uploading');
+  };
+
+  Track.prototype.markAsUploaded = function() {
+    return this._setUploadStatus('uploaded');
+  };
+
+  Track.prototype.markAsConflict = function() {
+    return this._setUploadStatus('conflict');
+  };
+
+  Track.prototype.markAsErrored = function(error) {
+    return this._setUploadStatus('errored', error);
+  };
+
+
+  /*
+      Trigger change for each status update because Backbone only triggers
+      `change` events for model's attributes.
+      The `change` events allow the projection to be updated.
+      @param `status` must be in Track.VALID_STATUSES
+   */
+
+  Track.prototype._setUploadStatus = function(status, error) {
+    var message;
+    if (error == null) {
+      error = null;
+    }
+    if (__indexOf.call(Track.VALID_STATUSES, status) < 0) {
+      message = ("Invalid upload status " + status + " not ") + ("in " + Track.VALID_STATUSES);
+      throw new Error(message);
+    } else {
+      this.error = error;
+      this.uploadStatus = status;
+      return this.trigger('change', this);
+    }
+  };
+
+  Track.prototype.isTrackStored = function(model) {
+    var existingTrack;
+    existingTrack = this.get(model.get('id'));
+    return existingTrack || null;
+  };
+
+  return Track;
+
+})(Backbone.Model);
 });
 
 ;require.register("router", function(exports, require, module) {
@@ -446,6 +739,26 @@ module.exports = ContextMenu = (function(_super) {
 
   ContextMenu.prototype.className = 'context-menu';
 
+  ContextMenu.prototype.events = {
+    'change #upload-files': 'lauchUploadFiles'
+  };
+
+  ContextMenu.prototype.afterRender = function() {
+    return this.uploader = $('#uploader');
+  };
+
+  ContextMenu.prototype.lauchUploadFiles = function(event) {
+    var files, target, _ref;
+    files = ((_ref = event.dataTransfert) != null ? _ref.files : void 0) || event.target.files;
+    if (files.length) {
+      window.uploadQueue.addBlobs(files);
+      if (event.target != null) {
+        target = $(event.target);
+        return target.replaceWith(target.clone(true));
+      }
+    }
+  };
+
   return ContextMenu;
 
 })(BaseView);
@@ -507,7 +820,7 @@ var buf = [];
 var jade_mixins = {};
 var jade_interp;
 
-buf.push("<div id=\"file-manager\" class=\"btn-group\"><button type=\"button\" class=\"btn btn-default\">" + (jade.escape((jade_interp = t('upload')) == null ? '' : jade_interp)) + "</button></div>");;return buf.join("");
+buf.push("<div id=\"file-manager\" class=\"btn-group\"><input id=\"upload-files\" name=\"upload-files\" type=\"file\" multiple=\"multiple\" accept=\"audio/*\" class=\"btn btn-default\"/></div>");;return buf.join("");
 };
 if (typeof define === 'function' && define.amd) {
   define([], function() {
@@ -583,7 +896,7 @@ var buf = [];
 var jade_mixins = {};
 var jade_interp;
 
-buf.push("<div class=\"demo-content-tracks\"><h1>Tracks Screen</h1><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p></div>");;return buf.join("");
+buf.push("<div class=\"demo-content-tracks\"><h1>Tracks Screen</h1><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p></div>");;return buf.join("");
 };
 if (typeof define === 'function' && define.amd) {
   define([], function() {

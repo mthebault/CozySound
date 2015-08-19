@@ -1,2 +1,8 @@
 #file-manager.btn-group
-    button(type='button').btn.btn-default #{t('upload')}
+    input#upload-files.btn.btn-default(
+    name='upload-files'
+    type='file'
+    multiple='multiple'
+    accept='audio/*'
+    )
+

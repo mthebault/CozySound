@@ -6,10 +6,10 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 19:45:08 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/18 19:45:13 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/18 23:04:28 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 
 module.exports =
-    'upload-file'            : 'Upload'
+    'upload-files'            : 'Upload'

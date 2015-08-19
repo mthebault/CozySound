@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 15:30:42 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/18 15:52:11 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/19 03:26:29 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -21,3 +21,27 @@ module.exports = class ContextMenu extends BaseView
     tagName: 'div'
     className: 'context-menu'
 
+    events:
+        # Event trigger when a user valid the files to upload
+        'change #upload-files': 'lauchUploadFiles'
+
+    afterRender: ->
+        @uploader = $('#uploader')
+
+    ################## UPLOAD #########################
+
+    # Catche all files in the event and send them to the uploadQueue collection
+    lauchUploadFiles: (event) ->
+        files = event.dataTransfert?.files or event.target.files
+        # Debug log ###############################
+        #
+        #console.log 'Files to upload:'
+        #console.log file for file in files
+        #
+        ##########################################
+        if files.length
+            window.uploadQueue.addBlobs files
+
+            if event.target?
+                target = $ event.target
+                target.replaceWith target.clone true
