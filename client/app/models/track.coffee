@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 22:06:02 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/19 05:35:18 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/19 22:47:19 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -69,3 +69,49 @@ module.exports = class Track extends Backbone.Model
         # TODO: make the comparisons
 
         return existingTrack or null
+
+    # Overrides sync method to allow track upload (multipart request)
+    # and progress events call with save methode
+    sync: (method, model, options) =>
+
+
+        # this is a new model, let's upload it as a multipart
+        if model.track
+
+            console.log model.track
+            # if the track is being overwritten (update), we force
+            # the "create" method, since only the "create" action in the server
+            # can handle track upload.
+            method = 'create'
+            @id = ""
+
+            formdata = new FormData()
+            formdata.append 'title', model.get 'title'
+            formdata.append 'artist', model.get 'artist'
+            formdata.append 'album', model.get 'album'
+            formdata.append 'trackNb', model.get 'trackNb'
+            formdata.append 'year', model.get 'year'
+            formdata.append 'genre', model.get 'genre'
+            formdata.append 'time', model.get 'time'
+            formdata.append 'docType', model.get 'docType'
+            formdata.append 'lastModification', model.get 'lastModification'
+            formdata.append 'overwrite', true if @overwrite
+            formdata.append 'track', model.track
+
+            # trigger upload progress on the model
+            progress = (e) ->
+                model.loaded = e.loaded
+                model.trigger 'progress', e
+
+            _.extend options,
+                contentType: false
+                data: formdata
+                # patch Model.sync so it could trigger progress event
+                xhr: =>
+                    xhr = $.ajaxSettings.xhr()
+                    if xhr.upload
+                        xhr.upload.addEventListener 'progress', progress, false
+                        @uploadXhrRequest = xhr
+                    xhr
+
+        Backbone.sync.apply @, arguments

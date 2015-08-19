@@ -191,7 +191,7 @@ module.exports = UploadQueue = (function() {
                 size: blob.size,
                 lastModification: blob.lastModifiedDate
               });
-              existingModel.file = blob;
+              existingModel.track = blob;
               existingModel.loaded = 0;
               existingModel.total = blob.size;
               model = existingModel;
@@ -218,10 +218,9 @@ module.exports = UploadQueue = (function() {
       size: blob.size,
       docType: blob.type
     });
-    ({
-      file: blob,
-      total: blob.size
-    });
+    model.track = blob;
+    model.load = 0;
+    model.total = blob.size;
     reader = new FileReader();
     reader.onload = function(event) {
       return ID3.loadTags(blob.name, (function() {
@@ -260,7 +259,7 @@ module.exports = UploadQueue = (function() {
       return model.save(null, {
         success: (function(_this) {
           return function(model) {
-            model.file = null;
+            model.track = null;
             model.loaded = model.total;
             model.markAsUploaded();
             return done(null);
@@ -269,7 +268,7 @@ module.exports = UploadQueue = (function() {
         error: (function(_this) {
           return function(_, err) {
             var body, defaultMessage, e, error, errorKey;
-            model.file = null;
+            model.track = null;
             body = (function() {
               try {
                 return JSON.parse(err.responseText);
@@ -546,6 +545,7 @@ module.exports = {
 
 ;require.register("models/track", function(exports, require, module) {
 var Track,
+  __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
   __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
@@ -554,6 +554,7 @@ module.exports = Track = (function(_super) {
   __extends(Track, _super);
 
   function Track() {
+    this.sync = __bind(this.sync, this);
     return Track.__super__.constructor.apply(this, arguments);
   }
 
@@ -634,6 +635,49 @@ module.exports = Track = (function(_super) {
     var existingTrack;
     existingTrack = this.get(model.get('id'));
     return existingTrack || null;
+  };
+
+  Track.prototype.sync = function(method, model, options) {
+    var formdata, progress;
+    if (model.track) {
+      console.log(model.track);
+      method = 'create';
+      this.id = "";
+      formdata = new FormData();
+      formdata.append('title', model.get('title'));
+      formdata.append('artist', model.get('artist'));
+      formdata.append('album', model.get('album'));
+      formdata.append('trackNb', model.get('trackNb'));
+      formdata.append('year', model.get('year'));
+      formdata.append('genre', model.get('genre'));
+      formdata.append('time', model.get('time'));
+      formdata.append('docType', model.get('docType'));
+      formdata.append('lastModification', model.get('lastModification'));
+      if (this.overwrite) {
+        formdata.append('overwrite', true);
+      }
+      formdata.append('track', model.track);
+      progress = function(e) {
+        model.loaded = e.loaded;
+        return model.trigger('progress', e);
+      };
+      _.extend(options, {
+        contentType: false,
+        data: formdata,
+        xhr: (function(_this) {
+          return function() {
+            var xhr;
+            xhr = $.ajaxSettings.xhr();
+            if (xhr.upload) {
+              xhr.upload.addEventListener('progress', progress, false);
+              _this.uploadXhrRequest = xhr;
+            }
+            return xhr;
+          };
+        })(this)
+      });
+    }
+    return Backbone.sync.apply(this, arguments);
   };
 
   return Track;

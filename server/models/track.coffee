@@ -6,9 +6,11 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/19 20:21:09 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/19 20:58:58 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/19 22:59:06 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
+
+cozydb = require 'cozydb'
 
 module.exports = Track = cozydb.getModel 'Track',
     title:      	String

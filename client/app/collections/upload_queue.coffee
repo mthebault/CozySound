@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 23:50:03 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/19 21:28:28 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/19 22:54:38 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -63,7 +63,7 @@ module.exports = class UploadQueue
                             size: blob.size
                             lastModification: blob.lastModifiedDate
 
-                        existingModel.file = blob
+                        existingModel.track = blob
                         existingModel.loaded = 0
                         existingModel.total = blob.size
 
@@ -95,8 +95,9 @@ module.exports = class UploadQueue
             size: blob.size
             docType: blob.type
 
-        file: blob
-        total: blob.size
+        model.track = blob
+        model.load = 0
+        model.total = blob.size
 
         reader = new FileReader()
         reader.onload = (event) ->
@@ -143,13 +144,13 @@ module.exports = class UploadQueue
         if not model.isErrored() and not model.isConflict()
             model.save null,
                 success: (model) =>
-                    model.file = null
+                    model.track = null
                     # Make sure progress is uniform, we force it a 100%
                     model.loaded = model.total
                     model.markAsUploaded()
                     done null
                 error: (_, err) =>
-                    model.file = null
+                    model.track = null
                     body = try JSON.parse(err.responseText)
                     catch e then msg: null
                     if err.status is 400 and body.code is 'ESTORAGE'
@@ -182,6 +183,7 @@ module.exports = class UploadQueue
 
         # If there is a conflict, the queue waits for the user to
         # make a decision.
+        # Not implemented yep
         else if model.isConflict()
             alert 'CONFLICT'
         # Otherwise, the upload starts directly.

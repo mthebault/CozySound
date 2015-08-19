@@ -6,11 +6,13 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/19 06:50:00 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/19 21:28:17 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/19 23:00:01 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 multiparty = require 'multiparty'
+moment = require 'moment'
+Track = require './../models/track'
 log = require('printit')
     prefix: 'track'
 
@@ -44,26 +46,26 @@ resetTimeout = ->
     #folderParent = {}
 
 
-confirmCanUpload = (data, req, next) ->
+#confirmCanUpload = (data, req, next) ->
 
-    # owner can upload.
-    return next null if not req.public
-    element = new File data
-    sharing.checkClearance element, req, 'w', (authorized, rule) ->
-        if authorized
-            #if rule?
-                #req.guestEmail = rule.email
-                #req.guestId = rule.contactid
-            next()
-        else
-            err = new Error 'You cannot access this resource'
-            err.status = 404
-            err.template =
-                name: '404'
-                params:
-                    localization: require '../lib/localization_manager'
-                    isPublic: true
-            next err
+    ## owner can upload.
+    #return next null if not req.public
+    #element = new File data
+    #sharing.checkClearance element, req, 'w', (authorized, rule) ->
+        #if authorized
+            ##if rule?
+                ##req.guestEmail = rule.email
+                ##req.guestId = rule.contactid
+            #next()
+        #else
+            #err = new Error 'You cannot access this resource'
+            #err.status = 404
+            #err.template =
+                #name: '404'
+                #params:
+                    #localization: require '../lib/localization_manager'
+                    #isPublic: true
+            #next err
 
 module.exports.create = (req, res, next) ->
     clearTimeout(timeout) if timeout?
@@ -76,22 +78,24 @@ module.exports.create = (req, res, next) ->
 
     console.log 'BEGIN CREATE'
     form.on 'part', (part) ->
-        console.log 'PART: ', part
         # We recieve the data in a stream so it send the data by "parts", each
         # part represent a data or the blob. This next lines check if the part
         # is note the blob (link with meta "filename"). If that put the data in
         # the fields object
         if not part.filename?
+            console.log 'PART META: ', part.name
             fields[part.name] = ''
             part.on 'data', (buffer) ->
                 fields[part.name] = buffer.toString()
             return
 
+        console.log 'PART: ', part.filename
         # TODO: parse the fields like year or track
 
         # We assume that only one track is sent.
         # we do not write a subfunction because it seems to load the whole
         # stream in memory.
+        title = fields.title
         lastModification = moment(new Date(fields.lastModifiedDate)).toISOString()
         # Not implemented yet
         #overwrite = fields.overwrite
@@ -177,7 +181,7 @@ module.exports.create = (req, res, next) ->
         # Check that the track doesn't exist yet.
         # The comparison is make for the moment by the name/artist
         # TODO: improve it
-        Track.getByArtistAndTitle keys: [title, artist], (err, sameTracks) ->
+        Track.getByArtistAndTitle keys: ['title', 'artist'], (err, sameTracks) ->
             return next err if err
 
             # there is already a track with the same name, give up
@@ -210,7 +214,7 @@ module.exports.create = (req, res, next) ->
 
             # Generate track metadata.
             data =
-                title: fields.title
+                title: title
                 artist: fields.artist
                 album: fields.album
                 trackNb: fields.trackNb
