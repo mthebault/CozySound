@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/19 06:50:00 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/19 23:00:01 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/19 23:03:34 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -182,7 +182,9 @@ module.exports.create = (req, res, next) ->
         # The comparison is make for the moment by the name/artist
         # TODO: improve it
         Track.getByArtistAndTitle keys: ['title', 'artist'], (err, sameTracks) ->
+            console.log "end"
             return next err if err
+            console.log "end2"
 
             # there is already a track with the same name, give up
             if sameTracks.length > 0

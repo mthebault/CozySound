@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/19 20:21:09 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/19 22:59:06 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/19 23:05:38 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -32,5 +32,5 @@ module.exports = Track = cozydb.getModel 'Track',
 
 
 Track.getByArtistAndTitle = (param, callback) ->
-    Track.request "artistAndTitle", param, callback
+    Track.request "byArtistAndTitle", param, callback
 
