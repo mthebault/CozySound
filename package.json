@@ -30,6 +30,10 @@
     "test": "cake tests",
     "start": "node build/server.js"
   },
-  "cozy-permissions": {},
+  "cozy-permissions": {
+      "Track": {
+                "description": "Store tracks in your cozy"
+      }
+  },
   "cozy-displayName": "Sound"
 }

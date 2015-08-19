@@ -172,41 +172,6 @@ module.exports = UploadQueue = (function() {
     this.asyncQueue.drain = this.completeUpload.bind(this);
   }
 
-  UploadQueue.prototype.retrieveDataBlob = function(blob) {
-    var model, reader;
-    model = new Track({
-      title: blob.name,
-      lastModified: blob.lastModifiedDate,
-      size: blob.size,
-      type: blob.type
-    });
-    ({
-      file: blob,
-      total: blob.size
-    });
-    reader = new FileReader();
-    reader.onload = function(event) {
-      return ID3.loadTags(blob.name, (function() {
-        var tags, _ref;
-        tags = ID3.getAllTags(blob.name);
-        return model.set({
-          title: tags.title != null ? tags.title : void 0,
-          artist: tags.artist != null ? tags.artist : '',
-          album: tags.album != null ? tags.album : '',
-          track: tags.track != null ? tags.track : '',
-          year: tags.year != null ? tags.year : '',
-          genre: tags.genre != null ? tags.genre : '',
-          time: ((_ref = tags.TLEN) != null ? _ref.data : void 0) != null ? tags.TLEN.data : ''
-        });
-      }), {
-        tags: ["title", "artist", "album", "track", "year", "genre", "TLEN"],
-        dataReader: FileAPIReader(blob)
-      });
-    };
-    reader.readAsArrayBuffer(blob);
-    return model;
-  };
-
   UploadQueue.prototype.addBlobs = function(blobs) {
     var i, nonBlockingLoop;
     i = 0;
@@ -243,6 +208,41 @@ module.exports = UploadQueue = (function() {
         return setTimeout(nonBlockingLoop, 2);
       };
     })(this))();
+  };
+
+  UploadQueue.prototype.retrieveDataBlob = function(blob) {
+    var model, reader;
+    model = new Track({
+      title: blob.name,
+      lastModification: blob.lastModifiedDate,
+      size: blob.size,
+      docType: blob.type
+    });
+    ({
+      file: blob,
+      total: blob.size
+    });
+    reader = new FileReader();
+    reader.onload = function(event) {
+      return ID3.loadTags(blob.name, (function() {
+        var tags, _ref;
+        tags = ID3.getAllTags(blob.name);
+        return model.set({
+          title: tags.title != null ? tags.title : model.title,
+          artist: tags.artist != null ? tags.artist : void 0,
+          album: tags.album != null ? tags.album : void 0,
+          trackNb: tags.track != null ? tags.track : void 0,
+          year: tags.year != null ? tags.year : void 0,
+          genre: tags.genre != null ? tags.genre : void 0,
+          time: ((_ref = tags.TLEN) != null ? _ref.data : void 0) != null ? tags.TLEN.data : void 0
+        });
+      }), {
+        tags: ["title", "artist", "album", "track", "year", "genre", "TLEN"],
+        dataReader: FileAPIReader(blob)
+      });
+    };
+    reader.readAsArrayBuffer(blob);
+    return model;
   };
 
   UploadQueue.prototype.add = function(model) {

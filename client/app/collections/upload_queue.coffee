@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 23:50:03 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/19 06:45:53 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/19 21:28:28 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -35,43 +35,6 @@ module.exports = class UploadQueue
         @asyncQueue = async.queue @uploadWorker, 5
         @asyncQueue.drain = @completeUpload.bind @
 
-
-    # Retrieve all data needed in the metadata and the ID3 metadata
-    # What is ID3 ?? -> https://en.wikipedia.org/wiki/ID3
-    # TODO: Improve the ID3 reader
-    # TODO: parse title -> take the ID3 title usualy much better
-    # TODO: retrieve album picture -> will be complicate because that need an
-    # inter app protocole with file and/or picture app
-    # TODO: There is lot's of other data to retrieve, may be interesting to look
-    # up
-    retrieveDataBlob: (blob) ->
-        model = new Track
-            title: blob.name
-            lastModified: blob.lastModifiedDate
-            size: blob.size
-            type: blob.type
-
-        file: blob
-        total: blob.size
-
-        reader = new FileReader()
-        reader.onload = (event) ->
-            ID3.loadTags blob.name, ( ->
-                tags = ID3.getAllTags blob.name
-                model.set
-                    title: if tags.title? then tags.title
-                    artist: if tags.artist? then tags.artist else ''
-                    album: if tags.album? then tags.album else ''
-                    track: if tags.track? then tags.track else ''
-                    year: if tags.year? then tags.year else ''
-                    genre: if tags.genre? then tags.genre else ''
-                    time: if tags.TLEN?.data? then tags.TLEN.data else ''
-            ),
-            tags: ["title","artist","album","track","year","genre","TLEN"]
-            dataReader: FileAPIReader blob
-        reader.readAsArrayBuffer blob
-
-        return model
 
     addBlobs: (blobs) ->
         #@reset if @completed // not implemented
@@ -115,6 +78,44 @@ module.exports = class UploadQueue
                     @add model
 
             setTimeout nonBlockingLoop, 2
+
+
+    # Retrieve all data needed in the metadata and the ID3 metadata
+    # What is ID3 ?? -> https://en.wikipedia.org/wiki/ID3
+    # TODO: Improve the ID3 reader
+    # TODO: parse title -> take the ID3 title usualy much better
+    # TODO: retrieve album picture -> will be complicate because that need an
+    # inter app protocole with file and/or picture app
+    # TODO: There is lot's of other data to retrieve, may be interesting to look
+    # up
+    retrieveDataBlob: (blob) ->
+        model = new Track
+            title: blob.name
+            lastModification: blob.lastModifiedDate
+            size: blob.size
+            docType: blob.type
+
+        file: blob
+        total: blob.size
+
+        reader = new FileReader()
+        reader.onload = (event) ->
+            ID3.loadTags blob.name, ( ->
+                tags = ID3.getAllTags blob.name
+                model.set
+                    title: if tags.title? then tags.title else model.title
+                    artist: if tags.artist? then tags.artist else undefined
+                    album: if tags.album? then tags.album else undefined
+                    trackNb: if tags.track? then tags.track else undefined
+                    year: if tags.year? then tags.year else undefined
+                    genre: if tags.genre? then tags.genre else undefined
+                    time: if tags.TLEN?.data? then tags.TLEN.data else undefined
+            ),
+            tags: ["title","artist","album","track","year","genre","TLEN"]
+            dataReader: FileAPIReader blob
+        reader.readAsArrayBuffer blob
+
+        return model
 
 
     # Add a to the operations in progress, change his status and
