@@ -1,8 +1,18 @@
-# See documentation on https://github.com/frankrousseau/americano#routes
+# **************************************************************************** #
+#                                                                              #
+#                                                         :::      ::::::::    #
+#    routes.coffee                                      :+:      :+:    :+:    #
+#                                                     +:+ +:+         +:+      #
+#    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
+#                                                 +#+#+#+#+#+   +#+            #
+#    Created: 2015/08/19 06:48:47 by ppeltier          #+#    #+#              #
+#    Updated: 2015/08/19 06:57:00 by ppeltier         ###   ########.fr        #
+#                                                                              #
+# **************************************************************************** #
 
-index = require './index'
+track = require './track'
 
 module.exports =
-    'foo':
-        get: index.main
+    'track':
+        post: track.create
 

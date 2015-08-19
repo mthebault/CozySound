@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 23:50:03 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/19 06:08:06 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/19 06:45:53 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -28,8 +28,6 @@ module.exports = class UploadQueue
         # reasons (it doesn't have to be updated each time a big folder is
         # loaded.)
         @uploadCollection = new Backbone.Collection()
-
-
 
         # Backbone.Events is a mixin, not a "class" you can extend.
         _.extend @, Backbone.Events
@@ -78,8 +76,6 @@ module.exports = class UploadQueue
     addBlobs: (blobs) ->
         #@reset if @completed // not implemented
 
-        console.log blobs
-
         i = 0
         # Non blocking loop, handling one file every 2ms so the UI don't get
         # stuck
@@ -115,8 +111,6 @@ module.exports = class UploadQueue
                     else
                         # Prevent the track from being added to the queue.
                         model = null
-
-
                 if model?
                     @add model
 
@@ -145,8 +139,7 @@ module.exports = class UploadQueue
     # uploadStatus based on response. If there is an unexpected error,
     # it tries again 3 times before failing.
     _processSave: (model, done) ->
-
-        if not model.isErrored() and not mode.isConflic()
+        if not model.isErrored() and not model.isConflict()
             model.save null,
                 success: (model) =>
                     model.file = null
@@ -175,23 +168,24 @@ module.exports = class UploadQueue
                         else
                             # let's try again
                             @asyncQueue.push model
-                done()
+                #done()
         else
             done()
 
 
     # Process each element in the queue
-    uploadWorker: (model, next) ->
+       uploadWorker: (model, next) =>
         # Skip if there is an error.
         if model.error
             setTimeout next, 10
+
         # If there is a conflict, the queue waits for the user to
         # make a decision.
         else if model.isConflict()
-            alert 'CONFLIT'
-            #TODO: Handle it
+            alert 'CONFLICT'
+        # Otherwise, the upload starts directly.
         else
-            @_processSave(model, next)
+            @_processSave model, next
 
 
     # Reset variables and trigger completion events.

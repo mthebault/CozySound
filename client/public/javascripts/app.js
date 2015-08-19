@@ -165,6 +165,7 @@ module.exports = UploadQueue = (function() {
   function UploadQueue(baseCollection) {
     this.baseCollection = baseCollection;
     this.completeUpload = __bind(this.completeUpload, this);
+    this.uploadWorker = __bind(this.uploadWorker, this);
     this.uploadCollection = new Backbone.Collection();
     _.extend(this, Backbone.Events);
     this.asyncQueue = async.queue(this.uploadWorker, 5);
@@ -208,7 +209,6 @@ module.exports = UploadQueue = (function() {
 
   UploadQueue.prototype.addBlobs = function(blobs) {
     var i, nonBlockingLoop;
-    console.log(blobs);
     i = 0;
     return (nonBlockingLoop = (function(_this) {
       return function() {
@@ -256,7 +256,7 @@ module.exports = UploadQueue = (function() {
   };
 
   UploadQueue.prototype._processSave = function(model, done) {
-    if (!model.isErrored() && !mode.isConflic()) {
+    if (!model.isErrored() && !model.isConflict()) {
       return model.save(null, {
         success: (function(_this) {
           return function(model) {
@@ -298,7 +298,7 @@ module.exports = UploadQueue = (function() {
             }
           };
         })(this)
-      }, done());
+      });
     } else {
       return done();
     }
@@ -308,7 +308,7 @@ module.exports = UploadQueue = (function() {
     if (model.error) {
       return setTimeout(next, 10);
     } else if (model.isConflict()) {
-      return alert('CONFLIT');
+      return alert('CONFLICT');
     } else {
       return this._processSave(model, next);
     }
