@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/19 06:48:47 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/19 06:57:00 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/20 19:25:37 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -16,3 +16,5 @@ module.exports =
     'track':
         post: track.create
 
+    'tracks':
+        get: track.all

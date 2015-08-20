@@ -6,10 +6,21 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 22:06:02 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/20 15:11:37 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/20 17:32:01 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
+###
+# Represent a track element contained in the base collection
+#
+#
+# # Upload Flag:
+#       In case of upload, the upload queue parse the metadata, and push it to
+#       the queue and the base collection so it is directly prompt to the user.
+#       The upload flag permit to the user to follow the uploading process and
+#       cancel it. Each modification of this flag is warn by the triggering of
+#       the 'change'.
+###
 module.exports = class Track extends Backbone.Model
     url: 'track'
 

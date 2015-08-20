@@ -6,10 +6,13 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 19:45:08 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/18 23:04:28 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/20 22:17:56 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
-
 module.exports =
     'upload-files'            : 'Upload'
+    'title'                   : 'Title'
+    'artist'                  : 'Artist'
+    '#'                       : '#'
+    'status'                  : 'Status'

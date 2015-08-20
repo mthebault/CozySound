@@ -6,12 +6,17 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 23:50:03 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/20 15:12:57 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/20 17:18:49 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 Track = require './../models/track'
 
+###
+# The UploadQueue is a mix of async.queue & BackboneCollection
+# - Blobs are parsed and added to the queue and the base collection with the flag
+# uploading
+###
 module.exports = class UploadQueue
     model: Track
 

@@ -110,10 +110,28 @@
   globals.require = require;
 })();
 require.register("application", function(exports, require, module) {
+var AppView, TracksList, UploadQueue;
+
+AppView = require('./views/app_view');
+
+TracksList = require('./collections/tracks_list');
+
+UploadQueue = require('./collections/upload_queue');
+
 module.exports = {
   initialize: function() {
-    var Router;
+    var Router, mainView;
     window.app = this;
+    this.baseCollection = new TracksList;
+    this.baseCollection.fetch({
+      error: function(error) {
+        return console.log(error);
+      }
+    });
+    this.uploadQueue = new UploadQueue(this.baseCollection);
+    this.baseCollectionView = null;
+    mainView = new AppView();
+    mainView.render();
     Router = require('router');
     this.router = new Router();
     Backbone.history.start();
@@ -131,6 +149,13 @@ var Track, TracksList,
 
 Track = require('./../models/track');
 
+
+/*
+ * Represents a collection of tracks
+ * It acts as a cache when instanciate as the baseCollection
+ * The base collection holds ALL tracks of the application
+ */
+
 module.exports = TracksList = (function(_super) {
   __extends(TracksList, _super);
 
@@ -139,6 +164,8 @@ module.exports = TracksList = (function(_super) {
   }
 
   TracksList.prototype.model = Track;
+
+  TracksList.prototype.url = 'tracks';
 
   TracksList.prototype.isTrackStored = function(model) {
     var existingTrack;
@@ -156,6 +183,13 @@ var Track, UploadQueue,
   __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
 
 Track = require('./../models/track');
+
+
+/*
+ * The UploadQueue is a mix of async.queue & BackboneCollection
+ * - Blobs are parsed and added to the queue and the base collection with the flag
+ * uploading
+ */
 
 module.exports = UploadQueue = (function() {
   UploadQueue.prototype.model = Track;
@@ -335,13 +369,9 @@ module.exports = UploadQueue = (function() {
 });
 
 ;require.register("initialize", function(exports, require, module) {
-var TracksList, UploadQueue, app;
+var app;
 
 app = require('application');
-
-TracksList = require('./collections/tracks_list');
-
-UploadQueue = require('./collections/upload_queue');
 
 $(function() {
   var err, locales;
@@ -360,8 +390,6 @@ $(function() {
   window.pendingOperations = {
     upload: 0
   };
-  window.mainTracksList = new TracksList;
-  window.uploadQueue = new UploadQueue(window.mainTracksList);
   return app.initialize();
 });
 });
@@ -539,17 +567,37 @@ module.exports = ViewCollection = (function(_super) {
 
 ;require.register("locales/en", function(exports, require, module) {
 module.exports = {
-  'upload-files': 'Upload'
+  'upload-files': 'Upload',
+  'title': 'Title',
+  'artist': 'Artist',
+  '#': '#',
+  'status': 'status'
 };
 });
 
 ;require.register("locales/fr", function(exports, require, module) {
 module.exports = {
-  'upload-files': 'Upload'
+  'upload-files': 'Upload',
+  'title': 'Title',
+  'artist': 'Artist',
+  '#': '#',
+  'status': 'Status'
 };
 });
 
 ;require.register("models/track", function(exports, require, module) {
+
+/*
+ * Represent a track element contained in the base collection
+ *
+ *
+ * # Upload Flag:
+ *       In case of upload, the upload queue parse the metadata, and push it to
+ *       the queue and the base collection so it is directly prompt to the user.
+ *       The upload flag permit to the user to follow the uploading process and
+ *       cancel it. Each modification of this flag is warn by the triggering of
+ *       the 'change'.
+ */
 var Track,
   __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
   __hasProp = {}.hasOwnProperty,
@@ -691,11 +739,13 @@ module.exports = Track = (function(_super) {
 });
 
 ;require.register("router", function(exports, require, module) {
-var AppView, Router,
+var Router, TracksView, app,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
-AppView = require('views/app_view');
+app = require('application');
+
+TracksView = require('views/content/track/tracks_view');
 
 module.exports = Router = (function(_super) {
   __extends(Router, _super);
@@ -704,16 +754,31 @@ module.exports = Router = (function(_super) {
     return Router.__super__.constructor.apply(this, arguments);
   }
 
+  Router.prototype.contentView = null;
+
   Router.prototype.routes = {
     '': 'main'
   };
 
-  Router.prototype.initialize = function() {};
-
   Router.prototype.main = function() {
-    var mainView;
-    mainView = new AppView();
-    return mainView.render();
+    return this._renderAllTracks();
+  };
+
+  Router.prototype._renderAllTracks = function() {
+    if (this.contentView != null) {
+      this.contentView.destroy();
+    }
+    this.contentView = this._loadAllTracks();
+    return this.contentView.render();
+  };
+
+  Router.prototype._loadAllTracks = function() {
+    if (this.baseCollectionView == null) {
+      return this.baseCollectionView = new TracksView({
+        baseCollection: app.baseCollection,
+        uploadQueue: app.uploadQueue
+      });
+    }
   };
 
   return Router;
@@ -722,7 +787,7 @@ module.exports = Router = (function(_super) {
 });
 
 ;require.register("views/app_view", function(exports, require, module) {
-var AppView, BaseView, ContextMenu, LeftMenu, PlayerScreen, TracksScreen,
+var AppView, BaseView, ContextMenu, LeftMenu, PlayerScreen,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
@@ -732,9 +797,16 @@ ContextMenu = require('./context_menu');
 
 LeftMenu = require('./left_menu');
 
-TracksScreen = require('./tracks_screen');
-
 PlayerScreen = require('./player_screen');
+
+
+/*
+ *  Represent the app context. It contain and lauch the four big parts:
+ *  - context menu
+ *  - left menu
+ *  - content screen
+ *  - player screen
+ */
 
 module.exports = AppView = (function(_super) {
   __extends(AppView, _super);
@@ -754,18 +826,110 @@ module.exports = AppView = (function(_super) {
     this.leftMenu = new LeftMenu;
     this.$('#left-menu').append(this.leftMenu.$el);
     this.leftMenu.render();
-    this.tracksScreen = new TracksScreen;
-    this.$('#tracks-screen').append(this.tracksScreen.$el);
-    this.tracksScreen.render();
     this.playerScreen = new PlayerScreen;
     this.$('#player-screen').append(this.playerScreen.$el);
-    this.playerScreen.render();
-    return console.log("write more code here !");
+    return this.playerScreen.render();
   };
 
   return AppView;
 
 })(BaseView);
+});
+
+;require.register("views/content/track/templates/track", function(exports, require, module) {
+var __templateData = function template(locals) {
+var buf = [];
+var jade_mixins = {};
+var jade_interp;
+
+buf.push("<div class=\"demo-content-tracks\"><h1>Tracks Screen</h1><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p></div>");;return buf.join("");
+};
+if (typeof define === 'function' && define.amd) {
+  define([], function() {
+    return __templateData;
+  });
+} else if (typeof module === 'object' && module && module.exports) {
+  module.exports = __templateData;
+} else {
+  __templateData;
+}
+});
+
+;require.register("views/content/track/templates/tracks", function(exports, require, module) {
+var __templateData = function template(locals) {
+var buf = [];
+var jade_mixins = {};
+var jade_interp;
+
+buf.push("<span>" + (jade.escape((jade_interp = t('title')) == null ? '' : jade_interp)) + "</span><span>" + (jade.escape((jade_interp = t('artist')) == null ? '' : jade_interp)) + "</span><span>" + (jade.escape((jade_interp = t('album')) == null ? '' : jade_interp)) + "</span><span>" + (jade.escape((jade_interp = t('#')) == null ? '' : jade_interp)) + "</span>");;return buf.join("");
+};
+if (typeof define === 'function' && define.amd) {
+  define([], function() {
+    return __templateData;
+  });
+} else if (typeof module === 'object' && module && module.exports) {
+  module.exports = __templateData;
+} else {
+  __templateData;
+}
+});
+
+;require.register("views/content/track/track_view", function(exports, require, module) {
+var BaseView, TrackView,
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+BaseView = require('../../../lib/base_view');
+
+module.exports - (TrackView = (function(_super) {
+  __extends(TrackView, _super);
+
+  function TrackView() {
+    return TrackView.__super__.constructor.apply(this, arguments);
+  }
+
+  TrackView.prototype.template = require('./templates/track');
+
+  return TrackView;
+
+})(BaseView));
+});
+
+;require.register("views/content/track/tracks_view", function(exports, require, module) {
+var TrackView, TracksView, ViewCollection,
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+ViewCollection = require('../../../lib/view_collection');
+
+TrackView = require('./track_view');
+
+
+/*
+ * TracksView is a collection of TrackView and it's contain in the tracks screen
+ */
+
+module.exports = TracksView = (function(_super) {
+  __extends(TracksView, _super);
+
+  function TracksView() {
+    return TracksView.__super__.constructor.apply(this, arguments);
+  }
+
+  TracksView.prototype.itemview = TrackView;
+
+  TracksView.prototype.template = require('./templates/tracks');
+
+  TracksView.prototype.collectionEl = '#content';
+
+  TracksView.prototype.initialize = function(options) {
+    this.collection = options.baseCollection;
+    return this.uploadQueue = options.uploadQueue;
+  };
+
+  return TracksView;
+
+})(ViewCollection);
 });
 
 ;require.register("views/context_menu", function(exports, require, module) {
@@ -774,6 +938,13 @@ var BaseView, ContextMenu,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
 BaseView = require('../lib/base_view');
+
+
+/*
+ * Context_menu represent the menu on the top of the app. His goal is to work
+ * with tracks_screen. It must display the dynamiques option when the user select
+ * one or several song in the tracks screen.
+ */
 
 module.exports = ContextMenu = (function(_super) {
   __extends(ContextMenu, _super);
@@ -800,7 +971,7 @@ module.exports = ContextMenu = (function(_super) {
     var files, target, _ref;
     files = ((_ref = event.dataTransfert) != null ? _ref.files : void 0) || event.target.files;
     if (files.length) {
-      window.uploadQueue.addBlobs(files);
+      window.app.uploadQueue.addBlobs(files);
       if (event.target != null) {
         target = $(event.target);
         return target.replaceWith(target.clone(true));
@@ -819,6 +990,12 @@ var BaseView, LeftMenu,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
 BaseView = require('../lib/base_view');
+
+
+/*
+ * LefMenu represent the main panel option. His goal is trigger the changing
+ * of content in the tracks screen
+ */
 
 module.exports = LeftMenu = (function(_super) {
   __extends(LeftMenu, _super);
@@ -888,7 +1065,7 @@ var buf = [];
 var jade_mixins = {};
 var jade_interp;
 
-buf.push("<div id=\"context-menu\" class=\"navbar navbar-fixed-top\"></div><div class=\"container-fluid\"><div class=\"row-fluid columns content\"><div class=\"row\"><div id=\"left-menu\" class=\"col-sm-3 col-md-2 left-menu\"></div><div id=\"tracks-screen\" class=\"col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2\"></div></div></div></div><div id=\"player-screen\" class=\"footer player\"></div>");;return buf.join("");
+buf.push("<div id=\"context-menu\" class=\"navbar navbar-fixed-top\"></div><div class=\"container-fluid\"><div class=\"row-fluid columns content\"><div class=\"row\"><div id=\"left-menu\" class=\"col-sm-3 col-md-2 left-menu\"></div><div id=\"content\" class=\"col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2\"></div></div></div></div><div id=\"player-screen\" class=\"footer player\"></div>");;return buf.join("");
 };
 if (typeof define === 'function' && define.amd) {
   define([], function() {
@@ -937,50 +1114,6 @@ if (typeof define === 'function' && define.amd) {
 } else {
   __templateData;
 }
-});
-
-;require.register("views/templates/tracks_screen", function(exports, require, module) {
-var __templateData = function template(locals) {
-var buf = [];
-var jade_mixins = {};
-var jade_interp;
-
-buf.push("<div class=\"demo-content-tracks\"><h1>Tracks Screen</h1><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p></div>");;return buf.join("");
-};
-if (typeof define === 'function' && define.amd) {
-  define([], function() {
-    return __templateData;
-  });
-} else if (typeof module === 'object' && module && module.exports) {
-  module.exports = __templateData;
-} else {
-  __templateData;
-}
-});
-
-;require.register("views/tracks_screen", function(exports, require, module) {
-var BaseView, TracksScreen,
-  __hasProp = {}.hasOwnProperty,
-  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
-
-BaseView = require('../lib/base_view');
-
-module.exports = TracksScreen = (function(_super) {
-  __extends(TracksScreen, _super);
-
-  function TracksScreen() {
-    return TracksScreen.__super__.constructor.apply(this, arguments);
-  }
-
-  TracksScreen.prototype.template = require('./templates/tracks_screen');
-
-  TracksScreen.prototype.tagName = 'div';
-
-  TracksScreen.prototype.className = 'tracks-screen';
-
-  return TracksScreen;
-
-})(BaseView);
 });
 
 ;

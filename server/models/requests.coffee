@@ -2,4 +2,6 @@
 
 cozydb = require 'cozydb'
 
-#module.exports =
+module.exports =
+    track:
+        all: cozydb.defaultRequests.all

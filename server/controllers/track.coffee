@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/19 06:50:00 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/20 15:35:14 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/20 19:32:20 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -18,15 +18,27 @@ Track = require './../models/track'
 log = require('printit')
     prefix: 'track'
 
-# Prior to track creation it ensures that all parameters are correct and that no
-# track already exists with the same name. Then it builds the track document from
-# given information and uploaded track metadata. Once done, it performs all
-# database operation and index the track name. Finally, it tags the track if the
-# parent folder is tagged.
-folderParent = {}
+
+
+module.exports.all = (req, res, next) ->
+    Track.request 'all', (err, data) ->
+        if err
+            res.send
+                error: true
+                code: 'ERETREIVE'
+                msg: 'modal err retrieve'
+            , 500
+        else
+            res.status(200).send(data)
+
+
+
+
+# Prior to track creation it ensures that all parameters are correct then it
+# builds the track document from given information and uploaded track metadata.
+# Once done, it performs all database operation and index the track name.
 timeout = null
 
-# Helpers functions of upload process
 
 # check if an error is storage related
 isStorageError = (err) ->
@@ -41,7 +53,6 @@ module.exports.create = (req, res, next) ->
     # Parse given form to extract image blobs
     form = new multiparty.Form()
 
-    console.log 'BEGIN CREATE'
     form.on 'part', (part) ->
         # We recieve the data in a stream so it send the data by "parts", each
         # part represent a data or the blob. This next lines check if the part
@@ -53,21 +64,18 @@ module.exports.create = (req, res, next) ->
                 fields[part.name] = buffer.toString()
             return
 
-        console.log 'FIELDS: ', fields
-        console.log 'PART: ', part.filename
-        # TODO: parse the fields like year or track
+        # TODO: make a better parse on the fields
 
         # We assume that only one track is sent.
         # we do not write a subfunction because it seems to load the whole
         # stream in memory.
         title = fields.title
-        lastModification = moment(new Date(fields.lastModifiedDate)).toISOString()
-        # Not implemented yet
-        #overwrite = fields.overwrite
+        lastModification = moment(new Date(fields.lastModification)).toISOString()
         upload = true
         canceled = false
         uploadStream = null
 
+        console.log 'MODIF: ', lastModification
         # we have no title for this track, give up
         if not title or title is ""
             err = new Error "Invalid arguments: no title given"
@@ -76,12 +84,10 @@ module.exports.create = (req, res, next) ->
 
         # while this upload is processing
         # we send usage.application to prevent auto-stop
-        # and we defer parents lastModification update
         keepAlive = ->
             if upload
                 feed.publish 'usage.application', 'tracks'
                 setTimeout keepAlive, 60*1000
-                #resetTimeout()
 
         # if anything happens after the track is created
         # we need to destroy it
@@ -131,7 +137,7 @@ module.exports.create = (req, res, next) ->
                         log.debug err if err
 
                         # index the track in cozy-indexer for fast search
-                        track.index ["title"], (err) ->
+                        track.index ["title", "artist"], (err) ->
                             # we ignore indexing errors
                             log.debug err if err
 
@@ -143,35 +149,7 @@ module.exports.create = (req, res, next) ->
 
         now = moment().toISOString()
 
-        # Check that the track doesn't exist yet.
-        # The comparison is make for the moment by the name/artist
-        # TODO: improve it
-        #Track.getByArtistAndTitle keys: ['title', 'artist'], (err, sameTracks) ->
-            #console.log "end"
-            #return next err if err
-            #console.log "end2"
-
-            ## there is already a track with the same name, give up
-            #if sameTracks.length > 0
-                # Overwrite option is not fully implemented yet
-                #
-                #
-                #if overwrite
-                    #track = sameTracks[0]
-                    #attributes =
-                        #lastModification: lastModification
-                        #size: part.byteCount
-                        #mime: mime.lookup name
-                        #class: getTrackClass part
-                        #uploading: true
-                    #return track.updateAttributes attributes, ->
-                        ## Ask for the data system to not run autostop
-                        ## while the upload is running.
-                        #keepAlive()
-
-                        ## Attach track in database.
-                        #attachBinary track
-                #else
+        # TODO: Check if track already exist
 
 
 
@@ -190,13 +168,9 @@ module.exports.create = (req, res, next) ->
             size: part.byteCount
             uploading: true
 
-        # check if the request is allowed
-        # Not implemented yet
-        # TODO: implement rights
-        #confirmCanUpload data, req, (err) ->
-            #return next err if err
+        # TODO: Check rights
 
-            #TODO: change lastModification date playlist
+        #TODO: change lastModification date playlist
 
             # Save track metadata
         Track.create data, (err, newTrack) ->

@@ -6,20 +6,26 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 15:30:07 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/18 22:30:07 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/20 22:13:53 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 BaseView = require '../lib/base_view'
 ContextMenu = require './context_menu'
 LeftMenu = require './left_menu'
-TracksScreen = require './tracks_screen'
 PlayerScreen = require './player_screen'
 
+###
+#  Represent the app context. It contain and lauch the four big parts:
+#  - context menu
+#  - left menu
+#  - content screen
+#  - player screen
+###
 module.exports = class AppView extends BaseView
 
     el: 'body.application'
-    template: require('./templates/home')
+    template: require './templates/home'
 
     afterRender: ->
         # Create and render the context menu
@@ -32,15 +38,9 @@ module.exports = class AppView extends BaseView
         @$('#left-menu').append @leftMenu.$el
         @leftMenu.render()
 
-        # Create and render the tracks screen
-        @tracksScreen = new TracksScreen
-        @$('#tracks-screen').append @tracksScreen.$el
-        @tracksScreen.render()
 
         # Create and render the player screen
         @playerScreen = new PlayerScreen
         @$('#player-screen').append @playerScreen.$el
         @playerScreen.render()
-
-        console.log "write more code here !"
 
