@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 22:06:02 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/19 22:47:19 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/20 15:11:37 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -78,7 +78,6 @@ module.exports = class Track extends Backbone.Model
         # this is a new model, let's upload it as a multipart
         if model.track
 
-            console.log model.track
             # if the track is being overwritten (update), we force
             # the "create" method, since only the "create" action in the server
             # can handle track upload.

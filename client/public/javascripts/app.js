@@ -177,40 +177,42 @@ module.exports = UploadQueue = (function() {
     i = 0;
     return (nonBlockingLoop = (function(_this) {
       return function() {
-        var blob, existingModel, model;
+        var blob;
         if (!(blob = blobs[i++])) {
           return;
         }
         if (!blob.type.match(/audio\/(mp3|mpeg)/)) {
-          _this.trigger('badFileType');
+          return _this.trigger('badFileType');
         } else {
-          model = _this.retrieveDataBlob(blob);
-          if ((existingModel = _this.isTrackStored(model) != null)) {
-            if (!existingModel.inUploadCycle() || existingModel.isUploaded()) {
-              existingModel.set({
-                size: blob.size,
-                lastModification: blob.lastModifiedDate
-              });
-              existingModel.track = blob;
-              existingModel.loaded = 0;
-              existingModel.total = blob.size;
-              model = existingModel;
-              model.markAsConflict();
-              _this.trigger('conflict', model);
-            } else {
-              model = null;
+          _this.retrieveMetaDataBlob(blob, function(model) {
+            var existingModel;
+            if ((existingModel = _this.isTrackStored(model) != null)) {
+              if (!existingModel.inUploadCycle() || existingModel.isUploaded()) {
+                existingModel.set({
+                  size: blob.size,
+                  lastModification: blob.lastModifiedDate
+                });
+                existingModel.track = blob;
+                existingModel.loaded = 0;
+                existingModel.total = blob.size;
+                model = existingModel;
+                model.markAsConflict();
+                _this.trigger('conflict', model);
+              } else {
+                model = null;
+              }
             }
-          }
-          if (model != null) {
-            _this.add(model);
-          }
+            if (model != null) {
+              return _this.add(model);
+            }
+          });
+          return setTimeout(nonBlockingLoop, 2);
         }
-        return setTimeout(nonBlockingLoop, 2);
       };
     })(this))();
   };
 
-  UploadQueue.prototype.retrieveDataBlob = function(blob) {
+  UploadQueue.prototype.retrieveMetaDataBlob = function(blob, callback) {
     var model, reader;
     model = new Track({
       title: blob.name,
@@ -226,7 +228,7 @@ module.exports = UploadQueue = (function() {
       return ID3.loadTags(blob.name, (function() {
         var tags, _ref;
         tags = ID3.getAllTags(blob.name);
-        return model.set({
+        model.set({
           title: tags.title != null ? tags.title : model.title,
           artist: tags.artist != null ? tags.artist : void 0,
           album: tags.album != null ? tags.album : void 0,
@@ -235,13 +237,17 @@ module.exports = UploadQueue = (function() {
           genre: tags.genre != null ? tags.genre : void 0,
           time: ((_ref = tags.TLEN) != null ? _ref.data : void 0) != null ? tags.TLEN.data : void 0
         });
+        return callback(model);
       }), {
         tags: ["title", "artist", "album", "track", "year", "genre", "TLEN"],
         dataReader: FileAPIReader(blob)
       });
     };
     reader.readAsArrayBuffer(blob);
-    return model;
+    return reader.onabort = function(event) {
+      this.trigger('metaDataError');
+      return callback(model);
+    };
   };
 
   UploadQueue.prototype.add = function(model) {
@@ -640,7 +646,6 @@ module.exports = Track = (function(_super) {
   Track.prototype.sync = function(method, model, options) {
     var formdata, progress;
     if (model.track) {
-      console.log(model.track);
       method = 'create';
       this.id = "";
       formdata = new FormData();

@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 23:50:03 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/19 22:54:38 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/20 15:11:46 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -20,6 +20,7 @@ module.exports = class UploadQueue
 
     # TODO: Catch event "badFileType" and prompt an error
     # TODO: Catch event "upload-complete"
+    # TODO: Catch event "metaDataError"
 
     constructor: (@baseCollection) ->
 
@@ -45,39 +46,37 @@ module.exports = class UploadQueue
         do nonBlockingLoop = =>
             return unless blob = blobs[i++]
 
-
             # Check if the client have send a good format
             # TODO: Later check if it's a picture to get the covert
             if not blob.type.match /audio\/(mp3|mpeg)/ #list of supported filetype
                 @trigger 'badFileType'
             else
-                model = @retrieveDataBlob blob
+                @retrieveMetaDataBlob blob, (model) =>
+                    # Check if a same track is already stored in the base collection
+                    if (existingModel = @isTrackStored(model)?)
+                        # Check if the track is in upload process or if it's already
+                        # successfully added
+                        if not existingModel.inUploadCycle() or existingModel.isUploaded()
+                            # update data
+                            existingModel.set
+                                size: blob.size
+                                lastModification: blob.lastModifiedDate
 
-                # Check if a same track is already stored in the base collection
-                if (existingModel = @isTrackStored(model)?)
-                    # Check if the track is in upload process or if it's already
-                    # successfully added
-                    if not existingModel.inUploadCycle() or existingModel.isUploaded()
-                        # update data
-                        existingModel.set
-                            size: blob.size
-                            lastModification: blob.lastModifiedDate
+                            existingModel.track = blob
+                            existingModel.loaded = 0
+                            existingModel.total = blob.size
 
-                        existingModel.track = blob
-                        existingModel.loaded = 0
-                        existingModel.total = blob.size
+                            model = existingModel
 
-                        model = existingModel
+                            model.markAsConflict()
+                            @trigger 'conflict', model
+                        else
+                            # Prevent the track from being added to the queue.
+                            model = null
+                    if model?
+                        @add model
 
-                        model.markAsConflict()
-                        @trigger 'conflict', model
-                    else
-                        # Prevent the track from being added to the queue.
-                        model = null
-                if model?
-                    @add model
-
-            setTimeout nonBlockingLoop, 2
+                setTimeout nonBlockingLoop, 2
 
 
     # Retrieve all data needed in the metadata and the ID3 metadata
@@ -88,7 +87,8 @@ module.exports = class UploadQueue
     # inter app protocole with file and/or picture app
     # TODO: There is lot's of other data to retrieve, may be interesting to look
     # up
-    retrieveDataBlob: (blob) ->
+    retrieveMetaDataBlob: (blob, callback) ->
+
         model = new Track
             title: blob.name
             lastModification: blob.lastModifiedDate
@@ -111,12 +111,14 @@ module.exports = class UploadQueue
                     year: if tags.year? then tags.year else undefined
                     genre: if tags.genre? then tags.genre else undefined
                     time: if tags.TLEN?.data? then tags.TLEN.data else undefined
+                callback(model)
             ),
             tags: ["title","artist","album","track","year","genre","TLEN"]
             dataReader: FileAPIReader blob
         reader.readAsArrayBuffer blob
-
-        return model
+        reader.onabort = (event) ->
+            @trigger 'metaDataError'
+            callback(model)
 
 
     # Add a to the operations in progress, change his status and

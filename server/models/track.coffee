@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/19 20:21:09 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/19 23:05:38 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/20 13:41:29 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -23,8 +23,8 @@ module.exports = Track = cozydb.getModel 'Track',
     size:       	Number
     plays:      	Number
     docType:            String
-    lastModifivation:   Date
-    creationDate:       Date
+    lastModification:   String
+    creationDate:       String
     clearance:          cozydb.NoSchema
     binary:             Object
     uploading:          Boolean

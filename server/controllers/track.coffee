@@ -6,12 +6,14 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/19 06:50:00 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/19 23:03:34 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/20 15:11:44 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 multiparty = require 'multiparty'
 moment = require 'moment'
+crypto = require 'crypto'
+feed = require '../lib/feed'
 Track = require './../models/track'
 log = require('printit')
     prefix: 'track'
@@ -30,43 +32,6 @@ timeout = null
 isStorageError = (err) ->
     return err.toString().indexOf('enough storage') isnt -1
 
-# After 1 minute of inactivity, update parents
-resetTimeout = ->
-    clearTimeout(timeout) if timeout?
-    timeout = setTimeout updateParents, 60 * 1000
-
-# Save in RAM lastModification date for parents
-# Update folder parent once all files are uploaded
-#updateParents = ->
-    #errors = {}
-    #for name in Object.keys(folderParent)
-        #folder = folderParent[name]
-        #folder.save (err) ->
-            #errors[folder.name] = err if err?
-    #folderParent = {}
-
-
-#confirmCanUpload = (data, req, next) ->
-
-    ## owner can upload.
-    #return next null if not req.public
-    #element = new File data
-    #sharing.checkClearance element, req, 'w', (authorized, rule) ->
-        #if authorized
-            ##if rule?
-                ##req.guestEmail = rule.email
-                ##req.guestId = rule.contactid
-            #next()
-        #else
-            #err = new Error 'You cannot access this resource'
-            #err.status = 404
-            #err.template =
-                #name: '404'
-                #params:
-                    #localization: require '../lib/localization_manager'
-                    #isPublic: true
-            #next err
-
 module.exports.create = (req, res, next) ->
     clearTimeout(timeout) if timeout?
 
@@ -83,10 +48,10 @@ module.exports.create = (req, res, next) ->
         # is note the blob (link with meta "filename"). If that put the data in
         # the fields object
         if not part.filename?
-            console.log 'PART META: ', part.name
             fields[part.name] = ''
             part.on 'data', (buffer) ->
                 fields[part.name] = buffer.toString()
+                console.log 'plop: ', fields
             return
 
         console.log 'PART: ', part.filename
@@ -116,7 +81,7 @@ module.exports.create = (req, res, next) ->
             if upload
                 feed.publish 'usage.application', 'tracks'
                 setTimeout keepAlive, 60*1000
-                resetTimeout()
+                #resetTimeout()
 
         # if anything happens after the track is created
         # we need to destroy it
@@ -181,13 +146,13 @@ module.exports.create = (req, res, next) ->
         # Check that the track doesn't exist yet.
         # The comparison is make for the moment by the name/artist
         # TODO: improve it
-        Track.getByArtistAndTitle keys: ['title', 'artist'], (err, sameTracks) ->
-            console.log "end"
-            return next err if err
-            console.log "end2"
+        #Track.getByArtistAndTitle keys: ['title', 'artist'], (err, sameTracks) ->
+            #console.log "end"
+            #return next err if err
+            #console.log "end2"
 
-            # there is already a track with the same name, give up
-            if sameTracks.length > 0
+            ## there is already a track with the same name, give up
+            #if sameTracks.length > 0
                 # Overwrite option is not fully implemented yet
                 #
                 #
@@ -207,52 +172,48 @@ module.exports.create = (req, res, next) ->
                         ## Attach track in database.
                         #attachBinary track
                 #else
-                    upload = false
-                    return res.send
-                        error: true
-                        code: 'EEXISTS'
-                        msg: "This track already exists"
-                    , 400
 
-            # Generate track metadata.
-            data =
-                title: title
-                artist: fields.artist
-                album: fields.album
-                trackNb: fields.trackNb
-                year: fields.year
-                genre: fields.genre
-                time: fields.time
-                docType: fields.dockType
-                creationDate: now
-                lastModification: lastModification
-                size: part.byteCount
-                uploading: true
 
-            # check if the request is allowed
-            # Not implemented yet
-            # TODO: implement rights
-            #confirmCanUpload data, req, (err) ->
-                #return next err if err
 
-                #TODO: change lastModification date playlist
+        #Generate track metadata.
+        data =
+            title: title
+            artist: fields.artist
+            album: fields.album
+            trackNb: fields.trackNb
+            year: fields.year
+            genre: fields.genre
+            time: fields.time
+            docType: fields.dockType
+            creationDate: now
+            lastModification: lastModification
+            size: part.byteCount
+            uploading: true
 
-                # Save track metadata
-            Track.create data, (err, newTrack) ->
-                return next err if err
+        # check if the request is allowed
+        # Not implemented yet
+        # TODO: implement rights
+        #confirmCanUpload data, req, (err) ->
+            #return next err if err
 
-                # Ask for the data system to not run autostop
-                # while the upload is running.
-                keepAlive()
+            #TODO: change lastModification date playlist
 
-                # If user stops the upload, the track is deleted.
-                err = new Error 'Request canceled by user'
-                res.on 'close', ->
-                    log.info 'Upload request closed by user'
-                    uploadStream.abort()
+            # Save track metadata
+        Track.create data, (err, newTrack) ->
+            return next err if err
 
-                # Attach track in database.
-                attachBinary newTrack
+            # Ask for the data system to not run autostop
+            # while the upload is running.
+            keepAlive()
+
+            # If user stops the upload, the track is deleted.
+            err = new Error 'Request canceled by user'
+            res.on 'close', ->
+                log.info 'Upload request closed by user'
+                uploadStream.abort()
+
+            # Attach track in database.
+            attachBinary newTrack
 
     form.on 'error', (err) ->
         log.error err
