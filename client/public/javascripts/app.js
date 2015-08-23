@@ -110,7 +110,7 @@
   globals.require = require;
 })();
 require.register("application", function(exports, require, module) {
-var AppView, TracksList, UploadQueue;
+var AppView, SelectedTracksList, TracksList, UploadQueue;
 
 AppView = require('./views/app_view');
 
@@ -118,13 +118,17 @@ TracksList = require('./collections/tracks_list');
 
 UploadQueue = require('./collections/upload_queue');
 
+SelectedTracksList = require('./collections/selected_list');
+
 module.exports = {
   initialize: function() {
     var Router, mainView;
     window.app = this;
     this.baseCollection = new TracksList;
+    this.selectedTracksList = new SelectedTracksList({
+      baseCollectionView: this.baseCollectionView
+    });
     this.uploadQueue = new UploadQueue(this.baseCollection);
-    this.baseCollectionView = null;
     mainView = new AppView();
     mainView.render();
     Router = require('router');
@@ -135,6 +139,52 @@ module.exports = {
     }
   }
 };
+});
+
+;require.register("collections/selected_list", function(exports, require, module) {
+var SelectedTracksList, Track,
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+Track = require('./../models/track');
+
+
+/*
+ * SelectedList is a collection of track selected by the user. All action on
+ * tracks must be managed by it
+ */
+
+module.exports = SelectedTracksList = (function(_super) {
+  __extends(SelectedTracksList, _super);
+
+  function SelectedTracksList() {
+    return SelectedTracksList.__super__.constructor.apply(this, arguments);
+  }
+
+  SelectedTracksList.prototype.model = Track;
+
+  SelectedTracksList.prototype.url = 'tracks';
+
+  SelectedTracksList.prototype.lastTrackSelected = null;
+
+  SelectedTracksList.prototype.initialize = function(options) {
+    SelectedTracksList.__super__.initialize.apply(this, arguments);
+    return this.baseCollectionView = options.baseCollectionView;
+  };
+
+  SelectedTracksList.prototype.onTrackClicked = function(view, isShiftPressed) {
+    if (isShiftPressed == null) {
+      isShiftPressed = false;
+    }
+    console.log('selected');
+    console.log('isShiftPressed: ', isShiftPressed);
+    console.log(view);
+    return console.log("collection: ", this.baseCollectionView);
+  };
+
+  return SelectedTracksList;
+
+})(Backbone.Collection);
 });
 
 ;require.register("collections/tracks_list", function(exports, require, module) {
@@ -760,18 +810,28 @@ module.exports = Router = (function(_super) {
   };
 
   Router.prototype._loadAllTracks = function() {
-    return app.baseCollection.fetch({
-      error: function(error) {
-        return console.log(error);
-      },
-      success: function(baseCollection) {
-        this.plop = new TracksView({
-          collection: app.baseCollection
-        });
-        this.plop.render();
-        return console.log("update router");
-      }
+    if (!app.baseCollection.lenght > 0) {
+      return app.baseCollection.fetch({
+        error: function(error) {
+          return console.log(error);
+        },
+        success: (function(_this) {
+          return function(baseCollection) {
+            return _this._renderAllTracks();
+          };
+        })(this)
+      });
+    } else {
+      return this._renderAllTracks();
+    }
+  };
+
+  Router.prototype._renderAllTracks = function() {
+    this.contentView = new TracksView({
+      collection: app.baseCollection
     });
+    this.contentView.render();
+    return console.log("update router");
   };
 
   return Router;
@@ -892,6 +952,8 @@ module.exports = TrackView = (function(_super) {
 
   TrackView.prototype.tagName = 'tr';
 
+  TrackView.prototype.isSelected = false;
+
   TrackView.prototype.refresh = function() {
     console.log(this.model.uploadStatus);
     console.log(this.model);
@@ -899,8 +961,18 @@ module.exports = TrackView = (function(_super) {
   };
 
   TrackView.prototype.onTrackClicked = function(event) {
-    console.log('plop');
-    return console.log(this);
+    var isShiftPressed;
+    isShiftPressed = event.shiftKey || false;
+    return window.app.selectedTracksList.onTrackClicked(this, isShiftPressed);
+  };
+
+  TrackView.prototype.afterRender = function() {
+    this.$el.data('cid', this.model.cid);
+    if (this.model.isUploading()) {
+      return this.$el.addClass('warning');
+    } else {
+      return this.$el.removeClass('warning');
+    }
   };
 
   return TrackView;

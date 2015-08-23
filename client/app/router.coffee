@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 15:30:33 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/23 17:40:18 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/23 20:23:16 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -21,19 +21,27 @@ module.exports = class Router extends Backbone.Router
     routes:
         '': 'main'
 
+    # For the moment the view collection is recreate each time the page is
+    # loaded
     main: ->
         @_loadAllTracks()
 
 
     _loadAllTracks: ->
-        #if not app.baseCollection.lenght > 0
-        app.baseCollection.fetch
-            error: (error) ->
-                console.log error
-            success: (baseCollection) ->
-                @plop = new TracksView
-                    collection: app.baseCollection
-                #@contentView = app.baseCollectionView
-                #@contentView.render()
-                @plop.render()
-                console.log "update router"
+        if not app.baseCollection.lenght > 0
+            app.baseCollection.fetch
+                error: (error) ->
+                    console.log error
+                success: (baseCollection) =>
+                    @_renderAllTracks()
+        else
+            @_renderAllTracks()
+
+    #TODO: optimise it
+    _renderAllTracks: ->
+        @contentView = new TracksView
+            collection: app.baseCollection
+        @contentView.render()
+
+
+        console.log "update router"

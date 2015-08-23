@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/20 18:08:58 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/23 18:25:43 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/23 20:04:19 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -21,6 +21,9 @@ module.exports = class TrackView extends BaseView
     className: 'track-row'
     tagName: 'tr'
 
+    # Define if the track is selected or not, is manages by the selected
+    # collection
+    isSelected: false
 
     refresh: ->
         console.log @model.uploadStatus
@@ -28,5 +31,16 @@ module.exports = class TrackView extends BaseView
         @render()
 
     onTrackClicked: (event) ->
-        console.log 'plop'
-        console.log @
+        # Check if shift or control have been pressed
+        isShiftPressed = event.shiftKey or false
+        window.app.selectedTracksList.onTrackClicked @, isShiftPressed
+
+
+    afterRender: ->
+        @$el.data 'cid', @model.cid
+
+        if @model.isUploading()
+            @$el.addClass 'warning'
+        else
+            @$el.removeClass 'warning'
+
