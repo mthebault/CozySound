@@ -492,7 +492,6 @@ module.exports = ViewCollection = (function(_super) {
   ViewCollection.prototype.initialize = function() {
     var collectionEl;
     ViewCollection.__super__.initialize.apply(this, arguments);
-    console.log('itemview: ', this.itemview);
     this.views = {};
     this.listenTo(this.collection, "reset", this.onReset);
     this.listenTo(this.collection, "add", this.addItem);
@@ -587,7 +586,7 @@ module.exports = {
  * Represent a track element contained in the base collection
  *
  *
- * # Upload Flag:
+ * # uploadStatus Flag:
  *       In case of upload, the upload queue parse the metadata, and push it to
  *       the queue and the base collection so it is directly prompt to the user.
  *       The upload flag permit to the user to follow the uploading process and
@@ -766,12 +765,11 @@ module.exports = Router = (function(_super) {
         return console.log(error);
       },
       success: function(baseCollection) {
-        console.log('fetch base collection: ', app.baseCollection);
         this.plop = new TracksView({
           collection: app.baseCollection
         });
-        console.log('collectionView: ', this.plop);
-        return this.plop.render();
+        this.plop.render();
+        return console.log("update router");
       }
     });
   };
@@ -892,6 +890,12 @@ module.exports = TrackView = (function(_super) {
 
   TrackView.prototype.tagName = 'tr';
 
+  TrackView.prototype.refresh = function() {
+    console.log(this.model.uploadStatus);
+    console.log(this.model);
+    return this.render();
+  };
+
   return TrackView;
 
 })(BaseView);
@@ -925,6 +929,30 @@ module.exports = TracksView = (function(_super) {
   TracksView.prototype.itemview = TrackView;
 
   TracksView.prototype.collectionEl = '#table-items-content';
+
+  TracksView.prototype.initialize = function(options) {
+    TracksView.__super__.initialize.call(this, options);
+    return this.listenTo(this.collection, 'change', _.partial(this.viewProxy, 'refresh'));
+  };
+
+  TracksView.prototype.viewProxy = function(methodName, object) {
+    var args, cid, view;
+    if (object.cid != null) {
+      cid = object.cid;
+    } else {
+      cid = this.$(object.target).parents('tr').data('cid');
+      if (cid == null) {
+        cid = this.$(object.currentTarget).data('cid');
+      }
+    }
+    view = _.find(this.views, function(view) {
+      return view.model.cid === cid;
+    });
+    if (view != null) {
+      args = [].splice.call(arguments, 1);
+      return view[methodName].apply(view, args);
+    }
+  };
 
   return TracksView;
 

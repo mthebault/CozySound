@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 15:31:19 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/23 17:17:57 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/23 17:41:08 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -48,7 +48,6 @@ module.exports = class ViewCollection extends BaseView
     # bind listeners to the collection
     initialize: ->
         super
-        console.log 'itemview: ', @itemview
         @views = {}
         @listenTo @collection, "reset",   @onReset
         @listenTo @collection, "add",     @addItem

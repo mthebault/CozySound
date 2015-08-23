@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/20 18:08:58 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/23 17:21:49 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/23 18:02:40 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -20,3 +20,8 @@ module.exports = class TrackView extends BaseView
 
     tagName: 'tr'
 
+
+    refresh: ->
+        console.log @model.uploadStatus
+        console.log @model
+        @render()
