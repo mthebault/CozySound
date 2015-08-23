@@ -123,11 +123,6 @@ module.exports = {
     var Router, mainView;
     window.app = this;
     this.baseCollection = new TracksList;
-    this.baseCollection.fetch({
-      error: function(error) {
-        return console.log(error);
-      }
-    });
     this.uploadQueue = new UploadQueue(this.baseCollection);
     this.baseCollectionView = null;
     mainView = new AppView();
@@ -497,6 +492,7 @@ module.exports = ViewCollection = (function(_super) {
   ViewCollection.prototype.initialize = function() {
     var collectionEl;
     ViewCollection.__super__.initialize.apply(this, arguments);
+    console.log('itemview: ', this.itemview);
     this.views = {};
     this.listenTo(this.collection, "reset", this.onReset);
     this.listenTo(this.collection, "add", this.addItem);
@@ -761,24 +757,23 @@ module.exports = Router = (function(_super) {
   };
 
   Router.prototype.main = function() {
-    return this._renderAllTracks();
-  };
-
-  Router.prototype._renderAllTracks = function() {
-    if (this.contentView != null) {
-      this.contentView.destroy();
-    }
-    this.contentView = this._loadAllTracks();
-    return this.contentView.render();
+    return this._loadAllTracks();
   };
 
   Router.prototype._loadAllTracks = function() {
-    if (this.baseCollectionView == null) {
-      return this.baseCollectionView = new TracksView({
-        baseCollection: app.baseCollection,
-        uploadQueue: app.uploadQueue
-      });
-    }
+    return app.baseCollection.fetch({
+      error: function(error) {
+        return console.log(error);
+      },
+      success: function(baseCollection) {
+        console.log('fetch base collection: ', app.baseCollection);
+        this.plop = new TracksView({
+          collection: app.baseCollection
+        });
+        console.log('collectionView: ', this.plop);
+        return this.plop.render();
+      }
+    });
   };
 
   return Router;
@@ -841,8 +836,8 @@ var __templateData = function template(locals) {
 var buf = [];
 var jade_mixins = {};
 var jade_interp;
-
-buf.push("<div class=\"demo-content-tracks\"><h1>Tracks Screen</h1><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p></div>");;return buf.join("");
+var locals_ = (locals || {}),model = locals_.model;
+buf.push("<td>" + (jade.escape((jade_interp = model.title) == null ? '' : jade_interp)) + "</td><td>" + (jade.escape((jade_interp = model.artist) == null ? '' : jade_interp)) + "</td><td>" + (jade.escape((jade_interp = model.album) == null ? '' : jade_interp)) + "</td><td>XX</td><td>" + (jade.escape((jade_interp = model.uploadStatus) == null ? '' : jade_interp)) + "</td>");;return buf.join("");
 };
 if (typeof define === 'function' && define.amd) {
   define([], function() {
@@ -861,7 +856,7 @@ var buf = [];
 var jade_mixins = {};
 var jade_interp;
 
-buf.push("<span>" + (jade.escape((jade_interp = t('title')) == null ? '' : jade_interp)) + "</span><span>" + (jade.escape((jade_interp = t('artist')) == null ? '' : jade_interp)) + "</span><span>" + (jade.escape((jade_interp = t('album')) == null ? '' : jade_interp)) + "</span><span>" + (jade.escape((jade_interp = t('#')) == null ? '' : jade_interp)) + "</span>");;return buf.join("");
+buf.push("<table class=\"table table-striped\"><thead><tr><th>Title</th><th>Artist</th><th>Album</th><th>#</th><th>status</th></tr></thead><tbody id=\"table-items-content\"></tbody></table>");;return buf.join("");
 };
 if (typeof define === 'function' && define.amd) {
   define([], function() {
@@ -881,7 +876,12 @@ var BaseView, TrackView,
 
 BaseView = require('../../../lib/base_view');
 
-module.exports - (TrackView = (function(_super) {
+
+/*
+ * Each TrackView represent a track in a collection
+ */
+
+module.exports = TrackView = (function(_super) {
   __extends(TrackView, _super);
 
   function TrackView() {
@@ -890,9 +890,11 @@ module.exports - (TrackView = (function(_super) {
 
   TrackView.prototype.template = require('./templates/track');
 
+  TrackView.prototype.tagName = 'tr';
+
   return TrackView;
 
-})(BaseView));
+})(BaseView);
 });
 
 ;require.register("views/content/track/tracks_view", function(exports, require, module) {
@@ -906,7 +908,7 @@ TrackView = require('./track_view');
 
 
 /*
- * TracksView is a collection of TrackView and it's contain in the tracks screen
+ * TracksView is the structure for put tracks in content view
  */
 
 module.exports = TracksView = (function(_super) {
@@ -916,16 +918,13 @@ module.exports = TracksView = (function(_super) {
     return TracksView.__super__.constructor.apply(this, arguments);
   }
 
-  TracksView.prototype.itemview = TrackView;
-
   TracksView.prototype.template = require('./templates/tracks');
 
-  TracksView.prototype.collectionEl = '#content';
+  TracksView.prototype.el = '#content';
 
-  TracksView.prototype.initialize = function(options) {
-    this.collection = options.baseCollection;
-    return this.uploadQueue = options.uploadQueue;
-  };
+  TracksView.prototype.itemview = TrackView;
+
+  TracksView.prototype.collectionEl = '#table-items-content';
 
   return TracksView;
 

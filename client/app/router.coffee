@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 15:30:33 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/20 22:46:13 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/23 16:19:52 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -22,18 +22,19 @@ module.exports = class Router extends Backbone.Router
         '': 'main'
 
     main: ->
-        @_renderAllTracks()
-
-
-    _renderAllTracks: ->
-        if @contentView?
-            @contentView.destroy()
-        @contentView = @_loadAllTracks()
-        @contentView.render()
+        @_loadAllTracks()
 
 
     _loadAllTracks: ->
-        if not @baseCollectionView?
-            @baseCollectionView = new TracksView
-               baseCollection:  app.baseCollection
-               uploadQueue: app.uploadQueue
+        #if not app.baseCollection.lenght > 0
+        app.baseCollection.fetch
+            error: (error) ->
+                console.log error
+            success: (baseCollection) ->
+                console.log 'fetch base collection: ', app.baseCollection
+                @plop = new TracksView
+                    collection: app.baseCollection
+                console.log 'collectionView: ', @plop
+                #@contentView = app.baseCollectionView
+                #@contentView.render()
+                @plop.render()
