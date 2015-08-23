@@ -13,7 +13,11 @@
   "main": "server.coffee",
   "dependencies": {
     "americano": "0.3.11",
+    "axon": "0.6.1",
     "cozydb": "0.0.19",
+    "moment": "2.6.0",
+    "multiparty": "3.3.0",
+    "node-polyglot": "0.3.0",
     "cozy-i18n-helper": "0.0.4"
   },
   "devDependencies": {
@@ -28,6 +32,10 @@
     "test": "cake tests",
     "start": "node build/server.js"
   },
-  "cozy-permissions": {},
+  "cozy-permissions": {
+      "Track": {
+                "description": "Store tracks in your cozy"
+      }
+  },
   "cozy-displayName": "Sound"
 }

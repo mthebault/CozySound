@@ -1,22 +1,27 @@
 # **************************************************************************** #
 #                                                                              #
 #                                                         :::      ::::::::    #
-#    player_screen.coffee                               :+:      :+:    :+:    #
+#    track_view.coffee                                  :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
-#    Created: 2015/08/18 15:58:59 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/20 22:14:16 by ppeltier         ###   ########.fr        #
+#    Created: 2015/08/20 18:08:58 by ppeltier          #+#    #+#              #
+#    Updated: 2015/08/23 18:02:40 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
-BaseView = require '../lib/base_view'
+BaseView = require '../../../lib/base_view'
 
-# Context_menu represent the menu on the top of the app. His goal is to work
-# with tracks_screen. It must display the dynamiques option when the user select
-# one or several song in the tracks screen.
-module.exports = class PlayerScreen extends BaseView
+###
+# Each TrackView represent a track in a collection
+###
+module.exports = class TrackView extends BaseView
+    template: require './templates/track'
 
-    template: require('./templates/player_screen')
-    tagName: 'div'
-    className: 'player-screen'
+    tagName: 'tr'
+
+
+    refresh: ->
+        console.log @model.uploadStatus
+        console.log @model
+        @render()
