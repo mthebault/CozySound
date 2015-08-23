@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/20 18:08:58 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/23 18:02:40 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/23 18:25:43 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -18,6 +18,7 @@ BaseView = require '../../../lib/base_view'
 module.exports = class TrackView extends BaseView
     template: require './templates/track'
 
+    className: 'track-row'
     tagName: 'tr'
 
 
@@ -25,3 +26,7 @@ module.exports = class TrackView extends BaseView
         console.log @model.uploadStatus
         console.log @model
         @render()
+
+    onTrackClicked: (event) ->
+        console.log 'plop'
+        console.log @

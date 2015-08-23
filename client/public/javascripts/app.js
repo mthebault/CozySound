@@ -888,12 +888,19 @@ module.exports = TrackView = (function(_super) {
 
   TrackView.prototype.template = require('./templates/track');
 
+  TrackView.prototype.className = 'track-row';
+
   TrackView.prototype.tagName = 'tr';
 
   TrackView.prototype.refresh = function() {
     console.log(this.model.uploadStatus);
     console.log(this.model);
     return this.render();
+  };
+
+  TrackView.prototype.onTrackClicked = function(event) {
+    console.log('plop');
+    return console.log(this);
   };
 
   return TrackView;
@@ -929,6 +936,12 @@ module.exports = TracksView = (function(_super) {
   TracksView.prototype.itemview = TrackView;
 
   TracksView.prototype.collectionEl = '#table-items-content';
+
+  TracksView.prototype.events = {
+    'click tr.track-row': function(e) {
+      return this.viewProxy('onTrackClicked', e);
+    }
+  };
 
   TracksView.prototype.initialize = function(options) {
     TracksView.__super__.initialize.call(this, options);
