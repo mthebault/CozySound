@@ -6,12 +6,11 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 15:30:33 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/23 20:23:16 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/24 13:19:23 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 app = require 'application'
-TracksView = require 'views/content/track/tracks_view'
 
 module.exports = class Router extends Backbone.Router
 
@@ -28,20 +27,15 @@ module.exports = class Router extends Backbone.Router
 
 
     _loadAllTracks: ->
+        @_renderAllTracks()
         if not app.baseCollection.lenght > 0
             app.baseCollection.fetch
                 error: (error) ->
                     console.log error
-                success: (baseCollection) =>
-                    @_renderAllTracks()
-        else
-            @_renderAllTracks()
 
     #TODO: optimise it
     _renderAllTracks: ->
-        @contentView = new TracksView
-            collection: app.baseCollection
+        @contentView = app.baseCollectionView
+        console.log 'contentView : ', @contentView
         @contentView.render()
-
-
         console.log "update router"

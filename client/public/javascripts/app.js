@@ -110,7 +110,7 @@
   globals.require = require;
 })();
 require.register("application", function(exports, require, module) {
-var AppView, SelectedTracksList, TracksList, UploadQueue;
+var AppView, SelectedTracksList, TracksList, TracksView, UploadQueue;
 
 AppView = require('./views/app_view');
 
@@ -118,19 +118,24 @@ TracksList = require('./collections/tracks_list');
 
 UploadQueue = require('./collections/upload_queue');
 
+TracksView = require('./views/content/track/tracks_view');
+
 SelectedTracksList = require('./collections/selected_list');
 
 module.exports = {
   initialize: function() {
     var Router, mainView;
     window.app = this;
+    mainView = new AppView();
+    mainView.render();
     this.baseCollection = new TracksList;
+    this.baseCollectionView = new TracksView({
+      collection: this.baseCollection
+    });
     this.selectedTracksList = new SelectedTracksList({
       baseCollectionView: this.baseCollectionView
     });
     this.uploadQueue = new UploadQueue(this.baseCollection);
-    mainView = new AppView();
-    mainView.render();
     Router = require('router');
     this.router = new Router();
     Backbone.history.start();
@@ -212,10 +217,31 @@ module.exports = TracksList = (function(_super) {
 
   TracksList.prototype.url = 'tracks';
 
+  TracksList.prototype.sizeFrameDownload = 2;
+
+  TracksList.prototype.cursorFrameDownload = 0;
+
   TracksList.prototype.isTrackStored = function(model) {
     var existingTrack;
     existingTrack = this.get(model.get('id'));
     return existingTrack || null;
+  };
+
+  TracksList.prototype.fetch = function() {
+    return $.ajax({
+      url: "tracks/" + this.cursorFrameDownload + "/" + (this.cursorFrameDownload + this.sizeFrameDownload),
+      type: 'GET',
+      error: function(xhr) {
+        return console.error(xhr);
+      },
+      success: (function(_this) {
+        return function(data) {
+          _this.sizeFrameDownload += data.length;
+          _this.set(data);
+          return console.log(_this);
+        };
+      })(this)
+    });
   };
 
   return TracksList;
@@ -784,13 +810,11 @@ module.exports = Track = (function(_super) {
 });
 
 ;require.register("router", function(exports, require, module) {
-var Router, TracksView, app,
+var Router, app,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
 app = require('application');
-
-TracksView = require('views/content/track/tracks_view');
 
 module.exports = Router = (function(_super) {
   __extends(Router, _super);
@@ -810,26 +834,19 @@ module.exports = Router = (function(_super) {
   };
 
   Router.prototype._loadAllTracks = function() {
+    this._renderAllTracks();
     if (!app.baseCollection.lenght > 0) {
       return app.baseCollection.fetch({
         error: function(error) {
           return console.log(error);
-        },
-        success: (function(_this) {
-          return function(baseCollection) {
-            return _this._renderAllTracks();
-          };
-        })(this)
+        }
       });
-    } else {
-      return this._renderAllTracks();
     }
   };
 
   Router.prototype._renderAllTracks = function() {
-    this.contentView = new TracksView({
-      collection: app.baseCollection
-    });
+    this.contentView = app.baseCollectionView;
+    console.log('contentView : ', this.contentView);
     this.contentView.render();
     return console.log("update router");
   };

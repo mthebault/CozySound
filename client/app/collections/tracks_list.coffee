@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 18:42:03 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/23 20:29:36 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/24 13:19:29 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -21,6 +21,12 @@ module.exports = class TracksList extends Backbone.Collection
     model: Track
     url: 'tracks'
 
+    # Number of tracks downloaded to each call of fetch
+    sizeFrameDownload: 2
+
+    # Set the number of tracks downloaded, each call of fetch will increment it
+    # by sizeFrameDownload
+    cursorFrameDownload: 0
 
     # Returns an existing model if a track with a similar id or a similar
     # tack is already in the queue.
@@ -33,3 +39,16 @@ module.exports = class TracksList extends Backbone.Collection
 
         return existingTrack or null
 
+    # Change to fetch data by range, it ask the server to retrieve the number of
+    # tracks set in sizeFrameDownload from cursorFrameDownload and in case of
+    # success add the number of tracks retrieved to cursorFramDownload
+    fetch: ->
+        $.ajax
+            url: "tracks/#{@cursorFrameDownload}/#{@cursorFrameDownload + @sizeFrameDownload}"
+            type: 'GET'
+            error: (xhr) ->
+                console.error xhr
+            success: (data) =>
+                @sizeFrameDownload += data.length
+                @set data
+                console.log @

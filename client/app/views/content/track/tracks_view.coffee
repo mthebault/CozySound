@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/20 17:41:32 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/23 19:17:24 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/24 13:06:46 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -26,6 +26,8 @@ module.exports = class TracksView extends ViewCollection
     events:
         # Event delegation
         'click tr.track-row': (e) -> @viewProxy 'onTrackClicked', e
+
+
 
     initialize: (options) ->
         super options
