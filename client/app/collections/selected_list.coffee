@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/23 19:30:42 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/24 17:08:20 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/24 18:37:13 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -24,50 +24,33 @@ module.exports = class SelectedTracksList extends Backbone.Collection
     # a model
     _lastTrackSelected: null
 
-    initialize: (options) ->
-        super
-        @baseCollection = options.baseCollection
-
-
-    onTrackClicked: (view, isShiftPressed = false) ->
-        if isShiftPressed == false
-            @manageTrackSelection view.model
+    ########################## Manage Select stat ###############################
+    onTrackClicked: (model, isShiftPressed = false) ->
+        if isShiftPressed == true && @_lastTrackSelected != null
+            @_manageListTracksSelection model
         else
-            @manageListTracksSelection view.model
-        @_lastTrackSelected = view.model
+            @_manageTrackSelection model
+        @_lastTrackSelected = model
 
-    manageListTracksSelection: (lastView) ->
+    _manageListTracksSelection: (lastModel) ->
         startIndex = @baseCollection.indexOf @_lastTrackSelected
-        endIndex = @baseCollection.indexOf lastView
+        endIndex = @baseCollection.indexOf lastModel
         loop
             if startIndex < endIndex
                 startIndex++
             else startIndex--
-            @manageTrackSelection @baseCollection.at startIndex
+            @_manageTrackSelection @baseCollection.at startIndex
             break if startIndex == endIndex
 
 
 
     # Check the select stat of the view and add/remove his to the collection
-    manageTrackSelection: (model) ->
+    _manageTrackSelection: (model) ->
         if model.isSelected() == false
-            if @addToSelection(model) == false
-                return
-        else
-            if @removeToSelection(model) == false
-                return
-        @trigger 'toggle-select', cid: @cid
-
-    addToSelection: (model) ->
-        @add model
-        if model.setAsSelected() == false
-            @remove model
-            return false
-        return true
-
-    removeToSelection: (model) ->
-        @remove model
-        if model.setAsNoSelected() == false
             @add model
-            return false
-        return true
+            model.setAsSelected()
+        else
+            @remove model
+            model.setAsNoSelected()
+
+    ##################### END - Manage Select Stat - END #########################

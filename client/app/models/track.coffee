@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 22:06:02 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/24 16:59:50 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/24 18:34:05 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -137,7 +137,6 @@ module.exports = class Track extends Backbone.Model
     ########################### Manage View stat ################################
     # Getter
     isSelected: -> return @_selectedStatus
-    setAsSelected: -> @_selectedStatus = true
     # Setters
     setAsSelected: ->
         @_selectedStatus = true

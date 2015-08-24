@@ -132,9 +132,8 @@ module.exports = {
     this.baseCollectionView = new TracksView({
       collection: this.baseCollection
     });
-    this.selectedTracksList = new SelectedTracksList({
-      baseCollection: this.baseCollection
-    });
+    this.selectedTracksList = new SelectedTracksList;
+    this.selectedTracksList.baseCollection = this.baseCollection;
     this.uploadQueue = new UploadQueue(this.baseCollection);
     Router = require('router');
     this.router = new Router();
@@ -172,27 +171,22 @@ module.exports = SelectedTracksList = (function(_super) {
 
   SelectedTracksList.prototype._lastTrackSelected = null;
 
-  SelectedTracksList.prototype.initialize = function(options) {
-    SelectedTracksList.__super__.initialize.apply(this, arguments);
-    return this.baseCollection = options.baseCollection;
-  };
-
-  SelectedTracksList.prototype.onTrackClicked = function(view, isShiftPressed) {
+  SelectedTracksList.prototype.onTrackClicked = function(model, isShiftPressed) {
     if (isShiftPressed == null) {
       isShiftPressed = false;
     }
-    if (isShiftPressed === false) {
-      this.manageTrackSelection(view.model);
+    if (isShiftPressed === true && this._lastTrackSelected !== null) {
+      this._manageListTracksSelection(model);
     } else {
-      this.manageListTracksSelection(view.model);
+      this._manageTrackSelection(model);
     }
-    return this._lastTrackSelected = view.model;
+    return this._lastTrackSelected = model;
   };
 
-  SelectedTracksList.prototype.manageListTracksSelection = function(lastView) {
+  SelectedTracksList.prototype._manageListTracksSelection = function(lastModel) {
     var endIndex, startIndex, _results;
     startIndex = this.baseCollection.indexOf(this._lastTrackSelected);
-    endIndex = this.baseCollection.indexOf(lastView);
+    endIndex = this.baseCollection.indexOf(lastModel);
     _results = [];
     while (true) {
       if (startIndex < endIndex) {
@@ -200,7 +194,7 @@ module.exports = SelectedTracksList = (function(_super) {
       } else {
         startIndex--;
       }
-      this.manageTrackSelection(this.baseCollection.at(startIndex));
+      this._manageTrackSelection(this.baseCollection.at(startIndex));
       if (startIndex === endIndex) {
         break;
       } else {
@@ -210,37 +204,14 @@ module.exports = SelectedTracksList = (function(_super) {
     return _results;
   };
 
-  SelectedTracksList.prototype.manageTrackSelection = function(model) {
+  SelectedTracksList.prototype._manageTrackSelection = function(model) {
     if (model.isSelected() === false) {
-      if (this.addToSelection(model) === false) {
-        return;
-      }
-    } else {
-      if (this.removeToSelection(model) === false) {
-        return;
-      }
-    }
-    return this.trigger('toggle-select', {
-      cid: this.cid
-    });
-  };
-
-  SelectedTracksList.prototype.addToSelection = function(model) {
-    this.add(model);
-    if (model.setAsSelected() === false) {
-      this.remove(model);
-      return false;
-    }
-    return true;
-  };
-
-  SelectedTracksList.prototype.removeToSelection = function(model) {
-    this.remove(model);
-    if (model.setAsNoSelected() === false) {
       this.add(model);
-      return false;
+      return model.setAsSelected();
+    } else {
+      this.remove(model);
+      return model.setAsNoSelected();
     }
-    return true;
   };
 
   return SelectedTracksList;
@@ -868,10 +839,6 @@ module.exports = Track = (function(_super) {
   };
 
   Track.prototype.setAsSelected = function() {
-    return this._selectedStatus = true;
-  };
-
-  Track.prototype.setAsSelected = function() {
     this._selectedStatus = true;
     return this.trigger('toggle-select', {
       cid: this.cid
@@ -1066,7 +1033,7 @@ module.exports = TrackView = (function(_super) {
   TrackView.prototype.onTrackClicked = function(event) {
     var isShiftPressed;
     isShiftPressed = event.shiftKey || false;
-    return window.app.selectedTracksList.onTrackClicked(this, isShiftPressed);
+    return window.app.selectedTracksList.onTrackClicked(this.model, isShiftPressed);
   };
 
   TrackView.prototype.changeSelectStat = function() {
