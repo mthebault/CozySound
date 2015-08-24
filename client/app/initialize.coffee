@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 15:30:35 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/20 22:13:37 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/24 18:47:52 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -33,7 +33,7 @@ $ ->
 
     # handy shortcut
     window.t = @polyglot.t.bind @polyglot
-    ######## END - Initialize Polyglot - END ############
+    ########## END - Initialize Polyglot - END ############
 
 
     # Keep count of the operations in progress

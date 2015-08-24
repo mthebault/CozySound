@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 15:30:38 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/24 18:27:50 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/24 19:26:06 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -23,23 +23,24 @@ module.exports =
         # Create a shortcut
         window.app = @
 
-        # Print the main structure
-        mainView = new AppView()
-        mainView.render()
-
         # BaseCollection is the main collection where all the tracks are stored, all
         # the others list must have only a reference to a track of this list
         @baseCollection = new TracksList
-
-        # BaseCollection View is a collection of all views in baseCollection,
-        # may be just temporary
-        @baseCollectionView = new TracksView
-            collection: @baseCollection
 
         # SelectedTracksList is a collection of all tracks selected by the user,
         # all acions on tracks must be handle by it
         @selectedTracksList = new SelectedTracksList
         @selectedTracksList.baseCollection =  @baseCollection
+
+        # Print the main structure
+        mainView = new AppView
+            selectedTracksList: @selectedTracksList
+        mainView.render()
+
+        # BaseCollection View is a collection of all views in baseCollection,
+        # may be just temporary
+        @baseCollectionView = new TracksView
+            collection: @baseCollection
 
         # uploadQueue is the list of track waiting to be uploaded. The tracks in
         # uploadQueue are also added to the mainTrackList to be printed.

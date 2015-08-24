@@ -126,14 +126,16 @@ module.exports = {
   initialize: function() {
     var Router, mainView;
     window.app = this;
-    mainView = new AppView();
-    mainView.render();
     this.baseCollection = new TracksList;
+    this.selectedTracksList = new SelectedTracksList;
+    this.selectedTracksList.baseCollection = this.baseCollection;
+    mainView = new AppView({
+      selectedTracksList: this.selectedTracksList
+    });
+    mainView.render();
     this.baseCollectionView = new TracksView({
       collection: this.baseCollection
     });
-    this.selectedTracksList = new SelectedTracksList;
-    this.selectedTracksList.baseCollection = this.baseCollection;
     this.uploadQueue = new UploadQueue(this.baseCollection);
     Router = require('router');
     this.router = new Router();
@@ -154,8 +156,11 @@ Track = require('./../models/track');
 
 
 /*
- * SelectedList is a collection of track selected by the user. All action on
- * tracks must be managed by it
+ * SelectedList is a collection of Track model selected by the user. This Tracks
+ * are references to Tracks models contains in the Base collection. So all action
+ * on tracks must be handle by this list which update the Base Collection and the
+ * view.It's the same collection for all content screen (playlist/all tracks/etc...)
+ * which is refresh.
  */
 
 module.exports = SelectedTracksList = (function(_super) {
@@ -211,6 +216,20 @@ module.exports = SelectedTracksList = (function(_super) {
     } else {
       this.remove(model);
       return model.setAsNoSelected();
+    }
+  };
+
+  SelectedTracksList.prototype.add = function(models, options) {
+    if (this.length === 0) {
+      this.trigger('selectionTracksState', true);
+    }
+    return SelectedTracksList.__super__.add.call(this, models, options);
+  };
+
+  SelectedTracksList.prototype.remove = function(models, options) {
+    SelectedTracksList.__super__.remove.call(this, models, options);
+    if (this.length === 0) {
+      return this.trigger('selectionTracksState', false);
     }
   };
 
@@ -935,8 +954,15 @@ module.exports = AppView = (function(_super) {
 
   AppView.prototype.template = require('./templates/home');
 
+  AppView.prototype.initialize = function(options) {
+    AppView.__super__.initialize.apply(this, arguments);
+    return this.selectedTracksList = options.selectedTracksList;
+  };
+
   AppView.prototype.afterRender = function() {
-    this.contextMenu = new ContextMenu;
+    this.contextMenu = new ContextMenu({
+      selectedTracksList: this.selectedTracksList
+    });
     this.$('#context-menu').append(this.contextMenu.$el);
     this.contextMenu.render();
     this.leftMenu = new LeftMenu;
@@ -1148,6 +1174,12 @@ module.exports = ContextMenu = (function(_super) {
     'click #fetch': 'fetchBaseCollection'
   };
 
+  ContextMenu.prototype.initialize = function(options) {
+    ContextMenu.__super__.initialize.apply(this, arguments);
+    this.selectedTracksList = options.selectedTracksList;
+    return this.listenTo(this.selectedTracksList, 'selectionTracksState', this.manageActionTrackMenu);
+  };
+
   ContextMenu.prototype.afterRender = function() {
     return this.uploader = $('#uploader');
   };
@@ -1166,6 +1198,11 @@ module.exports = ContextMenu = (function(_super) {
         return target.replaceWith(target.clone(true));
       }
     }
+  };
+
+  ContextMenu.prototype.manageActionTrackMenu = function(isUsed) {
+    console.log('SELECTION LIST ACTIVE');
+    return console.log('argument: ', argument);
   };
 
   return ContextMenu;

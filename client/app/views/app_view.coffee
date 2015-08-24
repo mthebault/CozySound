@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 15:30:07 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/20 22:13:53 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/24 19:25:51 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -27,9 +27,14 @@ module.exports = class AppView extends BaseView
     el: 'body.application'
     template: require './templates/home'
 
+    initialize: (options) ->
+        super
+        @selectedTracksList = options.selectedTracksList
+
     afterRender: ->
         # Create and render the context menu
         @contextMenu = new ContextMenu
+            selectedTracksList: @selectedTracksList
         @$('#context-menu').append @contextMenu.$el
         @contextMenu.render()
 

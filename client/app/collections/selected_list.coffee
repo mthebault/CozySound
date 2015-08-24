@@ -6,15 +6,18 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/23 19:30:42 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/24 18:37:13 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/24 19:32:01 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 Track = require './../models/track'
 
 ###
-# SelectedList is a collection of track selected by the user. All action on
-# tracks must be managed by it
+# SelectedList is a collection of Track model selected by the user. This Tracks
+# are references to Tracks models contains in the Base collection. So all action
+# on tracks must be handle by this list which update the Base Collection and the
+# view.It's the same collection for all content screen (playlist/all tracks/etc...)
+# which is refresh.
 ###
 module.exports = class SelectedTracksList extends Backbone.Collection
     model: Track
@@ -53,4 +56,15 @@ module.exports = class SelectedTracksList extends Backbone.Collection
             @remove model
             model.setAsNoSelected()
 
-    ##################### END - Manage Select Stat - END #########################
+    #################### END - Manage Select Stat - END #########################
+
+
+    add: (models, options) ->
+        if @length == 0
+            @trigger 'selectionTracksState', true
+        super models, options
+
+    remove: (models, options) ->
+        super models, options
+        if @length == 0
+            @trigger 'selectionTracksState', false

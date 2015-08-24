@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 15:30:42 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/24 13:58:59 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/24 19:40:23 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -33,6 +33,12 @@ module.exports = class ContextMenu extends BaseView
         # TODO: delete it
         'click #fetch': 'fetchBaseCollection'
 
+    initialize: (options) ->
+        super
+        @selectedTracksList = options.selectedTracksList
+
+        # Listen if a the selection collection is empty or not
+        @listenTo @selectedTracksList, 'selectionTracksState', @manageActionTrackMenu
 
     afterRender: ->
         @uploader = $('#uploader')
@@ -59,3 +65,14 @@ module.exports = class ContextMenu extends BaseView
             if event.target?
                 target = $ event.target
                 target.replaceWith target.clone true
+
+    ######################## ACTION TRACKS MENU #################################
+    # Check if the selection list is used or not. If it used the action track
+    # menu pop in the context menu. If it's not used anymore the menu disapear
+    # isUser is a bollean
+    manageActionTrackMenu: (isUsed)->
+        console.log 'SELECTION LIST ACTIVE'
+        console.log 'argument: ', argument
+
+    ################### END - ACTION TRACKS MENU - END ##########################
+
