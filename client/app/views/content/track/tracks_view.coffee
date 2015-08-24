@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/20 17:41:32 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/23 18:25:42 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/24 17:45:07 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -27,12 +27,15 @@ module.exports = class TracksView extends ViewCollection
         # Event delegation
         'click tr.track-row': (e) -> @viewProxy 'onTrackClicked', e
 
+
+
     initialize: (options) ->
         super options
 
         # Event delegation: Take the model send as argument in event and run his
         # methode named as the second argument
         @listenTo @collection, 'change', _.partial(@viewProxy, 'refresh')
+        @listenTo @collection, 'toggle-select', _.partial(@viewProxy, 'changeSelectStat')
 
 
     # Manage event delegation. Events are listen to on the collection level,

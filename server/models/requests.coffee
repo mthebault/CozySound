@@ -5,3 +5,4 @@ cozydb = require 'cozydb'
 module.exports =
     track:
         all: cozydb.defaultRequests.all
+        byRange: (doc) -> emit (doc.path + '/' + doc.name), doc

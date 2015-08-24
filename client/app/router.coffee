@@ -6,12 +6,11 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 15:30:33 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/23 17:40:18 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/24 17:45:03 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 app = require 'application'
-TracksView = require 'views/content/track/tracks_view'
 
 module.exports = class Router extends Backbone.Router
 
@@ -21,19 +20,19 @@ module.exports = class Router extends Backbone.Router
     routes:
         '': 'main'
 
+    # For the moment the view collection is recreate each time the page is
+    # loaded
     main: ->
         @_loadAllTracks()
 
 
     _loadAllTracks: ->
-        #if not app.baseCollection.lenght > 0
-        app.baseCollection.fetch
-            error: (error) ->
-                console.log error
-            success: (baseCollection) ->
-                @plop = new TracksView
-                    collection: app.baseCollection
-                #@contentView = app.baseCollectionView
-                #@contentView.render()
-                @plop.render()
-                console.log "update router"
+        @_renderAllTracks()
+        if not app.baseCollection.lenght > 0
+            app.baseCollection.fetch
+                error: (error) ->
+                    console.log error
+
+    _renderAllTracks: ->
+        @contentView = app.baseCollectionView
+        @contentView.render()
