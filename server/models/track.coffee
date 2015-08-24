@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/19 20:21:09 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/24 13:16:00 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/24 13:56:02 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -32,5 +32,4 @@ module.exports = Track = cozydb.getModel 'Track',
 
 
 Track.fetchByRange = (params, callback) ->
-    console.log params
     Track.request "byRange", params, callback

@@ -229,15 +229,17 @@ module.exports = TracksList = (function(_super) {
 
   TracksList.prototype.fetch = function() {
     return $.ajax({
-      url: "tracks/" + this.cursorFrameDownload + "/" + (this.cursorFrameDownload + this.sizeFrameDownload),
+      url: "tracks/" + this.cursorFrameDownload + "/" + this.sizeFrameDownload,
       type: 'GET',
       error: function(xhr) {
         return console.error(xhr);
       },
       success: (function(_this) {
         return function(data) {
-          _this.sizeFrameDownload += data.length;
-          _this.set(data);
+          _this.cursorFrameDownload += data.length;
+          _this.set(data, {
+            remove: false
+          });
           return console.log(_this);
         };
       })(this)
@@ -1062,11 +1064,13 @@ module.exports = TracksView = (function(_super) {
 });
 
 ;require.register("views/context_menu", function(exports, require, module) {
-var BaseView, ContextMenu,
+var BaseView, ContextMenu, app,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
 BaseView = require('../lib/base_view');
+
+app = require('../application');
 
 
 /*
@@ -1089,11 +1093,17 @@ module.exports = ContextMenu = (function(_super) {
   ContextMenu.prototype.className = 'context-menu';
 
   ContextMenu.prototype.events = {
-    'change #upload-files': 'lauchUploadFiles'
+    'change #upload-files': 'lauchUploadFiles',
+    'click #fetch': 'fetchBaseCollection'
   };
 
   ContextMenu.prototype.afterRender = function() {
     return this.uploader = $('#uploader');
+  };
+
+  ContextMenu.prototype.fetchBaseCollection = function() {
+    console.log('plop');
+    return window.app.baseCollection.fetch();
   };
 
   ContextMenu.prototype.lauchUploadFiles = function(event) {
@@ -1175,7 +1185,7 @@ var buf = [];
 var jade_mixins = {};
 var jade_interp;
 
-buf.push("<div id=\"file-manager\" class=\"btn-group\"><input id=\"upload-files\" name=\"upload-files\" type=\"file\" multiple=\"multiple\" accept=\"audio/*\" class=\"btn btn-default\"/></div>");;return buf.join("");
+buf.push("<div id=\"file-manager\" class=\"btn-group\"><input id=\"upload-files\" name=\"upload-files\" type=\"file\" multiple=\"multiple\" accept=\"audio/*\" class=\"btn btn-default btn-file\"/><button id=\"fetch\" type=\"button\" value=\"FETCH\" class=\"btn btn-default\">FETCH</button></div>");;return buf.join("");
 };
 if (typeof define === 'function' && define.amd) {
   define([], function() {

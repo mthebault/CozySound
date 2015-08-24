@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/19 06:50:00 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/24 13:17:22 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/24 13:56:06 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -25,11 +25,9 @@ module.exports.fetchRange = (req, res, next) ->
         err.status = 400
         return next err
     Track.fetchByRange
-        startKey: req.params.start
-        endKey: req.params.end
-        limit: req.params.end - req.params.start
+        skip: req.params.start
+        limit: req.params.nbTracks
         , (err, data) ->
-            console.log 'DATA: ', data
             res.status(200).send(data)
 
 

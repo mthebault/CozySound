@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 18:42:03 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/24 13:19:29 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/24 13:55:56 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -44,11 +44,12 @@ module.exports = class TracksList extends Backbone.Collection
     # success add the number of tracks retrieved to cursorFramDownload
     fetch: ->
         $.ajax
-            url: "tracks/#{@cursorFrameDownload}/#{@cursorFrameDownload + @sizeFrameDownload}"
+            url: "tracks/#{@cursorFrameDownload}/#{@sizeFrameDownload}"
             type: 'GET'
             error: (xhr) ->
                 console.error xhr
             success: (data) =>
-                @sizeFrameDownload += data.length
-                @set data
+                @cursorFrameDownload += data.length
+                @set data,
+                    remove: false
                 console.log @
