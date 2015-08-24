@@ -110,7 +110,7 @@
   globals.require = require;
 })();
 require.register("application", function(exports, require, module) {
-var AppView, TracksList, UploadQueue;
+var AppView, SelectedTracksList, TracksList, TracksView, UploadQueue;
 
 AppView = require('./views/app_view');
 
@@ -118,15 +118,23 @@ TracksList = require('./collections/tracks_list');
 
 UploadQueue = require('./collections/upload_queue');
 
+TracksView = require('./views/content/track/tracks_view');
+
+SelectedTracksList = require('./collections/selected_list');
+
 module.exports = {
   initialize: function() {
     var Router, mainView;
     window.app = this;
-    this.baseCollection = new TracksList;
-    this.uploadQueue = new UploadQueue(this.baseCollection);
-    this.baseCollectionView = null;
     mainView = new AppView();
     mainView.render();
+    this.baseCollection = new TracksList;
+    this.baseCollectionView = new TracksView({
+      collection: this.baseCollection
+    });
+    this.selectedTracksList = new SelectedTracksList;
+    this.selectedTracksList.baseCollection = this.baseCollection;
+    this.uploadQueue = new UploadQueue(this.baseCollection);
     Router = require('router');
     this.router = new Router();
     Backbone.history.start();
@@ -135,6 +143,80 @@ module.exports = {
     }
   }
 };
+});
+
+;require.register("collections/selected_list", function(exports, require, module) {
+var SelectedTracksList, Track,
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+Track = require('./../models/track');
+
+
+/*
+ * SelectedList is a collection of track selected by the user. All action on
+ * tracks must be managed by it
+ */
+
+module.exports = SelectedTracksList = (function(_super) {
+  __extends(SelectedTracksList, _super);
+
+  function SelectedTracksList() {
+    return SelectedTracksList.__super__.constructor.apply(this, arguments);
+  }
+
+  SelectedTracksList.prototype.model = Track;
+
+  SelectedTracksList.prototype.url = 'tracks';
+
+  SelectedTracksList.prototype._lastTrackSelected = null;
+
+  SelectedTracksList.prototype.onTrackClicked = function(model, isShiftPressed) {
+    if (isShiftPressed == null) {
+      isShiftPressed = false;
+    }
+    if (isShiftPressed === true && this._lastTrackSelected !== null) {
+      this._manageListTracksSelection(model);
+    } else {
+      this._manageTrackSelection(model);
+    }
+    return this._lastTrackSelected = model;
+  };
+
+  SelectedTracksList.prototype._manageListTracksSelection = function(lastModel) {
+    var endIndex, startIndex, _results;
+    startIndex = this.baseCollection.indexOf(this._lastTrackSelected);
+    endIndex = this.baseCollection.indexOf(lastModel);
+    _results = [];
+    while (true) {
+      if (startIndex < endIndex) {
+        startIndex++;
+      } else {
+        startIndex--;
+      }
+      this._manageTrackSelection(this.baseCollection.at(startIndex));
+      if (startIndex === endIndex) {
+        break;
+      } else {
+        _results.push(void 0);
+      }
+    }
+    return _results;
+  };
+
+  SelectedTracksList.prototype._manageTrackSelection = function(model) {
+    if (model.isSelected() === false) {
+      this.add(model);
+      return model.setAsSelected();
+    } else {
+      this.remove(model);
+      return model.setAsNoSelected();
+    }
+  };
+
+  return SelectedTracksList;
+
+})(Backbone.Collection);
 });
 
 ;require.register("collections/tracks_list", function(exports, require, module) {
@@ -162,10 +244,32 @@ module.exports = TracksList = (function(_super) {
 
   TracksList.prototype.url = 'tracks';
 
+  TracksList.prototype.sizeFrameDownload = 5;
+
+  TracksList.prototype.cursorFrameDownload = 0;
+
   TracksList.prototype.isTrackStored = function(model) {
     var existingTrack;
     existingTrack = this.get(model.get('id'));
     return existingTrack || null;
+  };
+
+  TracksList.prototype.fetch = function() {
+    return $.ajax({
+      url: "tracks/" + this.cursorFrameDownload + "/" + this.sizeFrameDownload,
+      type: 'GET',
+      error: function(xhr) {
+        return console.error(xhr);
+      },
+      success: (function(_this) {
+        return function(data) {
+          _this.cursorFrameDownload += data.length;
+          return _this.set(data, {
+            remove: false
+          });
+        };
+      })(this)
+    });
   };
 
   return TracksList;
@@ -615,9 +719,11 @@ module.exports = Track = (function(_super) {
 
   Track.VALID_STATUSES = [null, 'uploading', 'uploaded', 'errored'];
 
+  Track.prototype._selectedStatus = false;
+
 
   /*
-   * Getters for the local state.
+   * Getters for the local states.
    */
 
   Track.prototype.isUploading = function() {
@@ -728,19 +834,35 @@ module.exports = Track = (function(_super) {
     return Backbone.sync.apply(this, arguments);
   };
 
+  Track.prototype.isSelected = function() {
+    return this._selectedStatus;
+  };
+
+  Track.prototype.setAsSelected = function() {
+    this._selectedStatus = true;
+    return this.trigger('toggle-select', {
+      cid: this.cid
+    });
+  };
+
+  Track.prototype.setAsNoSelected = function() {
+    this._selectedStatus = false;
+    return this.trigger('toggle-select', {
+      cid: this.cid
+    });
+  };
+
   return Track;
 
 })(Backbone.Model);
 });
 
 ;require.register("router", function(exports, require, module) {
-var Router, TracksView, app,
+var Router, app,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
 app = require('application');
-
-TracksView = require('views/content/track/tracks_view');
 
 module.exports = Router = (function(_super) {
   __extends(Router, _super);
@@ -760,18 +882,19 @@ module.exports = Router = (function(_super) {
   };
 
   Router.prototype._loadAllTracks = function() {
-    return app.baseCollection.fetch({
-      error: function(error) {
-        return console.log(error);
-      },
-      success: function(baseCollection) {
-        this.plop = new TracksView({
-          collection: app.baseCollection
-        });
-        this.plop.render();
-        return console.log("update router");
-      }
-    });
+    this._renderAllTracks();
+    if (!app.baseCollection.lenght > 0) {
+      return app.baseCollection.fetch({
+        error: function(error) {
+          return console.log(error);
+        }
+      });
+    }
+  };
+
+  Router.prototype._renderAllTracks = function() {
+    this.contentView = app.baseCollectionView;
+    return this.contentView.render();
   };
 
   return Router;
@@ -888,12 +1011,37 @@ module.exports = TrackView = (function(_super) {
 
   TrackView.prototype.template = require('./templates/track');
 
+  TrackView.prototype.className = 'track-row';
+
   TrackView.prototype.tagName = 'tr';
+
+  TrackView.prototype.afterRender = function() {
+    this.$el.data('cid', this.model.cid);
+    if (this.model.isUploading()) {
+      return this.$el.addClass('warning');
+    } else {
+      return this.$el.removeClass('warning');
+    }
+  };
 
   TrackView.prototype.refresh = function() {
     console.log(this.model.uploadStatus);
     console.log(this.model);
     return this.render();
+  };
+
+  TrackView.prototype.onTrackClicked = function(event) {
+    var isShiftPressed;
+    isShiftPressed = event.shiftKey || false;
+    return window.app.selectedTracksList.onTrackClicked(this.model, isShiftPressed);
+  };
+
+  TrackView.prototype.changeSelectStat = function() {
+    if (this.model.isSelected()) {
+      return this.$el.addClass('success');
+    } else {
+      return this.$el.removeClass('success');
+    }
   };
 
   return TrackView;
@@ -930,9 +1078,16 @@ module.exports = TracksView = (function(_super) {
 
   TracksView.prototype.collectionEl = '#table-items-content';
 
+  TracksView.prototype.events = {
+    'click tr.track-row': function(e) {
+      return this.viewProxy('onTrackClicked', e);
+    }
+  };
+
   TracksView.prototype.initialize = function(options) {
     TracksView.__super__.initialize.call(this, options);
-    return this.listenTo(this.collection, 'change', _.partial(this.viewProxy, 'refresh'));
+    this.listenTo(this.collection, 'change', _.partial(this.viewProxy, 'refresh'));
+    return this.listenTo(this.collection, 'toggle-select', _.partial(this.viewProxy, 'changeSelectStat'));
   };
 
   TracksView.prototype.viewProxy = function(methodName, object) {
@@ -960,11 +1115,13 @@ module.exports = TracksView = (function(_super) {
 });
 
 ;require.register("views/context_menu", function(exports, require, module) {
-var BaseView, ContextMenu,
+var BaseView, ContextMenu, app,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
 BaseView = require('../lib/base_view');
+
+app = require('../application');
 
 
 /*
@@ -987,11 +1144,16 @@ module.exports = ContextMenu = (function(_super) {
   ContextMenu.prototype.className = 'context-menu';
 
   ContextMenu.prototype.events = {
-    'change #upload-files': 'lauchUploadFiles'
+    'change #upload-files': 'lauchUploadFiles',
+    'click #fetch': 'fetchBaseCollection'
   };
 
   ContextMenu.prototype.afterRender = function() {
     return this.uploader = $('#uploader');
+  };
+
+  ContextMenu.prototype.fetchBaseCollection = function() {
+    return window.app.baseCollection.fetch();
   };
 
   ContextMenu.prototype.lauchUploadFiles = function(event) {
@@ -1073,7 +1235,7 @@ var buf = [];
 var jade_mixins = {};
 var jade_interp;
 
-buf.push("<div id=\"file-manager\" class=\"btn-group\"><input id=\"upload-files\" name=\"upload-files\" type=\"file\" multiple=\"multiple\" accept=\"audio/*\" class=\"btn btn-default\"/></div>");;return buf.join("");
+buf.push("<div id=\"file-manager\" class=\"btn-group\"><input id=\"upload-files\" name=\"upload-files\" type=\"file\" multiple=\"multiple\" accept=\"audio/*\" class=\"btn btn-default btn-file\"/><button id=\"fetch\" type=\"button\" value=\"FETCH\" class=\"btn btn-default\">FETCH</button></div>");;return buf.join("");
 };
 if (typeof define === 'function' && define.amd) {
   define([], function() {

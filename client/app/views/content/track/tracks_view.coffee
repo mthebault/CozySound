@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/20 17:41:32 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/23 17:51:18 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/24 17:45:07 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -23,6 +23,11 @@ module.exports = class TracksView extends ViewCollection
     itemview: TrackView
     collectionEl: '#table-items-content'
 
+    events:
+        # Event delegation
+        'click tr.track-row': (e) -> @viewProxy 'onTrackClicked', e
+
+
 
     initialize: (options) ->
         super options
@@ -30,6 +35,7 @@ module.exports = class TracksView extends ViewCollection
         # Event delegation: Take the model send as argument in event and run his
         # methode named as the second argument
         @listenTo @collection, 'change', _.partial(@viewProxy, 'refresh')
+        @listenTo @collection, 'toggle-select', _.partial(@viewProxy, 'changeSelectStat')
 
 
     # Manage event delegation. Events are listen to on the collection level,
@@ -57,5 +63,3 @@ module.exports = class TracksView extends ViewCollection
             # Call `methodName` on the related view.
             args = [].splice.call arguments, 1
             view[methodName].apply view, args
-
-
