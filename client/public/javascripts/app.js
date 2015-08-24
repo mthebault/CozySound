@@ -1169,6 +1169,8 @@ module.exports = ContextMenu = (function(_super) {
 
   ContextMenu.prototype.className = 'context-menu';
 
+  ContextMenu.trackMenuActive;
+
   ContextMenu.prototype.events = {
     'change #upload-files': 'lauchUploadFiles',
     'click #fetch': 'fetchBaseCollection'
@@ -1181,18 +1183,19 @@ module.exports = ContextMenu = (function(_super) {
   };
 
   ContextMenu.prototype.afterRender = function() {
-    return this.uploader = $('#uploader');
+    this.uploader = $('#uploader');
+    return this.$('#edit-tracks').hide();
   };
 
   ContextMenu.prototype.fetchBaseCollection = function() {
-    return window.app.baseCollection.fetch();
+    return app.baseCollection.fetch();
   };
 
   ContextMenu.prototype.lauchUploadFiles = function(event) {
     var files, target, _ref;
     files = ((_ref = event.dataTransfert) != null ? _ref.files : void 0) || event.target.files;
     if (files.length) {
-      window.app.uploadQueue.addBlobs(files);
+      app.uploadQueue.addBlobs(files);
       if (event.target != null) {
         target = $(event.target);
         return target.replaceWith(target.clone(true));
@@ -1201,8 +1204,11 @@ module.exports = ContextMenu = (function(_super) {
   };
 
   ContextMenu.prototype.manageActionTrackMenu = function(isUsed) {
-    console.log('SELECTION LIST ACTIVE');
-    return console.log('argument: ', argument);
+    if (isUsed === true) {
+      return this.$('#edit-tracks').show();
+    } else {
+      return this.$('#edit-tracks').hide();
+    }
   };
 
   return ContextMenu;
@@ -1272,7 +1278,7 @@ var buf = [];
 var jade_mixins = {};
 var jade_interp;
 
-buf.push("<div id=\"file-manager\" class=\"btn-group\"><input id=\"upload-files\" name=\"upload-files\" type=\"file\" multiple=\"multiple\" accept=\"audio/*\" class=\"btn btn-default btn-file\"/><button id=\"fetch\" type=\"button\" value=\"FETCH\" class=\"btn btn-default\">FETCH</button></div>");;return buf.join("");
+buf.push("<div id=\"file-manager\" class=\"btn-group\"><input id=\"upload-files\" name=\"upload-files\" type=\"file\" multiple=\"multiple\" accept=\"audio/*\" class=\"btn btn-default btn-file\"/><button id=\"fetch\" type=\"button\" class=\"btn btn-default\">FETCH</button><button id=\"edit-tracks\" type=\"button\" class=\"btn btn-default\">EDIT</button></div>");;return buf.join("");
 };
 if (typeof define === 'function' && define.amd) {
   define([], function() {

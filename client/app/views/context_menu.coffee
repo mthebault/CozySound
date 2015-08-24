@@ -6,14 +6,14 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 15:30:42 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/24 19:40:23 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/24 20:17:33 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 BaseView = require '../lib/base_view'
-
-# TODO: delete it
 app = require '../application'
+
+
 ###
 # Context_menu represent the menu on the top of the app. His goal is to work
 # with tracks_screen. It must display the dynamiques option when the user select
@@ -24,6 +24,8 @@ module.exports = class ContextMenu extends BaseView
     template: require('./templates/context_menu')
     tagName: 'div'
     className: 'context-menu'
+
+    @trackMenuActive
 
     events:
         # Event trigger when a user valid the files to upload
@@ -42,11 +44,12 @@ module.exports = class ContextMenu extends BaseView
 
     afterRender: ->
         @uploader = $('#uploader')
+        @$('#edit-tracks').hide()
 
     # Testing function
     # TODO: delete it
     fetchBaseCollection: ->
-        window.app.baseCollection.fetch()
+        app.baseCollection.fetch()
 
     ################## UPLOAD #########################
 
@@ -60,7 +63,7 @@ module.exports = class ContextMenu extends BaseView
         #
         ##########################################
         if files.length
-            window.app.uploadQueue.addBlobs files
+            app.uploadQueue.addBlobs files
 
             if event.target?
                 target = $ event.target
@@ -71,8 +74,10 @@ module.exports = class ContextMenu extends BaseView
     # menu pop in the context menu. If it's not used anymore the menu disapear
     # isUser is a bollean
     manageActionTrackMenu: (isUsed)->
-        console.log 'SELECTION LIST ACTIVE'
-        console.log 'argument: ', argument
+        if (isUsed == true)
+            @$('#edit-tracks').show()
+        else
+            @$('#edit-tracks').hide()
 
     ################### END - ACTION TRACKS MENU - END ##########################
 
