@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 15:30:33 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/24 13:19:23 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/24 13:58:21 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -33,9 +33,6 @@ module.exports = class Router extends Backbone.Router
                 error: (error) ->
                     console.log error
 
-    #TODO: optimise it
     _renderAllTracks: ->
         @contentView = app.baseCollectionView
-        console.log 'contentView : ', @contentView
         @contentView.render()
-        console.log "update router"

@@ -133,7 +133,7 @@ module.exports = {
       collection: this.baseCollection
     });
     this.selectedTracksList = new SelectedTracksList({
-      baseCollectionView: this.baseCollectionView
+      baseCollection: this.baseCollection
     });
     this.uploadQueue = new UploadQueue(this.baseCollection);
     Router = require('router');
@@ -170,21 +170,77 @@ module.exports = SelectedTracksList = (function(_super) {
 
   SelectedTracksList.prototype.url = 'tracks';
 
-  SelectedTracksList.prototype.lastTrackSelected = null;
+  SelectedTracksList.prototype._lastTrackSelected = null;
 
   SelectedTracksList.prototype.initialize = function(options) {
     SelectedTracksList.__super__.initialize.apply(this, arguments);
-    return this.baseCollectionView = options.baseCollectionView;
+    return this.baseCollection = options.baseCollection;
   };
 
   SelectedTracksList.prototype.onTrackClicked = function(view, isShiftPressed) {
     if (isShiftPressed == null) {
       isShiftPressed = false;
     }
-    console.log('selected');
-    console.log('isShiftPressed: ', isShiftPressed);
-    console.log(view);
-    return console.log("collection: ", this.baseCollectionView);
+    if (isShiftPressed === false) {
+      this.manageTrackSelection(view.model);
+    } else {
+      this.manageListTracksSelection(view.model);
+    }
+    return this._lastTrackSelected = view.model;
+  };
+
+  SelectedTracksList.prototype.manageListTracksSelection = function(lastView) {
+    var endIndex, startIndex, _results;
+    startIndex = this.baseCollection.indexOf(this._lastTrackSelected);
+    endIndex = this.baseCollection.indexOf(lastView);
+    _results = [];
+    while (true) {
+      if (startIndex < endIndex) {
+        startIndex++;
+      } else {
+        startIndex--;
+      }
+      this.manageTrackSelection(this.baseCollection.at(startIndex));
+      if (startIndex === endIndex) {
+        break;
+      } else {
+        _results.push(void 0);
+      }
+    }
+    return _results;
+  };
+
+  SelectedTracksList.prototype.manageTrackSelection = function(model) {
+    if (model.isSelected() === false) {
+      if (this.addToSelection(model) === false) {
+        return;
+      }
+    } else {
+      if (this.removeToSelection(model) === false) {
+        return;
+      }
+    }
+    return this.trigger('toggle-select', {
+      cid: this.cid
+    });
+  };
+
+  SelectedTracksList.prototype.addToSelection = function(model) {
+    this.add(model);
+    if (model.setAsSelected() === false) {
+      this.remove(model);
+      return false;
+    }
+    return true;
+  };
+
+  SelectedTracksList.prototype.removeToSelection = function(model) {
+    this.remove(model);
+    if (model.setAsNoSelected() === false) {
+      this.add(model);
+      return false;
+    }
+    return true;
   };
 
   return SelectedTracksList;
@@ -217,7 +273,7 @@ module.exports = TracksList = (function(_super) {
 
   TracksList.prototype.url = 'tracks';
 
-  TracksList.prototype.sizeFrameDownload = 2;
+  TracksList.prototype.sizeFrameDownload = 5;
 
   TracksList.prototype.cursorFrameDownload = 0;
 
@@ -237,10 +293,9 @@ module.exports = TracksList = (function(_super) {
       success: (function(_this) {
         return function(data) {
           _this.cursorFrameDownload += data.length;
-          _this.set(data, {
+          return _this.set(data, {
             remove: false
           });
-          return console.log(_this);
         };
       })(this)
     });
@@ -693,9 +748,11 @@ module.exports = Track = (function(_super) {
 
   Track.VALID_STATUSES = [null, 'uploading', 'uploaded', 'errored'];
 
+  Track.prototype._selectedStatus = false;
+
 
   /*
-   * Getters for the local state.
+   * Getters for the local states.
    */
 
   Track.prototype.isUploading = function() {
@@ -806,6 +863,28 @@ module.exports = Track = (function(_super) {
     return Backbone.sync.apply(this, arguments);
   };
 
+  Track.prototype.isSelected = function() {
+    return this._selectedStatus;
+  };
+
+  Track.prototype.setAsSelected = function() {
+    return this._selectedStatus = true;
+  };
+
+  Track.prototype.setAsSelected = function() {
+    this._selectedStatus = true;
+    return this.trigger('toggle-select', {
+      cid: this.cid
+    });
+  };
+
+  Track.prototype.setAsNoSelected = function() {
+    this._selectedStatus = false;
+    return this.trigger('toggle-select', {
+      cid: this.cid
+    });
+  };
+
   return Track;
 
 })(Backbone.Model);
@@ -848,9 +927,7 @@ module.exports = Router = (function(_super) {
 
   Router.prototype._renderAllTracks = function() {
     this.contentView = app.baseCollectionView;
-    console.log('contentView : ', this.contentView);
-    this.contentView.render();
-    return console.log("update router");
+    return this.contentView.render();
   };
 
   return Router;
@@ -971,7 +1048,14 @@ module.exports = TrackView = (function(_super) {
 
   TrackView.prototype.tagName = 'tr';
 
-  TrackView.prototype.isSelected = false;
+  TrackView.prototype.afterRender = function() {
+    this.$el.data('cid', this.model.cid);
+    if (this.model.isUploading()) {
+      return this.$el.addClass('warning');
+    } else {
+      return this.$el.removeClass('warning');
+    }
+  };
 
   TrackView.prototype.refresh = function() {
     console.log(this.model.uploadStatus);
@@ -985,12 +1069,11 @@ module.exports = TrackView = (function(_super) {
     return window.app.selectedTracksList.onTrackClicked(this, isShiftPressed);
   };
 
-  TrackView.prototype.afterRender = function() {
-    this.$el.data('cid', this.model.cid);
-    if (this.model.isUploading()) {
-      return this.$el.addClass('warning');
+  TrackView.prototype.changeSelectStat = function() {
+    if (this.model.isSelected()) {
+      return this.$el.addClass('success');
     } else {
-      return this.$el.removeClass('warning');
+      return this.$el.removeClass('success');
     }
   };
 
@@ -1036,7 +1119,8 @@ module.exports = TracksView = (function(_super) {
 
   TracksView.prototype.initialize = function(options) {
     TracksView.__super__.initialize.call(this, options);
-    return this.listenTo(this.collection, 'change', _.partial(this.viewProxy, 'refresh'));
+    this.listenTo(this.collection, 'change', _.partial(this.viewProxy, 'refresh'));
+    return this.listenTo(this.collection, 'toggle-select', _.partial(this.viewProxy, 'changeSelectStat'));
   };
 
   TracksView.prototype.viewProxy = function(methodName, object) {
@@ -1102,7 +1186,6 @@ module.exports = ContextMenu = (function(_super) {
   };
 
   ContextMenu.prototype.fetchBaseCollection = function() {
-    console.log('plop');
     return window.app.baseCollection.fetch();
   };
 

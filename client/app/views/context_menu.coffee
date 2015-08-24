@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 15:30:42 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/24 13:47:47 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/24 13:58:59 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -40,7 +40,6 @@ module.exports = class ContextMenu extends BaseView
     # Testing function
     # TODO: delete it
     fetchBaseCollection: ->
-        console.log 'plop'
         window.app.baseCollection.fetch()
 
     ################## UPLOAD #########################

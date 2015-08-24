@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 18:42:03 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/24 13:55:56 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/24 16:07:26 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -22,7 +22,7 @@ module.exports = class TracksList extends Backbone.Collection
     url: 'tracks'
 
     # Number of tracks downloaded to each call of fetch
-    sizeFrameDownload: 2
+    sizeFrameDownload: 5
 
     # Set the number of tracks downloaded, each call of fetch will increment it
     # by sizeFrameDownload
@@ -52,4 +52,3 @@ module.exports = class TracksList extends Backbone.Collection
                 @cursorFrameDownload += data.length
                 @set data,
                     remove: false
-                console.log @

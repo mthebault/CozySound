@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 15:30:38 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/24 13:30:05 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/24 16:22:17 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -39,7 +39,7 @@ module.exports =
         # SelectedTracksList is a collection of all tracks selected by the user,
         # all acions on tracks must be handle by it
         @selectedTracksList = new SelectedTracksList
-            baseCollectionView: @baseCollectionView
+            baseCollection: @baseCollection
 
         # uploadQueue is the list of track waiting to be uploaded. The tracks in
         # uploadQueue are also added to the mainTrackList to be printed.
