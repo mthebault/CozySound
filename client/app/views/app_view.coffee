@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 15:30:07 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/25 13:22:22 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/25 19:20:38 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -40,4 +40,4 @@ module.exports = class AppView extends BaseView
 
         # Create and render the content screen
         @contentScreen = new ContentScreen
-        @contentScreen.render()
+        @contentScreen.renderAllTracks()

@@ -6,19 +6,19 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/25 09:53:27 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/25 13:32:06 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/25 20:16:21 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 ContextMenu = require './context_menu'
 SelectedTracksList = require '../collections/selected_list'
 TracksView = require '../views/content/track/tracks_view'
+EditionView = require '../views/content/edition/edition_view'
 
 module.exports = class ContentScreen
 
-    _collection: null
-    _collectionView: null
-
+    skeletonTrack: require './content/track_skel'
+    skeletonEdition: require './content/edition_skel'
 
     constructor: ->
         _.extend @, Backbone.Events
@@ -30,20 +30,56 @@ module.exports = class ContentScreen
         @selectedTracksList = new SelectedTracksList
         @selectedTracksList.baseCollection = @baseCollection
 
-        # Initialize the contextMenu
-        @contextMenu = new ContextMenu
-            selectedTracksList: @selectedTracksList
+
+        # Listen if a the selection collection in/out of state empty, pop/remove
+        # the action menu
+        @listenTo @selectedTracksList, 'selectionTracksState', @updateSelectionTracksState
 
         # Set baseCollection, so all tracks as the first collection printed
         @_collection = @baseCollection
 
-        # Listen if a the selection collection in/out of state empty, pop/remove
-        # the action menu
-        @listenTo @selectedTracksList, 'selectionTracksState', @contextMenu.manageActionTrackMenu
 
-    render: ->
-        @contextMenu.render()
-        # Create a new CollectionView with the new collection
+    ############################ ALL TRACKS #####################################
+    # Render the context menu, create a view collection of the selectioned
+    # collection and render it
+    renderAllTracks: ->
+        $('#content-screen').append @skeletonTrack
+        # Initialize the contextMenu
+        @_contextMenu = new ContextMenu
+            selectedTracksList: @selectedTracksList
+
+        # Initialize the tracks displayed
         @_collectionView = new TracksView
-            collection: @_collection
+            collection: @baseCollection
         @_collectionView.render()
+
+        # Listen if the user want edit the selectioned tracks
+        @listenTo @_contextMenu, 'lauchTracksEdition', @lauchTracksEdition
+        @_contextMenu.render()
+
+
+    removeAllTracks: ->
+        @_contextMenu.remove()
+        @_collectionView.remove()
+    ###################### END - ALL TRACKS - END ###############################
+
+
+    updateSelectionTracksState: (isUsed) ->
+        @_contextMenu.manageActionTrackMenu isUsed
+
+    ############################ TRACKS EDITION #################################
+    # Remove current content and lauch edition
+    lauchTracksEdition: ->
+        @_contextMenu.manageActionTrackMenu false
+        @removeAllTracks()
+        @renderTracksEdition()
+
+    renderTracksEdition: ->
+        $('#content-screen').append @skeletonEdition
+        # Initialize the Edition view
+        @editionView = new EditionView
+            collection: @selectedTracksList
+        @editionView.mergeMetaData()
+
+
+    ###################### END - TRACKS EDITION - END ###########################

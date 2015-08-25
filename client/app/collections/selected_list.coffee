@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/23 19:30:42 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/25 13:25:01 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/25 16:32:35 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -26,6 +26,12 @@ module.exports = class SelectedTracksList extends Backbone.Collection
     # Keep the last track selected to have a starting point with shift. track is
     # a model
     _lastTrackSelected: null
+
+    initialize: ->
+        super
+        # Create a shortcute for each track view can access to the selected
+        # tracks list to trigger an event when they are selected
+        window.selectedTracksList = @
 
     ########################## Manage Select stat ###############################
     onTrackClicked: (model, isShiftPressed = false) ->

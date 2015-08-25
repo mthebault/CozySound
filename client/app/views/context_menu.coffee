@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 15:30:42 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/25 12:51:25 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/25 19:06:57 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -30,7 +30,7 @@ module.exports = class ContextMenu extends BaseView
         # Event trigger when a user valid the files to upload
         'change #upload-files': 'lauchUploadFiles'
         # Lauch Tracks editions
-        'click #edit-tracks': (e) -> @selectedTracksList.editTracks()
+        'click #edit-tracks': (e) -> @trigger 'lauchTracksEdition'
 
         # Bouton testing
         # TODO: delete it
