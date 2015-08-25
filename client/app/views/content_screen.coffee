@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/25 09:53:27 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/25 20:16:21 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/25 20:46:41 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -78,8 +78,7 @@ module.exports = class ContentScreen
         $('#content-screen').append @skeletonEdition
         # Initialize the Edition view
         @editionView = new EditionView
-            collection: @selectedTracksList
-        @editionView.mergeMetaData()
+        @editionView.render()
 
 
     ###################### END - TRACKS EDITION - END ###########################

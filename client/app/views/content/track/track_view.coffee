@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/20 18:08:58 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/25 19:58:37 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/25 20:45:34 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -30,8 +30,8 @@ module.exports = class TrackView extends BaseView
             @$el.removeClass 'warning'
 
     refresh: ->
-        console.log @model.uploadStatus
-        console.log @model
+        #console.log @model.uploadStatus
+        #console.log @model
         @render()
 
     ########################## Manage Select stat ###############################

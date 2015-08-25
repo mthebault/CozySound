@@ -970,18 +970,39 @@ module.exports = EditionView = (function(_super) {
 
   EditionView.MERGED_ATTRIBUTES = ['title', 'artist', 'album', 'year', 'genre'];
 
+  EditionView.prototype.processedAttr = {};
+
   EditionView.prototype.initialize = function() {
     return this.collection = window.selectedTracksList;
+  };
+
+  EditionView.prototype.render = function() {
+    this.mergeMetaData();
+    return EditionView.__super__.render.apply(this, arguments);
   };
 
   EditionView.prototype.mergeMetaData = function() {
     return EditionView.MERGED_ATTRIBUTES.forEach((function(_this) {
       return function(attribute) {
-        var lastAttribute;
+        var isSimilar, lastAttribute;
         lastAttribute = void 0;
+        isSimilar = true;
         _this.collection.models.forEach(function(trackAttr) {
-          return console.log(trackAttr.get(attribute));
+          console.log('loop-> lastAttribute : ', lastAttribute, ' / attr: ', trackAttr.get(attribute));
+          if (lastAttribute !== void 0 && trackAttr.get(attribute) !== lastAttribute) {
+            console.log(attribute, ' is differente');
+            isSimilar = false;
+          }
+          if (lastAttribute === void 0) {
+            return lastAttribute = trackAttr.get(attribute);
+          }
         });
+        console.log('lastAttribute : ', lastAttribute, ' / similar: ', isSimilar);
+        if (lastAttribute !== void 0 && isSimilar === true) {
+          console.log('set : ', attribute);
+          _this.processedAttr[attribute] = lastAttribute;
+        }
+        console.log(_this.processedAttr);
         return console.log('');
       };
     })(this));
@@ -998,7 +1019,7 @@ var buf = [];
 var jade_mixins = {};
 var jade_interp;
 
-;return buf.join("");
+buf.push("<label for=\"Edit-title\">Title</label><input id=\"Edit-title\" type=\"text\" class=\"form-control\"/><label for=\"Edit-artist\">Artist</label><input id=\"Edit-artist\" type=\"text\" class=\"form-control\"/><label for=\"Edit-album\">Album</label><input id=\"Edit-album\" type=\"text\" class=\"form-control\"/><label for=\"Edit-year\">Year</label><input id=\"Edit-year\" type=\"text\" class=\"form-control\"/><label for=\"Edit-genre\">Genre</label><input id=\"Edit-genre\" type=\"text\" class=\"form-control\"/>");;return buf.join("");
 };
 if (typeof define === 'function' && define.amd) {
   define([], function() {
@@ -1017,7 +1038,7 @@ var buf = [];
 var jade_mixins = {};
 var jade_interp;
 
-;return buf.join("");
+buf.push("<div id=\"edition-screen\"></div>");;return buf.join("");
 };
 if (typeof define === 'function' && define.amd) {
   define([], function() {
@@ -1103,8 +1124,6 @@ module.exports = TrackView = (function(_super) {
   };
 
   TrackView.prototype.refresh = function() {
-    console.log(this.model.uploadStatus);
-    console.log(this.model);
     return this.render();
   };
 
@@ -1266,10 +1285,8 @@ module.exports = ContentScreen = (function() {
 
   ContentScreen.prototype.renderTracksEdition = function() {
     $('#content-screen').append(this.skeletonEdition);
-    this.editionView = new EditionView({
-      collection: this.selectedTracksList
-    });
-    return this.editionView.mergeMetaData();
+    this.editionView = new EditionView;
+    return this.editionView.render();
   };
 
   return ContentScreen;
