@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/25 09:53:27 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/25 20:46:41 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/25 22:14:29 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -78,7 +78,16 @@ module.exports = class ContentScreen
         $('#content-screen').append @skeletonEdition
         # Initialize the Edition view
         @editionView = new EditionView
+        # Listen the end of the edition
+        @listenTo @editionView, 'edition-end', @finishEdition
         @editionView.render()
 
+    finishEdition: ->
+        @removeTracksEdition()
+        @renderAllTracks()
+
+    removeTracksEdition: ->
+        @editionView.remove()
 
     ###################### END - TRACKS EDITION - END ###########################
+

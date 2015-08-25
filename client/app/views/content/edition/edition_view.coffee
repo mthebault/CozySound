@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/25 19:58:03 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/25 20:47:03 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/25 23:05:46 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -14,10 +14,15 @@ BaseView = require '../../../lib/base_view'
 
 module.exports = class EditionView extends BaseView
     template: require './templates/edition'
+    el: '#edition-screen'
 
     @MERGED_ATTRIBUTES: ['title', 'artist', 'album', 'year', 'genre']
 
     processedAttr: {}
+
+    events: ->
+        'click #edit-cancel': 'cancelEdition'
+        'click #edit-submit': 'submitEdition'
 
     initialize: ->
         @collection = window.selectedTracksList
@@ -25,24 +30,54 @@ module.exports = class EditionView extends BaseView
 
     render: ->
         @mergeMetaData()
-        super
+        @cleanProcessedAttr()
+        @$el.append(@template {attr: @processedAttr})
 
     mergeMetaData: ->
         EditionView.MERGED_ATTRIBUTES.forEach (attribute) =>
             lastAttribute = undefined
             isSimilar = true
-            @collection.models.forEach (trackAttr) ->
-                console.log 'loop-> lastAttribute : ', lastAttribute, ' / attr: ', trackAttr.get attribute
-                if lastAttribute != undefined and trackAttr.get(attribute) != lastAttribute
-                    console.log attribute, ' is differente'
+            @collection.models.forEach (track) ->
+                if lastAttribute != undefined and track.get(attribute) != lastAttribute
                     isSimilar = false
                 if lastAttribute == undefined
-                    lastAttribute = trackAttr.get attribute
-            console.log 'lastAttribute : ', lastAttribute, ' / similar: ', isSimilar
+                    lastAttribute = track.get attribute
             if lastAttribute != undefined && isSimilar == true
-                console.log 'set : ', attribute
                 @processedAttr[attribute] = lastAttribute
-            console.log @processedAttr
+
+    cleanProcessedAttr: ->
+        EditionView.MERGED_ATTRIBUTES.forEach (attr) =>
+            if @processedAttr[attr] == undefined
+                @processedAttr[attr] = ''
+
+    saveEditionChanges: ->
+        isChanged = false
+        EditionView.MERGED_ATTRIBUTES.forEach (attr) =>
+            attrValue = @processedAttr[attr]
+            inputValue = @$("#edit-#{attr}").val()
+            if inputValue != '' and attrValue != inputValue
+                isChanged = true
+                @computeChangeAttr attr, inputValue
+        if isChanged == true
+            @collection.updateTracks()
+
+    computeChangeAttr: (attribute, inputValue) ->
+        @collection.models.forEach (track) ->
+            track.set attribute, inputValue
 
 
-            console.log ''
+
+    cancelEdition: ->
+        @freeSelectedTracksList()
+        @trigger 'edition-end'
+
+    submitEdition: ->
+        @saveEditionChanges()
+        @freeSelectedTracksList()
+        @trigger 'edition-end'
+
+    freeSelectedTracksList: ->
+        loop
+            track = @collection.pop()
+            track.setAsNoSelected()
+            break if @collection.length == 0

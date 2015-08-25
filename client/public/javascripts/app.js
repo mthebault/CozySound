@@ -227,7 +227,24 @@ module.exports = SelectedTracksList = (function(_super) {
     }
   };
 
-  SelectedTracksList.prototype.editTracks = function() {};
+  SelectedTracksList.prototype.updateTracks = function() {
+    console.log('plop');
+    return $.ajax({
+      url: 'tracks',
+      type: 'PUT',
+      data: {
+        data: this.models
+      },
+      error: function(xhr) {
+        return console.error(xhr);
+      },
+      success: (function(_this) {
+        return function(data) {
+          return console.log(data);
+        };
+      })(this)
+    });
+  };
 
   return SelectedTracksList;
 
@@ -968,9 +985,18 @@ module.exports = EditionView = (function(_super) {
 
   EditionView.prototype.template = require('./templates/edition');
 
+  EditionView.prototype.el = '#edition-screen';
+
   EditionView.MERGED_ATTRIBUTES = ['title', 'artist', 'album', 'year', 'genre'];
 
   EditionView.prototype.processedAttr = {};
+
+  EditionView.prototype.events = function() {
+    return {
+      'click #edit-cancel': 'cancelEdition',
+      'click #edit-submit': 'submitEdition'
+    };
+  };
 
   EditionView.prototype.initialize = function() {
     return this.collection = window.selectedTracksList;
@@ -978,7 +1004,10 @@ module.exports = EditionView = (function(_super) {
 
   EditionView.prototype.render = function() {
     this.mergeMetaData();
-    return EditionView.__super__.render.apply(this, arguments);
+    this.cleanProcessedAttr();
+    return this.$el.append(this.template({
+      attr: this.processedAttr
+    }));
   };
 
   EditionView.prototype.mergeMetaData = function() {
@@ -987,25 +1016,80 @@ module.exports = EditionView = (function(_super) {
         var isSimilar, lastAttribute;
         lastAttribute = void 0;
         isSimilar = true;
-        _this.collection.models.forEach(function(trackAttr) {
-          console.log('loop-> lastAttribute : ', lastAttribute, ' / attr: ', trackAttr.get(attribute));
-          if (lastAttribute !== void 0 && trackAttr.get(attribute) !== lastAttribute) {
-            console.log(attribute, ' is differente');
+        _this.collection.models.forEach(function(track) {
+          if (lastAttribute !== void 0 && track.get(attribute) !== lastAttribute) {
             isSimilar = false;
           }
           if (lastAttribute === void 0) {
-            return lastAttribute = trackAttr.get(attribute);
+            return lastAttribute = track.get(attribute);
           }
         });
-        console.log('lastAttribute : ', lastAttribute, ' / similar: ', isSimilar);
         if (lastAttribute !== void 0 && isSimilar === true) {
-          console.log('set : ', attribute);
-          _this.processedAttr[attribute] = lastAttribute;
+          return _this.processedAttr[attribute] = lastAttribute;
         }
-        console.log(_this.processedAttr);
-        return console.log('');
       };
     })(this));
+  };
+
+  EditionView.prototype.cleanProcessedAttr = function() {
+    return EditionView.MERGED_ATTRIBUTES.forEach((function(_this) {
+      return function(attr) {
+        if (_this.processedAttr[attr] === void 0) {
+          return _this.processedAttr[attr] = '';
+        }
+      };
+    })(this));
+  };
+
+  EditionView.prototype.saveEditionChanges = function() {
+    var isChanged;
+    isChanged = false;
+    EditionView.MERGED_ATTRIBUTES.forEach((function(_this) {
+      return function(attr) {
+        var attrValue, inputValue;
+        attrValue = _this.processedAttr[attr];
+        inputValue = _this.$("#edit-" + attr).val();
+        if (inputValue !== '' && attrValue !== inputValue) {
+          isChanged = true;
+          return _this.computeChangeAttr(attr, inputValue);
+        }
+      };
+    })(this));
+    if (isChanged === true) {
+      return this.collection.updateTracks();
+    }
+  };
+
+  EditionView.prototype.computeChangeAttr = function(attribute, inputValue) {
+    return this.collection.models.forEach(function(track) {
+      return track.set(attribute, inputValue);
+    });
+  };
+
+  EditionView.prototype.cancelEdition = function() {
+    this.freeSelectedTracksList();
+    return this.trigger('edition-end');
+  };
+
+  EditionView.prototype.submitEdition = function() {
+    this.saveEditionChanges();
+    this.freeSelectedTracksList();
+    return this.trigger('edition-end');
+  };
+
+  EditionView.prototype.freeSelectedTracksList = function() {
+    var track, _results;
+    _results = [];
+    while (true) {
+      track = this.collection.pop();
+      track.setAsNoSelected();
+      if (this.collection.length === 0) {
+        break;
+      } else {
+        _results.push(void 0);
+      }
+    }
+    return _results;
   };
 
   return EditionView;
@@ -1018,8 +1102,8 @@ var __templateData = function template(locals) {
 var buf = [];
 var jade_mixins = {};
 var jade_interp;
-
-buf.push("<label for=\"Edit-title\">Title</label><input id=\"Edit-title\" type=\"text\" class=\"form-control\"/><label for=\"Edit-artist\">Artist</label><input id=\"Edit-artist\" type=\"text\" class=\"form-control\"/><label for=\"Edit-album\">Album</label><input id=\"Edit-album\" type=\"text\" class=\"form-control\"/><label for=\"Edit-year\">Year</label><input id=\"Edit-year\" type=\"text\" class=\"form-control\"/><label for=\"Edit-genre\">Genre</label><input id=\"Edit-genre\" type=\"text\" class=\"form-control\"/>");;return buf.join("");
+var locals_ = (locals || {}),attr = locals_.attr;
+buf.push("<div class=\"form-group\"><label for=\"Edit-title\">Title</label><input id=\"edit-title\" type=\"text\"" + (jade.attr("value", "" + (attr['title']) + "", true, false)) + " class=\"form-control\"/><label for=\"Edit-artist\">Artist</label><input id=\"edit-artist\" type=\"text\"" + (jade.attr("value", "" + (attr['artist']) + "", true, false)) + " class=\"form-control\"/><label for=\"Edit-album\">Album</label><input id=\"edit-album\" type=\"text\"" + (jade.attr("value", "" + (attr['album']) + "", true, false)) + " class=\"form-control\"/><label for=\"Edit-year\">Year</label><input id=\"edit-year\" type=\"text\"" + (jade.attr("value", "" + (attr['year']) + "", true, false)) + " class=\"form-control\"/><label for=\"Edit-genre\">Genre</label><input id=\"edit-genre\" type=\"text\"" + (jade.attr("value", "" + (attr['genre']) + "", true, false)) + " class=\"form-control\"/></div><button id=\"edit-cancel\" class=\"btn btn-default\">Cancel</button><button id=\"edit-submit\" class=\"btn btn-default\">Change</button>");;return buf.join("");
 };
 if (typeof define === 'function' && define.amd) {
   define([], function() {
@@ -1286,7 +1370,17 @@ module.exports = ContentScreen = (function() {
   ContentScreen.prototype.renderTracksEdition = function() {
     $('#content-screen').append(this.skeletonEdition);
     this.editionView = new EditionView;
+    this.listenTo(this.editionView, 'edition-end', this.finishEdition);
     return this.editionView.render();
+  };
+
+  ContentScreen.prototype.finishEdition = function() {
+    this.removeTracksEdition();
+    return this.renderAllTracks();
+  };
+
+  ContentScreen.prototype.removeTracksEdition = function() {
+    return this.editionView.remove();
   };
 
   return ContentScreen;

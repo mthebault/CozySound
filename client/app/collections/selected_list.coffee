@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/23 19:30:42 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/25 16:32:35 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/25 23:08:25 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -78,6 +78,16 @@ module.exports = class SelectedTracksList extends Backbone.Collection
 
 
     ############################ Edition tracks #################################
-    editTracks: ->
+    updateTracks: ->
+        console.log 'plop'
+        $.ajax
+            url: 'tracks'
+            type: 'PUT'
+            data: {data: @models}
+            error: (xhr) ->
+                console.error xhr
+            success: (data) =>
+                console.log data
+
 
     ###################### END - Edition tracks - END ###########################

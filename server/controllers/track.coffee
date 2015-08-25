@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/19 06:50:00 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/25 12:26:23 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/25 23:02:09 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -43,6 +43,10 @@ module.exports.all = (req, res, next) ->
         else
             res.status(200).send(data)
 
+
+module.exports.update = (req, res, next) ->
+    console.log req.body
+    res.status(200).send()
 
 
 
