@@ -6,11 +6,12 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/20 18:08:58 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/24 18:37:18 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/25 13:30:54 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 BaseView = require '../../../lib/base_view'
+content = require '../../content_screen'
 
 ###
 # Each TrackView represent a track in a collection
@@ -37,7 +38,8 @@ module.exports = class TrackView extends BaseView
     ########################## Manage Select stat ###############################
     onTrackClicked: (event) -> # Check if shift or control have been pressed
         isShiftPressed = event.shiftKey or false
-        window.app.selectedTracksList.onTrackClicked @model, isShiftPressed
+        console.log content
+        content.selectedTracksList.onTrackClicked @model, isShiftPressed
 
     changeSelectStat: ->
         if @model.isSelected()

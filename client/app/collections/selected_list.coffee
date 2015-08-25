@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/23 19:30:42 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/24 19:32:01 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/25 13:25:01 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -56,9 +56,8 @@ module.exports = class SelectedTracksList extends Backbone.Collection
             @remove model
             model.setAsNoSelected()
 
-    #################### END - Manage Select Stat - END #########################
-
-
+    # Trigger an event when a some track is selected to pop the action track
+    # menu. A other event is trigger to remove it
     add: (models, options) ->
         if @length == 0
             @trigger 'selectionTracksState', true
@@ -68,3 +67,11 @@ module.exports = class SelectedTracksList extends Backbone.Collection
         super models, options
         if @length == 0
             @trigger 'selectionTracksState', false
+    #################### END - Manage Select Stat - END #########################
+
+
+
+    ############################ Edition tracks #################################
+    editTracks: ->
+
+    ###################### END - Edition tracks - END ###########################

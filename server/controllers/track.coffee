@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/19 06:50:00 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/24 13:56:06 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/25 12:26:23 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -19,8 +19,9 @@ log = require('printit')
     prefix: 'track'
 
 
+# Fetch params.nbTracks tracks from params.start
 module.exports.fetchRange = (req, res, next) ->
-    if not req.params.start and not req.params.end
+    if not req.params.start or not req.params.nbTracks
         err = new Error "Bad arguments, no range given"
         err.status = 400
         return next err

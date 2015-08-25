@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 15:30:33 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/24 19:21:54 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/25 12:57:37 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -19,20 +19,14 @@ module.exports = class Router extends Backbone.Router
 
     routes:
         '': 'main'
+        'edition': 'edition'
 
     # For the moment the view collection is recreate each time the page is
     # loaded
     main: ->
-        @_loadAllTracks()
-
-
-    _loadAllTracks: ->
-        @_renderAllTracks()
         if not app.baseCollection.lenght > 0
             app.baseCollection.fetch
                 error: (error) ->
                     console.log error
-
-    _renderAllTracks: ->
-        @contentView = app.baseCollectionView
-        @contentView.render()
+                success: ->
+                    console.log 'coll: ', app.baseCollectionView

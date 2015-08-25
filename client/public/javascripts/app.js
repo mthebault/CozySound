@@ -110,7 +110,7 @@
   globals.require = require;
 })();
 require.register("application", function(exports, require, module) {
-var AppView, SelectedTracksList, TracksList, TracksView, UploadQueue;
+var AppView, TracksList, UploadQueue;
 
 AppView = require('./views/app_view');
 
@@ -118,28 +118,17 @@ TracksList = require('./collections/tracks_list');
 
 UploadQueue = require('./collections/upload_queue');
 
-TracksView = require('./views/content/track/tracks_view');
-
-SelectedTracksList = require('./collections/selected_list');
-
 module.exports = {
   initialize: function() {
     var Router, mainView;
     window.app = this;
     this.baseCollection = new TracksList;
-    this.selectedTracksList = new SelectedTracksList;
-    this.selectedTracksList.baseCollection = this.baseCollection;
-    mainView = new AppView({
-      selectedTracksList: this.selectedTracksList
-    });
+    mainView = new AppView;
     mainView.render();
-    this.baseCollectionView = new TracksView({
-      collection: this.baseCollection
-    });
-    this.uploadQueue = new UploadQueue(this.baseCollection);
     Router = require('router');
     this.router = new Router();
     Backbone.history.start();
+    this.uploadQueue = new UploadQueue(this.baseCollection);
     if (typeof Object.freeze === 'function') {
       return Object.freeze(this);
     }
@@ -233,6 +222,8 @@ module.exports = SelectedTracksList = (function(_super) {
     }
   };
 
+  SelectedTracksList.prototype.editTracks = function() {};
+
   return SelectedTracksList;
 
 })(Backbone.Collection);
@@ -283,7 +274,7 @@ module.exports = TracksList = (function(_super) {
       success: (function(_this) {
         return function(data) {
           _this.cursorFrameDownload += data.length;
-          return _this.set(data, {
+          return _this.add(data, {
             remove: false
           });
         };
@@ -893,27 +884,21 @@ module.exports = Router = (function(_super) {
   Router.prototype.contentView = null;
 
   Router.prototype.routes = {
-    '': 'main'
+    '': 'main',
+    'edition': 'edition'
   };
 
   Router.prototype.main = function() {
-    return this._loadAllTracks();
-  };
-
-  Router.prototype._loadAllTracks = function() {
-    this._renderAllTracks();
     if (!app.baseCollection.lenght > 0) {
       return app.baseCollection.fetch({
         error: function(error) {
           return console.log(error);
+        },
+        success: function() {
+          return console.log('coll: ', app.baseCollectionView);
         }
       });
     }
-  };
-
-  Router.prototype._renderAllTracks = function() {
-    this.contentView = app.baseCollectionView;
-    return this.contentView.render();
   };
 
   return Router;
@@ -922,15 +907,15 @@ module.exports = Router = (function(_super) {
 });
 
 ;require.register("views/app_view", function(exports, require, module) {
-var AppView, BaseView, ContextMenu, LeftMenu, PlayerScreen,
+var AppView, BaseView, ContentScreen, LeftMenu, PlayerScreen,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
 BaseView = require('../lib/base_view');
 
-ContextMenu = require('./context_menu');
-
 LeftMenu = require('./left_menu');
+
+ContentScreen = require('./content_screen');
 
 PlayerScreen = require('./player_screen');
 
@@ -954,23 +939,13 @@ module.exports = AppView = (function(_super) {
 
   AppView.prototype.template = require('./templates/home');
 
-  AppView.prototype.initialize = function(options) {
-    AppView.__super__.initialize.apply(this, arguments);
-    return this.selectedTracksList = options.selectedTracksList;
-  };
-
   AppView.prototype.afterRender = function() {
-    this.contextMenu = new ContextMenu({
-      selectedTracksList: this.selectedTracksList
-    });
-    this.$('#context-menu').append(this.contextMenu.$el);
-    this.contextMenu.render();
     this.leftMenu = new LeftMenu;
-    this.$('#left-menu').append(this.leftMenu.$el);
     this.leftMenu.render();
     this.playerScreen = new PlayerScreen;
-    this.$('#player-screen').append(this.playerScreen.$el);
-    return this.playerScreen.render();
+    this.playerScreen.render();
+    this.contentScreen = new ContentScreen;
+    return this.contentScreen.render();
   };
 
   return AppView;
@@ -1017,11 +992,13 @@ if (typeof define === 'function' && define.amd) {
 });
 
 ;require.register("views/content/track/track_view", function(exports, require, module) {
-var BaseView, TrackView,
+var BaseView, TrackView, content,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
 BaseView = require('../../../lib/base_view');
+
+content = require('../../content_screen');
 
 
 /*
@@ -1059,7 +1036,8 @@ module.exports = TrackView = (function(_super) {
   TrackView.prototype.onTrackClicked = function(event) {
     var isShiftPressed;
     isShiftPressed = event.shiftKey || false;
-    return window.app.selectedTracksList.onTrackClicked(this.model, isShiftPressed);
+    console.log(content);
+    return content.selectedTracksList.onTrackClicked(this.model, isShiftPressed);
   };
 
   TrackView.prototype.changeSelectStat = function() {
@@ -1098,7 +1076,7 @@ module.exports = TracksView = (function(_super) {
 
   TracksView.prototype.template = require('./templates/tracks');
 
-  TracksView.prototype.el = '#content';
+  TracksView.prototype.el = '#display-screen';
 
   TracksView.prototype.itemview = TrackView;
 
@@ -1140,20 +1118,57 @@ module.exports = TracksView = (function(_super) {
 })(ViewCollection);
 });
 
+;require.register("views/content_screen", function(exports, require, module) {
+var ContentScreen, ContextMenu, SelectedTracksList, TracksView;
+
+ContextMenu = require('./context_menu');
+
+SelectedTracksList = require('../collections/selected_list');
+
+TracksView = require('../views/content/track/tracks_view');
+
+module.exports = ContentScreen = (function() {
+  ContentScreen.prototype._collection = null;
+
+  ContentScreen.prototype._collectionView = null;
+
+  function ContentScreen() {
+    _.extend(this, Backbone.Events);
+    this.baseCollection = window.app.baseCollection;
+    this.selectedTracksList = new SelectedTracksList;
+    this.selectedTracksList.baseCollection = this.baseCollection;
+    this.contextMenu = new ContextMenu({
+      selectedTracksList: this.selectedTracksList
+    });
+    this._collection = this.baseCollection;
+    this.listenTo(this.selectedTracksList, 'selectionTracksState', this.contextMenu.manageActionTrackMenu);
+  }
+
+  ContentScreen.prototype.render = function() {
+    this.contextMenu.render();
+    this._collectionView = new TracksView({
+      collection: this._collection
+    });
+    return this._collectionView.render();
+  };
+
+  return ContentScreen;
+
+})();
+});
+
 ;require.register("views/context_menu", function(exports, require, module) {
-var BaseView, ContextMenu, app,
+var BaseView, ContextMenu,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
 BaseView = require('../lib/base_view');
 
-app = require('../application');
-
 
 /*
  * Context_menu represent the menu on the top of the app. His goal is to work
- * with tracks_screen. It must display the dynamiques option when the user select
- * one or several song in the tracks screen.
+ * with tracks_display. It must display the dynamiques option when the user select
+ * one or several song in the tracks display.
  */
 
 module.exports = ContextMenu = (function(_super) {
@@ -1163,23 +1178,18 @@ module.exports = ContextMenu = (function(_super) {
     return ContextMenu.__super__.constructor.apply(this, arguments);
   }
 
+  ContextMenu.prototype.el = '#context-menu';
+
   ContextMenu.prototype.template = require('./templates/context_menu');
 
-  ContextMenu.prototype.tagName = 'div';
-
-  ContextMenu.prototype.className = 'context-menu';
-
-  ContextMenu.trackMenuActive;
+  ContextMenu.prototype.trackMenuActive = false;
 
   ContextMenu.prototype.events = {
     'change #upload-files': 'lauchUploadFiles',
+    'click #edit-tracks': function(e) {
+      return this.selectedTracksList.editTracks();
+    },
     'click #fetch': 'fetchBaseCollection'
-  };
-
-  ContextMenu.prototype.initialize = function(options) {
-    ContextMenu.__super__.initialize.apply(this, arguments);
-    this.selectedTracksList = options.selectedTracksList;
-    return this.listenTo(this.selectedTracksList, 'selectionTracksState', this.manageActionTrackMenu);
   };
 
   ContextMenu.prototype.afterRender = function() {
@@ -1188,14 +1198,14 @@ module.exports = ContextMenu = (function(_super) {
   };
 
   ContextMenu.prototype.fetchBaseCollection = function() {
-    return app.baseCollection.fetch();
+    return window.app.baseCollection.fetch();
   };
 
   ContextMenu.prototype.lauchUploadFiles = function(event) {
     var files, target, _ref;
     files = ((_ref = event.dataTransfert) != null ? _ref.files : void 0) || event.target.files;
     if (files.length) {
-      app.uploadQueue.addBlobs(files);
+      window.app.uploadQueue.addBlobs(files);
       if (event.target != null) {
         target = $(event.target);
         return target.replaceWith(target.clone(true));
@@ -1242,6 +1252,8 @@ module.exports = LeftMenu = (function(_super) {
 
   LeftMenu.prototype.className = 'left-menu';
 
+  LeftMenu.prototype.el = '#left-menu';
+
   return LeftMenu;
 
 })(BaseView);
@@ -1263,6 +1275,8 @@ module.exports = PlayerScreen = (function(_super) {
 
   PlayerScreen.prototype.template = require('./templates/player_screen');
 
+  PlayerScreen.prototype.el = '#player-screen';
+
   PlayerScreen.prototype.tagName = 'div';
 
   PlayerScreen.prototype.className = 'player-screen';
@@ -1272,13 +1286,32 @@ module.exports = PlayerScreen = (function(_super) {
 })(BaseView);
 });
 
+;require.register("views/templates/content_screen", function(exports, require, module) {
+var __templateData = function template(locals) {
+var buf = [];
+var jade_mixins = {};
+var jade_interp;
+
+buf.push("<div id=\"context-menu\"></div><div id=\"display-screen\"></div>");;return buf.join("");
+};
+if (typeof define === 'function' && define.amd) {
+  define([], function() {
+    return __templateData;
+  });
+} else if (typeof module === 'object' && module && module.exports) {
+  module.exports = __templateData;
+} else {
+  __templateData;
+}
+});
+
 ;require.register("views/templates/context_menu", function(exports, require, module) {
 var __templateData = function template(locals) {
 var buf = [];
 var jade_mixins = {};
 var jade_interp;
 
-buf.push("<div id=\"file-manager\" class=\"btn-group\"><input id=\"upload-files\" name=\"upload-files\" type=\"file\" multiple=\"multiple\" accept=\"audio/*\" class=\"btn btn-default btn-file\"/><button id=\"fetch\" type=\"button\" class=\"btn btn-default\">FETCH</button><button id=\"edit-tracks\" type=\"button\" class=\"btn btn-default\">EDIT</button></div>");;return buf.join("");
+buf.push("<ul class=\"nav nav-tabs\"><input id=\"upload-files\" name=\"upload-files\" type=\"file\" multiple=\"multiple\" accept=\"audio/*\" role=\"presentation\" class=\"btn btn-default btn-file\"/><li id=\"fetch\" role=\"presentation\" class=\"btn btn-default\">FETCH</li><li id=\"edit-tracks\" role=\"presentation\" class=\"btn btn-default\">EDIT</li></ul>");;return buf.join("");
 };
 if (typeof define === 'function' && define.amd) {
   define([], function() {
@@ -1297,7 +1330,7 @@ var buf = [];
 var jade_mixins = {};
 var jade_interp;
 
-buf.push("<div id=\"context-menu\" class=\"navbar navbar-fixed-top\"></div><div class=\"container-fluid\"><div class=\"row-fluid columns content\"><div class=\"row\"><div id=\"left-menu\" class=\"col-sm-3 col-md-2 left-menu\"></div><div id=\"content\" class=\"col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2\"></div></div></div></div><div id=\"player-screen\" class=\"footer player\"></div>");;return buf.join("");
+buf.push("<div class=\"container-fluid\"><div id=\"left-menu\" class=\"sidebar\"></div><div id=\"content-screen\" class=\"content container-fluid\"><div id=\"context-menu\"></div><div id=\"display-screen\"></div></div></div><div id=\"player-screen\" class=\"footer player\"></div>");;return buf.join("");
 };
 if (typeof define === 'function' && define.amd) {
   define([], function() {
@@ -1335,7 +1368,7 @@ var buf = [];
 var jade_mixins = {};
 var jade_interp;
 
-buf.push("<div class=\"demo-content-player\"><h1>Player screen</h1></div>");;return buf.join("");
+buf.push("<h1>Player screen</h1>");;return buf.join("");
 };
 if (typeof define === 'function' && define.amd) {
   define([], function() {
