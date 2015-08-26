@@ -6,17 +6,25 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/25 19:58:03 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/25 23:05:46 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/26 11:18:04 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 BaseView = require '../../../lib/base_view'
 
+###
+# Edition View is the view manager of the tracks edition screen. It handle the
+# processing of the data's selectedTracksList tracks to merge it and in case of
+###
 module.exports = class EditionView extends BaseView
     template: require './templates/edition'
     el: '#edition-screen'
 
     @MERGED_ATTRIBUTES: ['title', 'artist', 'album', 'year', 'genre']
+
+    # Take a count of the number of track in update processing to send a
+    # notification when it's finish
+    processingUpdate: 0
 
     processedAttr: {}
 
@@ -51,15 +59,13 @@ module.exports = class EditionView extends BaseView
                 @processedAttr[attr] = ''
 
     saveEditionChanges: ->
-        isChanged = false
+        newInputAttr = new Array
         EditionView.MERGED_ATTRIBUTES.forEach (attr) =>
             attrValue = @processedAttr[attr]
             inputValue = @$("#edit-#{attr}").val()
             if inputValue != '' and attrValue != inputValue
-                isChanged = true
-                @computeChangeAttr attr, inputValue
-        if isChanged == true
-            @collection.updateTracks()
+                newInputAttr.push [attr, inputValue]
+        @collection.updateTracks newInputAttr
 
     computeChangeAttr: (attribute, inputValue) ->
         @collection.models.forEach (track) ->
@@ -73,7 +79,6 @@ module.exports = class EditionView extends BaseView
 
     submitEdition: ->
         @saveEditionChanges()
-        @freeSelectedTracksList()
         @trigger 'edition-end'
 
     freeSelectedTracksList: ->

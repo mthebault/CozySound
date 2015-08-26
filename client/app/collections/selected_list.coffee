@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/23 19:30:42 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/25 23:08:25 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/26 11:52:36 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -26,6 +26,9 @@ module.exports = class SelectedTracksList extends Backbone.Collection
     # Keep the last track selected to have a starting point with shift. track is
     # a model
     _lastTrackSelected: null
+
+    # Take a count of the number of track in update processing
+    processingUpdate: 0
 
     initialize: ->
         super
@@ -78,16 +81,30 @@ module.exports = class SelectedTracksList extends Backbone.Collection
 
 
     ############################ Edition tracks #################################
-    updateTracks: ->
-        console.log 'plop'
-        $.ajax
-            url: 'tracks'
-            type: 'PUT'
-            data: {data: @models}
-            error: (xhr) ->
-                console.error xhr
-            success: (data) =>
-                console.log data
+
+    updateTracks: (newAttrs) ->
+        console.log newAttrs
+        errorUpdating = 0
+        successUpdating = 0
+        loop
+            track = @pop()
+            track.setAsNoSelected()
+            loop
+                setOfAttr = newAttrs.pop()
+                if track.get(setOfAttr[0]) != setOfAttr[1]
+                    track.set setOfAttr[0], setOfAttr[1]
+                    @processingUpdate++
+                    console.log 'send: ', track
+                    track.sync 'update', track,
+                        error: (data) ->
+                            @processingUpdate--
+                            errorUpdating++
+                        success: (data) ->
+                            @processingUpdate--
+                            successUpdating++
+                break if newAttrs.length == 0
+            break if @length == 0
+
 
 
     ###################### END - Edition tracks - END ###########################

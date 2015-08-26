@@ -165,6 +165,8 @@ module.exports = SelectedTracksList = (function(_super) {
 
   SelectedTracksList.prototype._lastTrackSelected = null;
 
+  SelectedTracksList.prototype.processingUpdate = 0;
+
   SelectedTracksList.prototype.initialize = function() {
     SelectedTracksList.__super__.initialize.apply(this, arguments);
     return window.selectedTracksList = this;
@@ -227,23 +229,43 @@ module.exports = SelectedTracksList = (function(_super) {
     }
   };
 
-  SelectedTracksList.prototype.updateTracks = function() {
-    console.log('plop');
-    return $.ajax({
-      url: 'tracks',
-      type: 'PUT',
-      data: {
-        data: this.models
-      },
-      error: function(xhr) {
-        return console.error(xhr);
-      },
-      success: (function(_this) {
-        return function(data) {
-          return console.log(data);
-        };
-      })(this)
-    });
+  SelectedTracksList.prototype.updateTracks = function(newAttrs) {
+    var errorUpdating, setOfAttr, successUpdating, track, _results;
+    console.log(newAttrs);
+    errorUpdating = 0;
+    successUpdating = 0;
+    _results = [];
+    while (true) {
+      track = this.pop();
+      track.setAsNoSelected();
+      while (true) {
+        setOfAttr = newAttrs.pop();
+        if (track.get(setOfAttr[0]) !== setOfAttr[1]) {
+          track.set(setOfAttr[0], setOfAttr[1]);
+          this.processingUpdate++;
+          console.log('send: ', track);
+          track.sync('update', track, {
+            error: function(data) {
+              this.processingUpdate--;
+              return errorUpdating++;
+            },
+            success: function(data) {
+              this.processingUpdate--;
+              return successUpdating++;
+            }
+          });
+        }
+        if (newAttrs.length === 0) {
+          break;
+        }
+      }
+      if (this.length === 0) {
+        break;
+      } else {
+        _results.push(void 0);
+      }
+    }
+    return _results;
   };
 
   return SelectedTracksList;
@@ -976,6 +998,12 @@ var BaseView, EditionView,
 
 BaseView = require('../../../lib/base_view');
 
+
+/*
+ * Edition View is the view manager of the tracks edition screen. It handle the
+ * processing of the data's selectedTracksList tracks to merge it and in case of
+ */
+
 module.exports = EditionView = (function(_super) {
   __extends(EditionView, _super);
 
@@ -988,6 +1016,8 @@ module.exports = EditionView = (function(_super) {
   EditionView.prototype.el = '#edition-screen';
 
   EditionView.MERGED_ATTRIBUTES = ['title', 'artist', 'album', 'year', 'genre'];
+
+  EditionView.prototype.processingUpdate = 0;
 
   EditionView.prototype.processedAttr = {};
 
@@ -1042,22 +1072,19 @@ module.exports = EditionView = (function(_super) {
   };
 
   EditionView.prototype.saveEditionChanges = function() {
-    var isChanged;
-    isChanged = false;
+    var newInputAttr;
+    newInputAttr = new Array;
     EditionView.MERGED_ATTRIBUTES.forEach((function(_this) {
       return function(attr) {
         var attrValue, inputValue;
         attrValue = _this.processedAttr[attr];
         inputValue = _this.$("#edit-" + attr).val();
         if (inputValue !== '' && attrValue !== inputValue) {
-          isChanged = true;
-          return _this.computeChangeAttr(attr, inputValue);
+          return newInputAttr.push([attr, inputValue]);
         }
       };
     })(this));
-    if (isChanged === true) {
-      return this.collection.updateTracks();
-    }
+    return this.collection.updateTracks(newInputAttr);
   };
 
   EditionView.prototype.computeChangeAttr = function(attribute, inputValue) {
@@ -1073,7 +1100,6 @@ module.exports = EditionView = (function(_super) {
 
   EditionView.prototype.submitEdition = function() {
     this.saveEditionChanges();
-    this.freeSelectedTracksList();
     return this.trigger('edition-end');
   };
 
