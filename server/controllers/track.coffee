@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/19 06:50:00 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/26 12:57:13 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/26 16:01:13 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -48,7 +48,9 @@ module.exports.update = (req, res, next) ->
     data = req.body
     Track.find data.id, (err, trackFind) ->
         return next err if err
-        data.lastModified = moment(Date.now()).toISOString()
+        data.lastModified = moment(Date.now())
+        #TODO: set correctly the date
+        console.log data.lastModified
         trackFind.updateAttributes data, (err) ->
             if err
                 res.send
@@ -102,7 +104,6 @@ module.exports.create = (req, res, next) ->
         canceled = false
         uploadStream = null
 
-        console.log 'MODIF: ', lastModification
         # we have no title for this track, give up
         if not title or title is ""
             err = new Error "Invalid arguments: no title given"

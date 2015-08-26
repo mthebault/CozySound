@@ -118,6 +118,11 @@ TracksList = require('./collections/tracks_list');
 
 UploadQueue = require('./collections/upload_queue');
 
+
+/*
+ * Represent the app, all global variables must be set in it and not in window
+ */
+
 module.exports = {
   initialize: function() {
     var Router, mainView;
@@ -134,6 +139,29 @@ module.exports = {
     }
   }
 };
+});
+
+;require.register("collections/playlists_list", function(exports, require, module) {
+var Playlist, PlaylistList,
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+Playlist = require('../models/playlist');
+
+module.exports = PlaylistList = (function(_super) {
+  __extends(PlaylistList, _super);
+
+  function PlaylistList() {
+    return PlaylistList.__super__.constructor.apply(this, arguments);
+  }
+
+  PlaylistList.prototype.model = Playlist;
+
+  PlaylistList.prototype.url = 'playlist';
+
+  return PlaylistList;
+
+})(Backbone.Collection);
 });
 
 ;require.register("collections/selected_list", function(exports, require, module) {
@@ -161,7 +189,7 @@ module.exports = SelectedTracksList = (function(_super) {
 
   SelectedTracksList.prototype.model = Track;
 
-  SelectedTracksList.prototype.url = 'tracks';
+  SelectedTracksList.prototype.url = 'track';
 
   SelectedTracksList.prototype._lastTrackSelected = null;
 
@@ -323,7 +351,7 @@ module.exports = TracksList = (function(_super) {
 
   TracksList.prototype.model = Track;
 
-  TracksList.prototype.url = 'tracks';
+  TracksList.prototype.url = 'track';
 
   TracksList.prototype.sizeFrameDownload = 5;
 
@@ -337,7 +365,7 @@ module.exports = TracksList = (function(_super) {
 
   TracksList.prototype.fetch = function() {
     return $.ajax({
-      url: "tracks/" + this.cursorFrameDownload + "/" + this.sizeFrameDownload,
+      url: "track/" + this.cursorFrameDownload + "/" + this.sizeFrameDownload,
       type: 'GET',
       error: function(xhr) {
         return console.error(xhr);
@@ -764,6 +792,25 @@ module.exports = {
   '#': '#',
   'status': 'Status'
 };
+});
+
+;require.register("models/playlist", function(exports, require, module) {
+var Playlist,
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+module.exports = Playlist = (function(_super) {
+  __extends(Playlist, _super);
+
+  function Playlist() {
+    return Playlist.__super__.constructor.apply(this, arguments);
+  }
+
+  Playlist.prototype.url = 'playlist';
+
+  return Playlist;
+
+})(Backbone.Model);
 });
 
 ;require.register("models/track", function(exports, require, module) {
@@ -1387,37 +1434,45 @@ module.exports = ContentScreen = (function() {
   function ContentScreen() {
     _.extend(this, Backbone.Events);
     this.baseCollection = window.app.baseCollection;
+    this.menu = window.app.leftMenu;
     this.selectedTracksList = new SelectedTracksList;
     this.selectedTracksList.baseCollection = this.baseCollection;
+    this.currentView = new Array;
     this.listenTo(this.selectedTracksList, 'selectionTracksState', this.updateSelectionTracksState);
-    this._collection = this.baseCollection;
+    this.listenTo(this.menu, 'playlist-create', this.createNewPlaylist);
   }
+
+  ContentScreen.prototype.removeCurrentView = function() {
+    var view, _results;
+    _results = [];
+    while (true) {
+      if (this.currentView.length === 0) {
+        break;
+      }
+      view = this.currentView.pop();
+      _results.push(view.remove());
+    }
+    return _results;
+  };
 
   ContentScreen.prototype.renderAllTracks = function() {
     $('#content-screen').append(this.skeletonTrack);
     this._contextMenu = new ContextMenu({
       selectedTracksList: this.selectedTracksList
     });
+    this.listenTo(this._contextMenu, 'lauchTracksEdition', this.lauchTracksEdition);
+    this._contextMenu.render();
+    this.currentView.push(this._contextMenu);
     this._collectionView = new TracksView({
       collection: this.baseCollection
     });
     this._collectionView.render();
-    this.listenTo(this._contextMenu, 'lauchTracksEdition', this.lauchTracksEdition);
-    return this._contextMenu.render();
-  };
-
-  ContentScreen.prototype.removeAllTracks = function() {
-    this._contextMenu.remove();
-    return this._collectionView.remove();
-  };
-
-  ContentScreen.prototype.updateSelectionTracksState = function(isUsed) {
-    return this._contextMenu.manageActionTrackMenu(isUsed);
+    return this.currentView.push(this._collectionView);
   };
 
   ContentScreen.prototype.lauchTracksEdition = function() {
     this._contextMenu.manageActionTrackMenu(false);
-    this.removeAllTracks();
+    this.removeCurrentView();
     return this.renderTracksEdition();
   };
 
@@ -1425,16 +1480,21 @@ module.exports = ContentScreen = (function() {
     $('#content-screen').append(this.skeletonEdition);
     this.editionView = new EditionView;
     this.listenTo(this.editionView, 'edition-end', this.finishEdition);
-    return this.editionView.render();
+    this.editionView.render();
+    return this.currentView.push(this.editionView);
   };
 
   ContentScreen.prototype.finishEdition = function() {
-    this.removeTracksEdition();
+    this.removeCurrentView();
     return this.renderAllTracks();
   };
 
-  ContentScreen.prototype.removeTracksEdition = function() {
-    return this.editionView.remove();
+  ContentScreen.prototype.createNewPlaylist = function() {
+    return this.removeCurrentView();
+  };
+
+  ContentScreen.prototype.updateSelectionTracksState = function(isUsed) {
+    return this._contextMenu.manageActionTrackMenu(isUsed);
   };
 
   return ContentScreen;
@@ -1543,8 +1603,12 @@ module.exports = LeftMenu = (function(_super) {
     'click #menu-playlist-new': 'createNewPlaylist'
   };
 
+  LeftMenu.prototype.initialize = function() {
+    return window.app.leftMenu = this;
+  };
+
   LeftMenu.prototype.createNewPlaylist = function() {
-    return console.log('plop');
+    return this.trigger('playlist-create');
   };
 
   return LeftMenu;

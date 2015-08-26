@@ -1,23 +1,17 @@
 # **************************************************************************** #
 #                                                                              #
 #                                                         :::      ::::::::    #
-#    routes.coffee                                      :+:      :+:    :+:    #
+#    playlists_list.coffee                              :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
-#    Created: 2015/08/19 06:48:47 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/26 17:18:46 by ppeltier         ###   ########.fr        #
+#    Created: 2015/08/26 17:16:29 by ppeltier          #+#    #+#              #
+#    Updated: 2015/08/26 18:13:28 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
-track = require './track'
+Playlist = require '../models/playlist'
 
-module.exports =
-    'track':
-        get: track.all
-        post: track.create
-        put: track.update
-
-
-    'track/:start/:nbTracks':
-        get: track.fetchRange
+module.exports = class PlaylistList extends Backbone.Collection
+    model: Playlist
+    url: 'playlist'

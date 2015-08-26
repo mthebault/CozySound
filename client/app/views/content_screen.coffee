@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/25 09:53:27 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/25 22:14:29 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/26 18:20:11 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -24,20 +24,29 @@ module.exports = class ContentScreen
         _.extend @, Backbone.Events
 
         @baseCollection = window.app.baseCollection
+        @menu = window.app.leftMenu
 
         # SelectedTracksList is a collection of all tracks selected by the user,
         # all acions on tracks must be handle by it
         @selectedTracksList = new SelectedTracksList
         @selectedTracksList.baseCollection = @baseCollection
 
+        # An array of all view currently prompt
+        @currentView = new Array
 
         # Listen if a the selection collection in/out of state empty, pop/remove
         # the action menu
         @listenTo @selectedTracksList, 'selectionTracksState', @updateSelectionTracksState
 
-        # Set baseCollection, so all tracks as the first collection printed
-        @_collection = @baseCollection
+        # Listen the creation of a new playlist
+        @listenTo @menu, 'playlist-create', @createNewPlaylist
 
+
+    removeCurrentView: ->
+        loop
+            break if @currentView.length == 0
+            view = @currentView.pop()
+            view.remove()
 
     ############################ ALL TRACKS #####################################
     # Render the context menu, create a view collection of the selectioned
@@ -47,31 +56,27 @@ module.exports = class ContentScreen
         # Initialize the contextMenu
         @_contextMenu = new ContextMenu
             selectedTracksList: @selectedTracksList
+        # Listen if the user want edit the selectioned tracks
+        @listenTo @_contextMenu, 'lauchTracksEdition', @lauchTracksEdition
+        @_contextMenu.render()
+        @currentView.push @_contextMenu
+
 
         # Initialize the tracks displayed
         @_collectionView = new TracksView
             collection: @baseCollection
         @_collectionView.render()
-
-        # Listen if the user want edit the selectioned tracks
-        @listenTo @_contextMenu, 'lauchTracksEdition', @lauchTracksEdition
-        @_contextMenu.render()
+        @currentView.push @_collectionView
 
 
-    removeAllTracks: ->
-        @_contextMenu.remove()
-        @_collectionView.remove()
     ###################### END - ALL TRACKS - END ###############################
 
-
-    updateSelectionTracksState: (isUsed) ->
-        @_contextMenu.manageActionTrackMenu isUsed
 
     ############################ TRACKS EDITION #################################
     # Remove current content and lauch edition
     lauchTracksEdition: ->
         @_contextMenu.manageActionTrackMenu false
-        @removeAllTracks()
+        @removeCurrentView()
         @renderTracksEdition()
 
     renderTracksEdition: ->
@@ -81,13 +86,20 @@ module.exports = class ContentScreen
         # Listen the end of the edition
         @listenTo @editionView, 'edition-end', @finishEdition
         @editionView.render()
+        @currentView.push @editionView
 
     finishEdition: ->
-        @removeTracksEdition()
+        @removeCurrentView()
         @renderAllTracks()
-
-    removeTracksEdition: ->
-        @editionView.remove()
-
     ###################### END - TRACKS EDITION - END ###########################
+
+
+    ################################ EVENTS #####################################
+    createNewPlaylist: ->
+        @removeCurrentView()
+
+
+    updateSelectionTracksState: (isUsed) ->
+        @_contextMenu.manageActionTrackMenu isUsed
+    ########################## END - EVENTS - END ###############################
 

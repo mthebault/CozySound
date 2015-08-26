@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/23 19:30:42 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/26 12:57:54 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/26 17:47:23 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -21,7 +21,7 @@ Track = require './../models/track'
 ###
 module.exports = class SelectedTracksList extends Backbone.Collection
     model: Track
-    url: 'tracks'
+    url: 'track'
 
     # Keep the last track selected to have a starting point with shift. track is
     # a model
