@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/19 06:50:00 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/26 11:38:05 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/26 12:38:51 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -54,6 +54,7 @@ module.exports.update = (req, res, next) ->
                 res.send
                     error: true
                     code: 'EUPDATE'
+                    data: trackFind
                     msg: 'model err update'
             else
                 res.status(200).send(data)

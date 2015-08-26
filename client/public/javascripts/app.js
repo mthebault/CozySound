@@ -167,6 +167,10 @@ module.exports = SelectedTracksList = (function(_super) {
 
   SelectedTracksList.prototype.processingUpdate = 0;
 
+  SelectedTracksList.prototype.errorUpdating = 0;
+
+  SelectedTracksList.prototype.successUpdating = 0;
+
   SelectedTracksList.prototype.initialize = function() {
     SelectedTracksList.__super__.initialize.apply(this, arguments);
     return window.selectedTracksList = this;
@@ -230,35 +234,40 @@ module.exports = SelectedTracksList = (function(_super) {
   };
 
   SelectedTracksList.prototype.updateTracks = function(newAttrs) {
-    var errorUpdating, setOfAttr, successUpdating, track, _results;
-    console.log(newAttrs);
+    var errorUpdating, i, memory, setOfAttr, successUpdating, track, _results;
     errorUpdating = 0;
     successUpdating = 0;
+    setOfAttr = null;
     _results = [];
     while (true) {
       track = this.pop();
       track.setAsNoSelected();
+      i = 0;
       while (true) {
-        setOfAttr = newAttrs.pop();
+        setOfAttr = newAttrs[i];
         if (track.get(setOfAttr[0]) !== setOfAttr[1]) {
+          memory = track.get(setOfAttr[0]);
           track.set(setOfAttr[0], setOfAttr[1]);
-          this.processingUpdate++;
-          console.log('send: ', track);
-          track.sync('update', track, {
-            error: function(data) {
-              this.processingUpdate--;
-              return errorUpdating++;
-            },
-            success: function(data) {
-              this.processingUpdate--;
-              return successUpdating++;
-            }
-          });
         }
-        if (newAttrs.length === 0) {
+        i++;
+        if (i === newAttrs.length) {
           break;
         }
       }
+      this.processingUpdate++;
+      track.sync('update', track, {
+        error: (function(_this) {
+          return function(res) {
+            _this.setUpdateError();
+            return _this.set(res.data);
+          };
+        })(this),
+        success: (function(_this) {
+          return function(data) {
+            return _this.setUpdateSuccess();
+          };
+        })(this)
+      });
       if (this.length === 0) {
         break;
       } else {
@@ -266,6 +275,24 @@ module.exports = SelectedTracksList = (function(_super) {
       }
     }
     return _results;
+  };
+
+  SelectedTracksList.prototype.setUpdateError = function() {
+    this.processingUpdate--;
+    this.errorUpdating++;
+    return this.checkProcessingUpdateQueue();
+  };
+
+  SelectedTracksList.prototype.setUpdateSuccess = function() {
+    this.processingUpdate--;
+    this.successUpdating++;
+    return this.checkProcessingUpdateQueue();
+  };
+
+  SelectedTracksList.prototype.checkProcessingUpdateQueue = function() {
+    if (this.processingUpdate === 0) {
+      return console.log('EDITION: ', this.successUpdating, ' successe and ', this.errorUpdating, ' error');
+    }
   };
 
   return SelectedTracksList;

@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/23 19:30:42 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/26 11:52:36 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/26 12:40:33 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -29,6 +29,9 @@ module.exports = class SelectedTracksList extends Backbone.Collection
 
     # Take a count of the number of track in update processing
     processingUpdate: 0
+    # Take a count of the success and error updating
+    errorUpdating: 0
+    successUpdating: 0
 
     initialize: ->
         super
@@ -83,28 +86,41 @@ module.exports = class SelectedTracksList extends Backbone.Collection
     ############################ Edition tracks #################################
 
     updateTracks: (newAttrs) ->
-        console.log newAttrs
         errorUpdating = 0
         successUpdating = 0
+        setOfAttr = null
         loop
             track = @pop()
             track.setAsNoSelected()
+            i = 0
             loop
-                setOfAttr = newAttrs.pop()
+                setOfAttr = newAttrs[i]
                 if track.get(setOfAttr[0]) != setOfAttr[1]
+                    memory = track.get(setOfAttr[0])
                     track.set setOfAttr[0], setOfAttr[1]
-                    @processingUpdate++
-                    console.log 'send: ', track
-                    track.sync 'update', track,
-                        error: (data) ->
-                            @processingUpdate--
-                            errorUpdating++
-                        success: (data) ->
-                            @processingUpdate--
-                            successUpdating++
-                break if newAttrs.length == 0
+                i++
+                break if i == newAttrs.length
+            @processingUpdate++
+            track.sync 'update', track,
+                error: (res) =>
+                    @setUpdateError()
+                    @set res.data
+                success: (data) =>
+                    @setUpdateSuccess()
             break if @length == 0
 
 
+    setUpdateError: ->
+        @processingUpdate--
+        @errorUpdating++
+        @checkProcessingUpdateQueue()
 
+    setUpdateSuccess: ->
+        @processingUpdate--
+        @successUpdating++
+        @checkProcessingUpdateQueue()
+
+    checkProcessingUpdateQueue: ->
+        if @processingUpdate == 0
+            console.log 'EDITION: ', @successUpdating, ' successe and ', @errorUpdating, ' error'
     ###################### END - Edition tracks - END ###########################
