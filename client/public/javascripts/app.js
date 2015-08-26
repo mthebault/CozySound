@@ -141,6 +141,29 @@ module.exports = {
 };
 });
 
+;require.register("collections/playlist_items", function(exports, require, module) {
+var PlaylistItems, Track,
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+Track = require('../models/track');
+
+module.exports = PlaylistItems = (function(_super) {
+  __extends(PlaylistItems, _super);
+
+  function PlaylistItems() {
+    return PlaylistItems.__super__.constructor.apply(this, arguments);
+  }
+
+  PlaylistItems.prototype.url = 'playlist';
+
+  PlaylistItems.prototype.model = Track;
+
+  return PlaylistItems;
+
+})(Backbone.Collection);
+});
+
 ;require.register("collections/playlists_list", function(exports, require, module) {
 var Playlist, PlaylistList,
   __hasProp = {}.hasOwnProperty,
@@ -157,7 +180,7 @@ module.exports = PlaylistList = (function(_super) {
 
   PlaylistList.prototype.model = Playlist;
 
-  PlaylistList.prototype.url = 'playlist';
+  PlaylistList.prototype.url = 'playlist-list';
 
   return PlaylistList;
 
@@ -794,10 +817,137 @@ module.exports = {
 };
 });
 
+;require.register("models/content_screen", function(exports, require, module) {
+var ContentScreen, ContextMenu, EditionView, SelectedTracksList, TracksView;
+
+ContextMenu = require('../views/context_menu');
+
+SelectedTracksList = require('../collections/selected_list');
+
+TracksView = require('../views/content/track/tracks_view');
+
+EditionView = require('../views/content/edition/edition_view');
+
+module.exports = ContentScreen = (function() {
+  ContentScreen.prototype.skeletonTrack = require('../views/content/track_skel');
+
+  ContentScreen.prototype.skeletonEdition = require('../views/content/edition_skel');
+
+  function ContentScreen() {
+    _.extend(this, Backbone.Events);
+    this.baseCollection = window.app.baseCollection;
+    this.menu = window.app.leftMenu;
+    this.selectedTracksList = new SelectedTracksList;
+    this.selectedTracksList.baseCollection = this.baseCollection;
+    this.currentView = new Array;
+    this.listenTo(this.selectedTracksList, 'selectionTracksState', this.updateSelectionTracksState);
+  }
+
+  ContentScreen.prototype.removeCurrentView = function() {
+    var view, _results;
+    _results = [];
+    while (true) {
+      if (this.currentView.length === 0) {
+        break;
+      }
+      view = this.currentView.pop();
+      _results.push(view.remove());
+    }
+    return _results;
+  };
+
+  ContentScreen.prototype.renderAllTracks = function() {
+    $('#content-screen').append(this.skeletonTrack);
+    this._contextMenu = new ContextMenu({
+      selectedTracksList: this.selectedTracksList
+    });
+    this.listenTo(this._contextMenu, 'lauchTracksEdition', this.lauchTracksEdition);
+    this._contextMenu.render();
+    this.currentView.push(this._contextMenu);
+    this._collectionView = new TracksView({
+      collection: this.baseCollection
+    });
+    this._collectionView.render();
+    return this.currentView.push(this._collectionView);
+  };
+
+  ContentScreen.prototype.lauchTracksEdition = function() {
+    this._contextMenu.manageActionTrackMenu(false);
+    this.removeCurrentView();
+    return this.renderTracksEdition();
+  };
+
+  ContentScreen.prototype.renderTracksEdition = function() {
+    $('#content-screen').append(this.skeletonEdition);
+    this.editionView = new EditionView;
+    this.listenTo(this.editionView, 'edition-end', this.finishEdition);
+    this.editionView.render();
+    return this.currentView.push(this.editionView);
+  };
+
+  ContentScreen.prototype.finishEdition = function() {
+    this.removeCurrentView();
+    return this.renderAllTracks();
+  };
+
+  ContentScreen.prototype.updateSelectionTracksState = function(isUsed) {
+    return this._contextMenu.manageActionTrackMenu(isUsed);
+  };
+
+  return ContentScreen;
+
+})();
+});
+
+;require.register("models/menu_screen", function(exports, require, module) {
+var Menu, MenuView, Playlist, PlaylistList;
+
+MenuView = require('../views/menu/menu_screen');
+
+PlaylistList = require('../collections/playlists_list');
+
+Playlist = require('./playlist');
+
+
+/*
+ * Menu represent the left menu section. It manage the view (MenuView) and the
+ * playlist collection (PlaylistList)
+ * Menu communicate with the content section by events which trigger some action
+ * as print playlist / print all tracks / etc...
+ */
+
+module.exports = Menu = (function() {
+  Menu.prototype.currentPlaylist = null;
+
+  function Menu() {
+    _.extend(this, Backbone.Events);
+    this.playlistsCollection = new PlaylistList;
+    this.view = new MenuView({
+      playlistsCollection: this.playlistsCollection
+    });
+    this.listenTo(this.view, 'playlist-create', this.createNewPlaylist);
+  }
+
+  Menu.prototype.render = function() {
+    return this.view.render();
+  };
+
+  Menu.prototype.createNewPlaylist = function() {
+    console.log('plop');
+    return this.currentPlaylist = new Playlist;
+  };
+
+  return Menu;
+
+})();
+});
+
 ;require.register("models/playlist", function(exports, require, module) {
-var Playlist,
+var Playlist, PlaylistItems,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+PlaylistItems = require('../collections/playlist_items');
 
 module.exports = Playlist = (function(_super) {
   __extends(Playlist, _super);
@@ -806,7 +956,15 @@ module.exports = Playlist = (function(_super) {
     return Playlist.__super__.constructor.apply(this, arguments);
   }
 
-  Playlist.prototype.url = 'playlist';
+  Playlist.prototype.url = 'playlist-list';
+
+  Playlist.prototype.defaults = {
+    name: 'New Playlist'
+  };
+
+  Playlist.prototype.initialize = function() {
+    return this.collection = new PlaylistItems;
+  };
 
   return Playlist;
 
@@ -1020,15 +1178,15 @@ module.exports = Router = (function(_super) {
 });
 
 ;require.register("views/app_view", function(exports, require, module) {
-var AppView, BaseView, ContentScreen, LeftMenu, PlayerScreen,
+var AppView, BaseView, ContentScreen, Menu, PlayerScreen,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
 BaseView = require('../lib/base_view');
 
-LeftMenu = require('./left_menu');
+Menu = require('../models/menu_screen');
 
-ContentScreen = require('./content_screen');
+ContentScreen = require('../models/content_screen');
 
 PlayerScreen = require('./player_screen');
 
@@ -1053,8 +1211,8 @@ module.exports = AppView = (function(_super) {
   AppView.prototype.template = require('./templates/home');
 
   AppView.prototype.afterRender = function() {
-    this.leftMenu = new LeftMenu;
-    this.leftMenu.render();
+    this.menu = new Menu;
+    this.menu.render();
     this.playerScreen = new PlayerScreen;
     this.playerScreen.render();
     this.contentScreen = new ContentScreen;
@@ -1415,99 +1573,14 @@ if (typeof define === 'function' && define.amd) {
 }
 });
 
-;require.register("views/content_screen", function(exports, require, module) {
-var ContentScreen, ContextMenu, EditionView, SelectedTracksList, TracksView;
-
-ContextMenu = require('./context_menu');
-
-SelectedTracksList = require('../collections/selected_list');
-
-TracksView = require('../views/content/track/tracks_view');
-
-EditionView = require('../views/content/edition/edition_view');
-
-module.exports = ContentScreen = (function() {
-  ContentScreen.prototype.skeletonTrack = require('./content/track_skel');
-
-  ContentScreen.prototype.skeletonEdition = require('./content/edition_skel');
-
-  function ContentScreen() {
-    _.extend(this, Backbone.Events);
-    this.baseCollection = window.app.baseCollection;
-    this.menu = window.app.leftMenu;
-    this.selectedTracksList = new SelectedTracksList;
-    this.selectedTracksList.baseCollection = this.baseCollection;
-    this.currentView = new Array;
-    this.listenTo(this.selectedTracksList, 'selectionTracksState', this.updateSelectionTracksState);
-    this.listenTo(this.menu, 'playlist-create', this.createNewPlaylist);
-  }
-
-  ContentScreen.prototype.removeCurrentView = function() {
-    var view, _results;
-    _results = [];
-    while (true) {
-      if (this.currentView.length === 0) {
-        break;
-      }
-      view = this.currentView.pop();
-      _results.push(view.remove());
-    }
-    return _results;
-  };
-
-  ContentScreen.prototype.renderAllTracks = function() {
-    $('#content-screen').append(this.skeletonTrack);
-    this._contextMenu = new ContextMenu({
-      selectedTracksList: this.selectedTracksList
-    });
-    this.listenTo(this._contextMenu, 'lauchTracksEdition', this.lauchTracksEdition);
-    this._contextMenu.render();
-    this.currentView.push(this._contextMenu);
-    this._collectionView = new TracksView({
-      collection: this.baseCollection
-    });
-    this._collectionView.render();
-    return this.currentView.push(this._collectionView);
-  };
-
-  ContentScreen.prototype.lauchTracksEdition = function() {
-    this._contextMenu.manageActionTrackMenu(false);
-    this.removeCurrentView();
-    return this.renderTracksEdition();
-  };
-
-  ContentScreen.prototype.renderTracksEdition = function() {
-    $('#content-screen').append(this.skeletonEdition);
-    this.editionView = new EditionView;
-    this.listenTo(this.editionView, 'edition-end', this.finishEdition);
-    this.editionView.render();
-    return this.currentView.push(this.editionView);
-  };
-
-  ContentScreen.prototype.finishEdition = function() {
-    this.removeCurrentView();
-    return this.renderAllTracks();
-  };
-
-  ContentScreen.prototype.createNewPlaylist = function() {
-    return this.removeCurrentView();
-  };
-
-  ContentScreen.prototype.updateSelectionTracksState = function(isUsed) {
-    return this._contextMenu.manageActionTrackMenu(isUsed);
-  };
-
-  return ContentScreen;
-
-})();
-});
-
 ;require.register("views/context_menu", function(exports, require, module) {
-var BaseView, ContextMenu,
+var BaseView, ContextMenu, PlaylistList,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
 BaseView = require('../lib/base_view');
+
+PlaylistList = require('../collections/playlists_list');
 
 
 /*
@@ -1571,49 +1644,156 @@ module.exports = ContextMenu = (function(_super) {
 })(BaseView);
 });
 
-;require.register("views/left_menu", function(exports, require, module) {
-var BaseView, LeftMenu,
+;require.register("views/menu/menu_screen", function(exports, require, module) {
+var BaseView, MenuView, PlaylistsView,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
-BaseView = require('../lib/base_view');
+BaseView = require('../../lib/base_view');
+
+PlaylistsView = require('./playlist/playlists_view');
 
 
 /*
- * LefMenu represent the main panel option. His goal is trigger the changing
+ * MenuView represent the main panel view. His goal is trigger the changing
  * of content in the tracks screen
+ *
+ * The playlists names a handle by a collection of view (PlaylistView)
  */
 
-module.exports = LeftMenu = (function(_super) {
-  __extends(LeftMenu, _super);
+module.exports = MenuView = (function(_super) {
+  __extends(MenuView, _super);
 
-  function LeftMenu() {
-    return LeftMenu.__super__.constructor.apply(this, arguments);
+  function MenuView() {
+    return MenuView.__super__.constructor.apply(this, arguments);
   }
 
-  LeftMenu.prototype.template = require('./templates/left_menu');
+  MenuView.prototype.template = require('./templates/menu_screen');
 
-  LeftMenu.prototype.tagName = 'div';
+  MenuView.prototype.tagName = 'div';
 
-  LeftMenu.prototype.className = 'left-menu';
+  MenuView.prototype.className = 'left-menu';
 
-  LeftMenu.prototype.el = '#left-menu';
+  MenuView.prototype.el = '#left-menu';
 
-  LeftMenu.prototype.events = {
+  MenuView.prototype.events = {
     'click #menu-playlist-new': 'createNewPlaylist'
   };
 
-  LeftMenu.prototype.initialize = function() {
-    return window.app.leftMenu = this;
+  MenuView.prototype.initialize = function(options) {
+    window.app.leftMenu = this;
+    this.playlistsCollection = options.playlistsCollection;
+    return this.playlistsViews = new PlaylistsView({
+      collection: this.playlistsCollection
+    });
   };
 
-  LeftMenu.prototype.createNewPlaylist = function() {
+  MenuView.prototype.render = function() {
+    MenuView.__super__.render.apply(this, arguments);
+    return this.playlistsViews.render();
+  };
+
+  MenuView.prototype.createNewPlaylist = function() {
     return this.trigger('playlist-create');
   };
 
-  return LeftMenu;
+  return MenuView;
 
 })(BaseView);
+});
+
+;require.register("views/menu/playlist/playlist_view", function(exports, require, module) {
+
+});
+
+;require.register("views/menu/playlist/playlists_view", function(exports, require, module) {
+var PlaylistView, PlaylistsView, ViewCollection,
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+ViewCollection = require('../../../lib/view_collection');
+
+PlaylistView = require('./playlist_view');
+
+module.exports = PlaylistsView = (function(_super) {
+  __extends(PlaylistsView, _super);
+
+  function PlaylistsView() {
+    return PlaylistsView.__super__.constructor.apply(this, arguments);
+  }
+
+  PlaylistsView.prototype.template = require('./templates/playlists');
+
+  PlaylistsView.prototype.el = '#menu-playlist';
+
+  PlaylistsView.prototype.itemview = PlaylistView;
+
+  PlaylistsView.prototype.collectionEl = '#menu-playlist-list';
+
+  PlaylistsView.prototype.initialize = function(options) {
+    return PlaylistsView.__super__.initialize.call(this, options);
+  };
+
+  return PlaylistsView;
+
+})(ViewCollection);
+});
+
+;require.register("views/menu/playlist/templates/playlist", function(exports, require, module) {
+var __templateData = function template(locals) {
+var buf = [];
+var jade_mixins = {};
+var jade_interp;
+
+buf.push("<li><a>Playlist1</a></li>");;return buf.join("");
+};
+if (typeof define === 'function' && define.amd) {
+  define([], function() {
+    return __templateData;
+  });
+} else if (typeof module === 'object' && module && module.exports) {
+  module.exports = __templateData;
+} else {
+  __templateData;
+}
+});
+
+;require.register("views/menu/playlist/templates/playlists", function(exports, require, module) {
+var __templateData = function template(locals) {
+var buf = [];
+var jade_mixins = {};
+var jade_interp;
+
+buf.push("<ul id=\"menu-playlist-list\" class=\"nav nav-sidebar\"><li></li></ul>");;return buf.join("");
+};
+if (typeof define === 'function' && define.amd) {
+  define([], function() {
+    return __templateData;
+  });
+} else if (typeof module === 'object' && module && module.exports) {
+  module.exports = __templateData;
+} else {
+  __templateData;
+}
+});
+
+;require.register("views/menu/templates/menu_screen", function(exports, require, module) {
+var __templateData = function template(locals) {
+var buf = [];
+var jade_mixins = {};
+var jade_interp;
+
+buf.push("<label for=\"menu-section\">Section</label><ul id=\"menu-section\" class=\"nav nav-sidebar\"><li><a>All Tracks</a></li></ul><label for=\"menu-playlist\">Playlist</label><div id=\"menu-playlist\"></div><li id=\"menu-playlist-new\"><a>Create a Playlist</a></li>");;return buf.join("");
+};
+if (typeof define === 'function' && define.amd) {
+  define([], function() {
+    return __templateData;
+  });
+} else if (typeof module === 'object' && module && module.exports) {
+  module.exports = __templateData;
+} else {
+  __templateData;
+}
 });
 
 ;require.register("views/player_screen", function(exports, require, module) {
@@ -1669,25 +1849,6 @@ var jade_mixins = {};
 var jade_interp;
 
 buf.push("<div class=\"container-fluid\"><div id=\"left-menu\" class=\"sidebar\"></div><div id=\"content-screen\" class=\"content container-fluid\"></div></div><div id=\"player-screen\" class=\"footer player\"></div>");;return buf.join("");
-};
-if (typeof define === 'function' && define.amd) {
-  define([], function() {
-    return __templateData;
-  });
-} else if (typeof module === 'object' && module && module.exports) {
-  module.exports = __templateData;
-} else {
-  __templateData;
-}
-});
-
-;require.register("views/templates/left_menu", function(exports, require, module) {
-var __templateData = function template(locals) {
-var buf = [];
-var jade_mixins = {};
-var jade_interp;
-
-buf.push("<label for=\"menu-section\">Section</label><ul id=\"menu-section\" class=\"nav nav-sidebar\"><li><a>All Tracks</a></li></ul><label for=\"menu-playlist\">Playlist</label><ul id=\"menu-playlist\" class=\"nav nav-sidebar\"><li><a>Playlist1</a></li><li><a>Playlist2</a></li><li><a>Playlist3</a></li><li id=\"menu-playlist-new\"><a>Create a Playlist</a></li></ul>");;return buf.join("");
 };
 if (typeof define === 'function' && define.amd) {
   define([], function() {

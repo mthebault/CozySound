@@ -6,19 +6,22 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 15:30:40 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/26 18:09:31 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/26 21:04:48 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
-BaseView = require '../lib/base_view'
+BaseView = require '../../lib/base_view'
+PlaylistsView = require './playlist/playlists_view'
 
 ###
-# LefMenu represent the main panel option. His goal is trigger the changing
+# MenuView represent the main panel view. His goal is trigger the changing
 # of content in the tracks screen
+#
+# The playlists names a handle by a collection of view (PlaylistView)
 ###
-module.exports = class LeftMenu extends BaseView
+module.exports = class MenuView extends BaseView
 
-    template: require './templates/left_menu'
+    template: require './templates/menu_screen'
     tagName: 'div'
     className: 'left-menu'
     el: '#left-menu'
@@ -26,8 +29,21 @@ module.exports = class LeftMenu extends BaseView
     events:
         'click #menu-playlist-new': 'createNewPlaylist'
 
-    initialize: ->
+    initialize: (options) ->
+        # Set a shortcut
         window.app.leftMenu = @
+
+        # Get the collection of playlist
+        @playlistsCollection = options.playlistsCollection
+
+        # Create a collection of playlist view based on the collection
+        @playlistsViews = new PlaylistsView
+            collection: @playlistsCollection
+
+
+    render: ->
+        super
+        @playlistsViews.render()
 
     createNewPlaylist: ->
         @trigger 'playlist-create'

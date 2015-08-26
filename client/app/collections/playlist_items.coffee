@@ -1,17 +1,17 @@
 # **************************************************************************** #
 #                                                                              #
 #                                                         :::      ::::::::    #
-#    playlists_list.coffee                              :+:      :+:    :+:    #
+#    playlist.coffee                                    :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
-#    Created: 2015/08/26 17:16:29 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/26 20:33:41 by ppeltier         ###   ########.fr        #
+#    Created: 2015/08/26 19:48:45 by ppeltier          #+#    #+#              #
+#    Updated: 2015/08/26 20:33:24 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
-Playlist = require '../models/playlist'
+Track = require '../models/track'
 
-module.exports = class PlaylistList extends Backbone.Collection
-    model: Playlist
-    url: 'playlist-list'
+module.exports = class PlaylistItems extends Backbone.Collection
+    url: 'playlist'
+    model: Track

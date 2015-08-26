@@ -6,19 +6,19 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/25 09:53:27 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/26 18:20:11 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/26 20:33:29 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
-ContextMenu = require './context_menu'
+ContextMenu = require '../views/context_menu'
 SelectedTracksList = require '../collections/selected_list'
 TracksView = require '../views/content/track/tracks_view'
 EditionView = require '../views/content/edition/edition_view'
 
 module.exports = class ContentScreen
 
-    skeletonTrack: require './content/track_skel'
-    skeletonEdition: require './content/edition_skel'
+    skeletonTrack: require '../views/content/track_skel'
+    skeletonEdition: require '../views/content/edition_skel'
 
     constructor: ->
         _.extend @, Backbone.Events
@@ -37,9 +37,6 @@ module.exports = class ContentScreen
         # Listen if a the selection collection in/out of state empty, pop/remove
         # the action menu
         @listenTo @selectedTracksList, 'selectionTracksState', @updateSelectionTracksState
-
-        # Listen the creation of a new playlist
-        @listenTo @menu, 'playlist-create', @createNewPlaylist
 
 
     removeCurrentView: ->
@@ -95,8 +92,6 @@ module.exports = class ContentScreen
 
 
     ################################ EVENTS #####################################
-    createNewPlaylist: ->
-        @removeCurrentView()
 
 
     updateSelectionTracksState: (isUsed) ->
