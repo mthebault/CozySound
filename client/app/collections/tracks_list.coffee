@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 18:42:03 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/24 16:07:26 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/25 22:46:58 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -50,5 +50,5 @@ module.exports = class TracksList extends Backbone.Collection
                 console.error xhr
             success: (data) =>
                 @cursorFrameDownload += data.length
-                @set data,
+                @add data,
                     remove: false

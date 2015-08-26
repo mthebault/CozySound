@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 23:50:03 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/23 17:26:49 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/26 12:57:37 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -134,14 +134,16 @@ module.exports = class UploadQueue
         # don't override conflict status
         model.markAsUploading() unless model.isConflict()
 
+        # Push it at the end of the queue
+        @asyncQueue.push model
+
+        model.set 'plays', 0
         # Add to the base collection to print it
         @baseCollection.add model
 
         # Add to the upload collection so it can be precessed
         @uploadCollection.add model
 
-        # Push it at the end of the queue
-        @asyncQueue.push model
 
 
     # Perform the actual persistence by saving the model and changing

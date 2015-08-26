@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/19 06:50:00 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/24 13:56:06 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/26 12:57:13 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -19,8 +19,9 @@ log = require('printit')
     prefix: 'track'
 
 
+# Fetch params.nbTracks tracks from params.start
 module.exports.fetchRange = (req, res, next) ->
-    if not req.params.start and not req.params.end
+    if not req.params.start or not req.params.nbTracks
         err = new Error "Bad arguments, no range given"
         err.status = 400
         return next err
@@ -42,6 +43,21 @@ module.exports.all = (req, res, next) ->
         else
             res.status(200).send(data)
 
+
+module.exports.update = (req, res, next) ->
+    data = req.body
+    Track.find data.id, (err, trackFind) ->
+        return next err if err
+        data.lastModified = moment(Date.now()).toISOString()
+        trackFind.updateAttributes data, (err) ->
+            if err
+                res.send
+                    error: true
+                    code: 'EUPDATE'
+                    data: trackFind
+                    msg: 'model err update'
+            else
+                res.status(200).send(data)
 
 
 
@@ -178,6 +194,7 @@ module.exports.create = (req, res, next) ->
             lastModification: lastModification
             size: part.byteCount
             uploading: true
+            plays: 0
 
         # TODO: Check rights
 

@@ -1,9 +1,11 @@
-#file-manager.btn-group
+ul.nav.nav-tabs
     input#upload-files.btn.btn-default.btn-file(
-    name='upload-files'
-    type='file'
-    multiple='multiple'
-    accept='audio/*'
-    )
-    button#fetch.btn.btn-default(type='button', value='FETCH') FETCH
+        name='upload-files'
+        type='file'
+        multiple='multiple'
+        accept='audio/*'
+        role='presentation'
+        )
+    li#fetch.btn.btn-default(role='presentation') FETCH
+    li#edit-tracks.btn.btn-default(role='presentation') EDIT
 

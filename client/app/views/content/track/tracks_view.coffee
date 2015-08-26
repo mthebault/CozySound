@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/20 17:41:32 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/24 17:45:07 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/25 19:09:24 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -18,7 +18,7 @@ TrackView = require './track_view'
 ###
 module.exports = class TracksView extends ViewCollection
     template: require './templates/tracks'
-    el: '#content'
+    el: '#display-screen'
 
     itemview: TrackView
     collectionEl: '#table-items-content'

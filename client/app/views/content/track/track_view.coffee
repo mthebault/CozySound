@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/20 18:08:58 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/24 18:37:18 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/26 12:58:06 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -30,14 +30,14 @@ module.exports = class TrackView extends BaseView
             @$el.removeClass 'warning'
 
     refresh: ->
-        console.log @model.uploadStatus
-        console.log @model
+        #console.log @model.uploadStatus
+        #console.log @model
         @render()
 
     ########################## Manage Select stat ###############################
     onTrackClicked: (event) -> # Check if shift or control have been pressed
         isShiftPressed = event.shiftKey or false
-        window.app.selectedTracksList.onTrackClicked @model, isShiftPressed
+        window.selectedTracksList.onTrackClicked @model, isShiftPressed
 
     changeSelectStat: ->
         if @model.isSelected()

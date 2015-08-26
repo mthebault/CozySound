@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 15:58:59 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/20 22:14:16 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/25 10:16:53 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -18,5 +18,6 @@ BaseView = require '../lib/base_view'
 module.exports = class PlayerScreen extends BaseView
 
     template: require('./templates/player_screen')
+    el: '#player-screen'
     tagName: 'div'
     className: 'player-screen'
