@@ -1,12 +1,12 @@
 # **************************************************************************** #
 #                                                                              #
 #                                                         :::      ::::::::    #
-#    left_menu.coffee                                   :+:      :+:    :+:    #
+#    menu_screen.coffee                                 :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
-#    Created: 2015/08/26 19:04:21 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/26 20:59:09 by ppeltier         ###   ########.fr        #
+#    Created: 2015/08/26 22:17:02 by ppeltier          #+#    #+#              #
+#    Updated: 2015/08/26 22:34:17 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -20,12 +20,15 @@ Playlist = require './playlist'
 # Menu communicate with the content section by events which trigger some action
 # as print playlist / print all tracks / etc...
 ###
-module.exports = class Menu
+module.exports = class Menu_Screen
 
     currentPlaylist: null
 
     constructor: ->
         _.extend @, Backbone.Events
+
+        # Set a shortcut
+        window.app.menuScreen = @
 
         # Create the collection of playlists
         @playlistsCollection = new PlaylistList
@@ -42,6 +45,6 @@ module.exports = class Menu
 
     ################################ EVENTS #####################################
     createNewPlaylist: ->
-        console.log 'plop'
         @currentPlaylist = new Playlist
+        @trigger 'menu-cmd-playlist', @currentPlaylist
     ########################## END - EVENTS - END ###############################

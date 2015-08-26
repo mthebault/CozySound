@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/25 09:53:27 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/26 20:33:29 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/26 22:38:25 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -14,17 +14,19 @@ ContextMenu = require '../views/context_menu'
 SelectedTracksList = require '../collections/selected_list'
 TracksView = require '../views/content/track/tracks_view'
 EditionView = require '../views/content/edition/edition_view'
+PlaylistView = require '../views/content/playlist/playlist_view'
 
 module.exports = class ContentScreen
 
     skeletonTrack: require '../views/content/track_skel'
     skeletonEdition: require '../views/content/edition_skel'
+    skeletonPlaylist: require '../views/content/playlist_skel'
 
     constructor: ->
         _.extend @, Backbone.Events
 
         @baseCollection = window.app.baseCollection
-        @menu = window.app.leftMenu
+        @menu = window.app.menuScreen
 
         # SelectedTracksList is a collection of all tracks selected by the user,
         # all acions on tracks must be handle by it
@@ -37,6 +39,12 @@ module.exports = class ContentScreen
         # Listen if a the selection collection in/out of state empty, pop/remove
         # the action menu
         @listenTo @selectedTracksList, 'selectionTracksState', @updateSelectionTracksState
+
+        # *** menu-cmd-playlist ***
+        # from: createNewPlaylist - models/menu_screen.coffee
+        # action: Remove current content and prompt the playlist in argument
+        # argument: Playlist object
+        @listenTo @menu, 'menu-cmd-playlist', @lauchPlaylist
 
 
     removeCurrentView: ->
@@ -93,8 +101,21 @@ module.exports = class ContentScreen
 
     ################################ EVENTS #####################################
 
-
     updateSelectionTracksState: (isUsed) ->
         @_contextMenu.manageActionTrackMenu isUsed
     ########################## END - EVENTS - END ###############################
 
+
+    ############################## PLAYLIST #####################################
+    lauchPlaylist: (playlist) ->
+        @removeCurrentView()
+        $('#content-screen').append @skeletonPlaylist
+        @renderPlaylist playlist
+
+    renderPlaylist: (playlist) ->
+        @_playlistView = new PlaylistView
+        @_playlistView.render()
+        @currentView.push @_playlistView
+
+        console.log "PLAYLIST: ", playlist
+    ######################## END - PLAYLIST END - ###############################

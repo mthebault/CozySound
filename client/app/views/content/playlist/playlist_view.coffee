@@ -1,24 +1,19 @@
 # **************************************************************************** #
 #                                                                              #
 #                                                         :::      ::::::::    #
-#    playlists_view.coffee                              :+:      :+:    :+:    #
+#    playlist_view.coffee                               :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
-#    Created: 2015/08/26 20:40:51 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/26 22:00:06 by ppeltier         ###   ########.fr        #
+#    Created: 2015/08/26 22:26:12 by ppeltier          #+#    #+#              #
+#    Updated: 2015/08/26 22:36:21 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
-ViewCollection = require '../../../lib/view_collection'
-PlaylistView = require './playlist_view'
+BaseView = require '../../../lib/base_view'
 
-module.exports = class PlaylistsView extends  ViewCollection
-    template: require './templates/playlists'
-    el: '#menu-playlist'
+module.exports = class PlaylistView extends BaseView
+    template: require './templates/playlist'
+    el: '#playlist-screen'
 
-    itemview: PlaylistView
-    collectionEl: '#menu-playlist-list'
 
-    initialize: (options) ->
-        super options
