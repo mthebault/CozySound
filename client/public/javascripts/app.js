@@ -1539,6 +1539,14 @@ module.exports = LeftMenu = (function(_super) {
 
   LeftMenu.prototype.el = '#left-menu';
 
+  LeftMenu.prototype.events = {
+    'click #menu-playlist-new': 'createNewPlaylist'
+  };
+
+  LeftMenu.prototype.createNewPlaylist = function() {
+    return console.log('plop');
+  };
+
   return LeftMenu;
 
 })(BaseView);
@@ -1615,7 +1623,7 @@ var buf = [];
 var jade_mixins = {};
 var jade_interp;
 
-buf.push("<div class=\"demo-content-left\"><h1>Left menu</h1><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p><p>content</p></div>");;return buf.join("");
+buf.push("<label for=\"menu-section\">Section</label><ul id=\"menu-section\" class=\"nav nav-sidebar\"><li><a>All Tracks</a></li></ul><label for=\"menu-playlist\">Playlist</label><ul id=\"menu-playlist\" class=\"nav nav-sidebar\"><li><a>Playlist1</a></li><li><a>Playlist2</a></li><li><a>Playlist3</a></li><li id=\"menu-playlist-new\"><a>Create a Playlist</a></li></ul>");;return buf.join("");
 };
 if (typeof define === 'function' && define.amd) {
   define([], function() {

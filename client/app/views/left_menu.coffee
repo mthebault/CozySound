@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 15:30:40 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/25 10:18:51 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/26 15:54:39 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -22,4 +22,11 @@ module.exports = class LeftMenu extends BaseView
     tagName: 'div'
     className: 'left-menu'
     el: '#left-menu'
+
+    events:
+        'click #menu-playlist-new': 'createNewPlaylist'
+
+    createNewPlaylist: ->
+        console.log 'plop'
+
 
