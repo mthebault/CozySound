@@ -469,9 +469,10 @@ module.exports = UploadQueue = (function() {
     if (!model.isConflict()) {
       model.markAsUploading();
     }
+    this.asyncQueue.push(model);
+    model.set('plays', 0);
     this.baseCollection.add(model);
-    this.uploadCollection.add(model);
-    return this.asyncQueue.push(model);
+    return this.uploadCollection.add(model);
   };
 
   UploadQueue.prototype._processSave = function(model, done) {
@@ -1194,7 +1195,7 @@ var buf = [];
 var jade_mixins = {};
 var jade_interp;
 var locals_ = (locals || {}),model = locals_.model;
-buf.push("<td>" + (jade.escape((jade_interp = model.title) == null ? '' : jade_interp)) + "</td><td>" + (jade.escape((jade_interp = model.artist) == null ? '' : jade_interp)) + "</td><td>" + (jade.escape((jade_interp = model.album) == null ? '' : jade_interp)) + "</td><td>XX</td><td>" + (jade.escape((jade_interp = model.uploadStatus) == null ? '' : jade_interp)) + "</td>");;return buf.join("");
+buf.push("<td>" + (jade.escape((jade_interp = model.title) == null ? '' : jade_interp)) + "</td><td>" + (jade.escape((jade_interp = model.artist) == null ? '' : jade_interp)) + "</td><td>" + (jade.escape((jade_interp = model.album) == null ? '' : jade_interp)) + "</td><td>" + (jade.escape((jade_interp = model.plays) == null ? '' : jade_interp)) + "</td><td>" + (jade.escape((jade_interp = model.time) == null ? '' : jade_interp)) + "</td>");;return buf.join("");
 };
 if (typeof define === 'function' && define.amd) {
   define([], function() {
@@ -1213,7 +1214,7 @@ var buf = [];
 var jade_mixins = {};
 var jade_interp;
 
-buf.push("<table class=\"table table-striped\"><thead><tr><th>Title</th><th>Artist</th><th>Album</th><th>#</th><th>status</th></tr></thead><tbody id=\"table-items-content\"></tbody></table>");;return buf.join("");
+buf.push("<table class=\"table table-striped\"><thead><tr><th>Title</th><th>Artist</th><th>Album</th><th>#</th><th>Time</th></tr></thead><tbody id=\"table-items-content\"></tbody></table>");;return buf.join("");
 };
 if (typeof define === 'function' && define.amd) {
   define([], function() {
@@ -1252,6 +1253,7 @@ module.exports = TrackView = (function(_super) {
   TrackView.prototype.tagName = 'tr';
 
   TrackView.prototype.afterRender = function() {
+    console.log(this.model);
     this.$el.data('cid', this.model.cid);
     if (this.model.isUploading()) {
       return this.$el.addClass('warning');

@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/19 06:50:00 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/26 12:38:51 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/26 12:50:59 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -194,6 +194,7 @@ module.exports.create = (req, res, next) ->
             lastModification: lastModification
             size: part.byteCount
             uploading: true
+            plays: 0
 
         # TODO: Check rights
 
