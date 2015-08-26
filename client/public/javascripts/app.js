@@ -1253,7 +1253,6 @@ module.exports = TrackView = (function(_super) {
   TrackView.prototype.tagName = 'tr';
 
   TrackView.prototype.afterRender = function() {
-    console.log(this.model);
     this.$el.data('cid', this.model.cid);
     if (this.model.isUploading()) {
       return this.$el.addClass('warning');
