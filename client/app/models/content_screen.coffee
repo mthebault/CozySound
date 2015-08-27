@@ -6,21 +6,21 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/25 09:53:27 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/26 22:38:25 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/27 02:01:31 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
-ContextMenu = require '../views/context_menu'
 SelectedTracksList = require '../collections/selected_list'
+ContextMenu = require '../views/content/context_menu/context_menu'
 TracksView = require '../views/content/track/tracks_view'
 EditionView = require '../views/content/edition/edition_view'
 PlaylistView = require '../views/content/playlist/playlist_view'
 
 module.exports = class ContentScreen
 
-    skeletonTrack: require '../views/content/track_skel'
-    skeletonEdition: require '../views/content/edition_skel'
-    skeletonPlaylist: require '../views/content/playlist_skel'
+    skeletonTrack: require '../views/content/track/templates/track_skel'
+    skeletonEdition: require '../views/content/edition/templates/edition_skel'
+    skeletonPlaylist: require '../views/content/playlist/templates/playlist_skel'
 
     constructor: ->
         _.extend @, Backbone.Events
@@ -113,9 +113,7 @@ module.exports = class ContentScreen
         @renderPlaylist playlist
 
     renderPlaylist: (playlist) ->
-        @_playlistView = new PlaylistView
+        @_playlistView = new PlaylistView playlist
         @_playlistView.render()
         @currentView.push @_playlistView
-
-        console.log "PLAYLIST: ", playlist
     ######################## END - PLAYLIST END - ###############################

@@ -6,12 +6,12 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/26 22:17:02 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/26 22:34:17 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/27 02:05:48 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
-MenuView = require '../views/menu/menu_screen'
-PlaylistList = require '../collections/playlists_list'
+MenuView = require '../views/menu/menu_view'
+PlaylistsList = require '../collections/playlists_list'
 Playlist = require './playlist'
 
 ###
@@ -31,7 +31,7 @@ module.exports = class Menu_Screen
         window.app.menuScreen = @
 
         # Create the collection of playlists
-        @playlistsCollection = new PlaylistList
+        @playlistsCollection = new PlaylistsList
 
         # Create the view
         @view = new MenuView
@@ -46,5 +46,7 @@ module.exports = class Menu_Screen
     ################################ EVENTS #####################################
     createNewPlaylist: ->
         @currentPlaylist = new Playlist
+        @playlistsCollection.add @currentPlaylist
+        console.log 'listContent: ', @playlistsCollection
         @trigger 'menu-cmd-playlist', @currentPlaylist
     ########################## END - EVENTS - END ###############################

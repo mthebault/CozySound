@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 15:30:40 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/26 22:21:02 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/27 02:06:51 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -22,8 +22,6 @@ PlaylistsView = require './playlist/playlists_view'
 module.exports = class MenuView extends BaseView
 
     template: require './templates/menu_screen'
-    tagName: 'div'
-    className: 'left-menu'
     el: '#left-menu'
 
     events:
@@ -34,16 +32,15 @@ module.exports = class MenuView extends BaseView
         # Get the collection of playlist
         @playlistsCollection = options.playlistsCollection
 
-        # Create a collection of playlist view based on the collection
-        @playlistsViews = new PlaylistsView
-            collection: @playlistsCollection
 
 
     render: ->
         super
+
+        # Create a collection of playlist view based on the collection
+        @playlistsViews = new PlaylistsView
+            collection: @playlistsCollection
         @playlistsViews.render()
 
     createNewPlaylist: ->
         @trigger 'playlist-create'
-
-
