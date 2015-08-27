@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/25 09:53:27 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/27 02:01:31 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/27 03:54:20 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -14,13 +14,39 @@ SelectedTracksList = require '../collections/selected_list'
 ContextMenu = require '../views/content/context_menu/context_menu'
 TracksView = require '../views/content/track/tracks_view'
 EditionView = require '../views/content/edition/edition_view'
-PlaylistView = require '../views/content/playlist/playlist_view'
 
+###
+# ContenScreen is the main screen where all tracks are printed. This is a
+# generique class to print any collection of tracks with an optional skeleton.
+# The collection must contain only Track models set int /models/track.coffee.
+# All track must be a reference to a track in @baseCollection which is a sort of
+# cache
+#
+# # Rendering
+# All content must have a method named "render<content name>" which in order:
+# - Call removeCurrentView()
+# - Call renderSkeleton(skeleton, data) (optional)
+# - set @currentcollection
+# - set custom things
+# - Call renderTracks()
+#
+# # Skeleton
+# You can render a Skeleton with the function renderSkeleton(skeleton, data).
+# The argument skeleton must be a jade file. The argument data is all data
+# accessible in the jade file. You can reach theme by the methode "data". The
+# template must contain a div with the id "display-screen" where the track
+# screen will be print
+#
+# # Contents
+# - All tracks: print @baseCollection
+# - Playlist: trigger by the event "content-print-playlist" with the collection
+# in argument
+#
+###
 module.exports = class ContentScreen
 
-    skeletonTrack: require '../views/content/track/templates/track_skel'
+    skeletonPlaylist: require '../views/content/track/templates/playlist_skel'
     skeletonEdition: require '../views/content/edition/templates/edition_skel'
-    skeletonPlaylist: require '../views/content/playlist/templates/playlist_skel'
 
     constructor: ->
         _.extend @, Backbone.Events
@@ -36,28 +62,27 @@ module.exports = class ContentScreen
         # An array of all view currently prompt
         @currentView = new Array
 
+        # Set the collection with @baseCollection by default
+        @currentCollection = @baseCollection
+
         # Listen if a the selection collection in/out of state empty, pop/remove
         # the action menu
         @listenTo @selectedTracksList, 'selectionTracksState', @updateSelectionTracksState
 
+    ################################ EVENTS #####################################
         # *** menu-cmd-playlist ***
         # from: createNewPlaylist - models/menu_screen.coffee
-        # action: Remove current content and prompt the playlist in argument
         # argument: Playlist object
-        @listenTo @menu, 'menu-cmd-playlist', @lauchPlaylist
+        @listenTo @menu, 'content-print-playlist', @renderPlaylist
+    ########################## END - EVENTS - END ###############################
 
 
-    removeCurrentView: ->
-        loop
-            break if @currentView.length == 0
-            view = @currentView.pop()
-            view.remove()
 
-    ############################ ALL TRACKS #####################################
-    # Render the context menu, create a view collection of the selectioned
-    # collection and render it
-    renderAllTracks: ->
-        $('#content-screen').append @skeletonTrack
+
+
+
+    ############################ GENERIQUE ######################################
+    renderTracks: ->
         # Initialize the contextMenu
         @_contextMenu = new ContextMenu
             selectedTracksList: @selectedTracksList
@@ -66,15 +91,49 @@ module.exports = class ContentScreen
         @_contextMenu.render()
         @currentView.push @_contextMenu
 
-
         # Initialize the tracks displayed
         @_collectionView = new TracksView
-            collection: @baseCollection
+            collection: @currentCollection
         @_collectionView.render()
         @currentView.push @_collectionView
 
+    renderSkeleton: (skeleton, data) ->
+        dataParsed = {data: data?.toJSON()}
+        $('#content-screen').append(skeleton(dataParsed))
 
+    removeCurrentView: ->
+        loop
+            break if @currentView.length == 0
+            view = @currentView.pop()
+            view.remove()
+
+    updateSelectionTracksState: (isUsed) ->
+        @_contextMenu.manageActionTrackMenu isUsed
+    ###################### END - GENERIQUE - END ################################
+
+
+
+
+    ############################ ALL TRACKS #####################################
+    renderAllTracks: ->
+        @renderTracks()
     ###################### END - ALL TRACKS - END ###############################
+
+
+
+
+
+    ############################## PLAYLIST #####################################
+    renderPlaylist: (playlist) ->
+        @removeCurrentView()
+        @renderSkeleton @skeletonPlaylist, playlist
+        @currentCollection = playlist.collection
+        console.log @currentCollection
+        @renderTracks()
+    ######################## END - PLAYLIST END - ###############################
+
+
+
 
 
     ############################ TRACKS EDITION #################################
@@ -85,7 +144,7 @@ module.exports = class ContentScreen
         @renderTracksEdition()
 
     renderTracksEdition: ->
-        $('#content-screen').append @skeletonEdition
+        @renderSkeleton @skeletonEdition
         # Initialize the Edition view
         @editionView = new EditionView
         # Listen the end of the edition
@@ -99,21 +158,3 @@ module.exports = class ContentScreen
     ###################### END - TRACKS EDITION - END ###########################
 
 
-    ################################ EVENTS #####################################
-
-    updateSelectionTracksState: (isUsed) ->
-        @_contextMenu.manageActionTrackMenu isUsed
-    ########################## END - EVENTS - END ###############################
-
-
-    ############################## PLAYLIST #####################################
-    lauchPlaylist: (playlist) ->
-        @removeCurrentView()
-        $('#content-screen').append @skeletonPlaylist
-        @renderPlaylist playlist
-
-    renderPlaylist: (playlist) ->
-        @_playlistView = new PlaylistView playlist
-        @_playlistView.render()
-        @currentView.push @_playlistView
-    ######################## END - PLAYLIST END - ###############################

@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/26 22:17:02 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/27 02:05:48 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/27 03:03:34 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -47,6 +47,5 @@ module.exports = class Menu_Screen
     createNewPlaylist: ->
         @currentPlaylist = new Playlist
         @playlistsCollection.add @currentPlaylist
-        console.log 'listContent: ', @playlistsCollection
-        @trigger 'menu-cmd-playlist', @currentPlaylist
+        @trigger 'content-print-playlist', @currentPlaylist
     ########################## END - EVENTS - END ###############################
