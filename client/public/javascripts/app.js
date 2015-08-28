@@ -493,6 +493,7 @@ module.exports = UploadQueue = (function() {
       return ID3.loadTags(blob.name, (function() {
         var tags, _ref;
         tags = ID3.getAllTags(blob.name);
+        console.log(tags);
         model.set({
           title: tags.title != null ? tags.title : model.title,
           artist: tags.artist != null ? tags.artist : void 0,
@@ -985,9 +986,7 @@ module.exports = Menu_Screen = (function() {
   };
 
   Menu_Screen.prototype.createNewPlaylist = function() {
-    this.currentPlaylist = new Playlist;
-    this.playlistsCollection.add(this.currentPlaylist);
-    return this.trigger('content-print-playlist', this.currentPlaylist);
+    return this.playlistsCollection.create();
   };
 
   return Menu_Screen;

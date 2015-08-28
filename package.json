@@ -35,6 +35,12 @@
   "cozy-permissions": {
       "Track": {
                 "description": "Store tracks in your cozy"
+      },
+      "Playlist": {
+                "description": "Store playlists in your cozy"
+      },
+      "Album": {
+                "description": "Store albums in your cozy"
       }
   },
   "cozy-displayName": "Sound"

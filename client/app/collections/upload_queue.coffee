@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 23:50:03 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/26 17:47:02 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/28 22:16:05 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -107,7 +107,8 @@ module.exports = class UploadQueue
         reader = new FileReader()
         reader.onload = (event) ->
             ID3.loadTags blob.name, ( ->
-                tags = ID3.getAllTags blob.name
+                tags = 'TAGS UPLOAD: ', ID3.getAllTags blob.name
+                console.log tags
                 model.set
                     title: if tags.title? then tags.title else model.title
                     artist: if tags.artist? then tags.artist else undefined

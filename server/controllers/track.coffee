@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/19 06:50:00 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/26 16:01:13 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/08/28 22:15:39 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -14,9 +14,10 @@ multiparty = require 'multiparty'
 moment = require 'moment'
 crypto = require 'crypto'
 feed = require '../lib/feed'
-Track = require './../models/track'
 log = require('printit')
     prefix: 'track'
+Track = require './../models/track'
+album = require './album'
 
 
 # Fetch params.nbTracks tracks from params.start
@@ -170,10 +171,21 @@ module.exports.create = (req, res, next) ->
                             log.debug err if err
 
                             # Retrieve binary metadata
-                            Track.find track.id, (err, track) ->
+                            Track.find track.id, (err, track) =>
                                 log.debug err if err
-                                res.send track, 200
-                                #end
+
+
+                                if albumData.name
+                                    # Create or set an album
+                                    albumData.tracks = track.id
+                                    album.set albumData, res, (err) ->
+                                        return next err if err
+                                        res.send track, 200
+                                        #end
+                                else
+                                    res.send track, 200
+                                    #end
+
 
         now = moment().toISOString()
 
@@ -182,13 +194,16 @@ module.exports.create = (req, res, next) ->
 
 
         #Generate track metadata.
-        data =
-            title: title
+        albumData =
+            name: fields.album
             artist: fields.artist
-            album: fields.album
-            trackNb: fields.trackNb
             year: fields.year
             genre: fields.genre
+            lastModification: lastModification
+
+        trackData =
+            title: title
+            trackNb: fields.trackNb
             time: fields.time
             docType: fields.dockType
             creationDate: now
@@ -197,12 +212,13 @@ module.exports.create = (req, res, next) ->
             uploading: true
             plays: 0
 
+
         # TODO: Check rights
 
         #TODO: change lastModification date playlist
 
             # Save track metadata
-        Track.create data, (err, newTrack) ->
+        Track.create trackData, (err, newTrack) ->
             return next err if err
 
             # Ask for the data system to not run autostop
@@ -217,6 +233,7 @@ module.exports.create = (req, res, next) ->
 
             # Attach track in database.
             attachBinary newTrack
+
 
     form.on 'error', (err) ->
         log.error err
