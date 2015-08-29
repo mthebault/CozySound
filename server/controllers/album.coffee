@@ -13,33 +13,49 @@
 Track = require './../models/track'
 Album = require './../models/album'
 
-module.exports.set = (data, res, callback) ->
+albumAttributes = ['name', 'genre', 'year', 'artist', 'feat']
 
-    setTrackAlbum = (trackId, albumId, callback) ->
-        Track.find trackId, (err, track) ->
-            return callback err if err
-            track.album = albumId
-            track.updateAttributes track, (err, data) ->
-                data.index ["title"], (err) ->
-                    return callback()
+updateAlbum = (album, data, callback) ->
+    trackData = {}
+    albumAttributes.forEach (elem) ->
+        console.log 'album: ', album[elem]
+        if album[elem]? && data[elem] && album[elem] != album[elem]
+            trackData[elem] = data[elem]
+
+    # Add the track to the list of album tracks
+    album.tracks.push data.tracks
+
+    # Update album
+    album.updateAttributes albumFind, (err, album) ->
+        return callback err if err
+        # Set the album in the track
+        trackData.album = album.id
+        return callback null, trackData
 
 
-    # If it find an album with the same name, add the track,
-    # update the track to add the playlist id and  update the
-    # album to add the track id
-    #TODO: make some rollback
-    Album.search data.name, (error, albumFind) =>
-        # Update the existing album
+# Create a new album
+createAlbum = (data, callback) ->
+    trackId = data.tracks
+    data.tracks = new Array(trackId)
+    Album.create data, (err, newAlbum) ->
+        return callback err if err
+        newAlbum.index ["name"], (err) ->
+
+
+# If it find an album with the same name, add the track,
+# update the track to add the playlist id and  update the
+# album to add the track id
+#TODO: make some rollback
+set = (data, callback) ->
+    # If we can find an album with the same name
+    Album.search data.albumName, (error, albumFind) =>
         return callback error if error
         if albumFind?
-            albumFind.tracks.push data.tracks
-            albumFind.updateAttributes albumFind, (err, album) ->
-                setTrackAlbum data.tracks, albumFind.id, callback
+            # Update the existing album
+            updateAlbum albumFind, data, callback
         else
             # Create a new album
-            trackId = data.tracks
-            data.tracks = new Array(trackId)
-            Album.create data, (err, newAlbum) ->
-                return callback err if err
-                newAlbum.index ["name"], (err) ->
-                    setTrackAlbum trackId, newAlbum.id, callback
+            createAlbum data, callback
+
+module.exports =
+    set: set

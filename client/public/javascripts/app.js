@@ -493,7 +493,7 @@ module.exports = UploadQueue = (function() {
       return ID3.loadTags(blob.name, (function() {
         var tags, _ref;
         tags = ID3.getAllTags(blob.name);
-        console.log(tags);
+        console.log('TAGS UPLOAD: ', tags);
         model.set({
           title: tags.title != null ? tags.title : model.title,
           artist: tags.artist != null ? tags.artist : void 0,

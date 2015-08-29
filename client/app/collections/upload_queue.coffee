@@ -107,8 +107,8 @@ module.exports = class UploadQueue
         reader = new FileReader()
         reader.onload = (event) ->
             ID3.loadTags blob.name, ( ->
-                tags = 'TAGS UPLOAD: ', ID3.getAllTags blob.name
-                console.log tags
+                tags = ID3.getAllTags blob.name
+                console.log 'TAGS UPLOAD: ', tags
                 model.set
                     title: if tags.title? then tags.title else model.title
                     artist: if tags.artist? then tags.artist else undefined

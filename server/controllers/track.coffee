@@ -21,7 +21,7 @@ album = require './album'
 
 
 # Fetch params.nbTracks tracks from params.start
-module.exports.fetchRange = (req, res, next) ->
+fetchRange = (req, res, next) ->
     if not req.params.start or not req.params.nbTracks
         err = new Error "Bad arguments, no range given"
         err.status = 400
@@ -33,7 +33,7 @@ module.exports.fetchRange = (req, res, next) ->
             res.status(200).send(data)
 
 
-module.exports.all = (req, res, next) ->
+all = (req, res, next) ->
     Track.request 'all', (err, data) ->
         if err
             res.send
@@ -45,7 +45,7 @@ module.exports.all = (req, res, next) ->
             res.status(200).send(data)
 
 
-module.exports.update = (req, res, next) ->
+update = (req, res, next) ->
     data = req.body
     Track.find data.id, (err, trackFind) ->
         return next err if err
@@ -74,7 +74,7 @@ timeout = null
 isStorageError = (err) ->
     return err.toString().indexOf('enough storage') isnt -1
 
-module.exports.create = (req, res, next) ->
+create = (req, res, next) ->
     clearTimeout(timeout) if timeout?
 
     # Represent all fields retrieved
@@ -193,17 +193,15 @@ module.exports.create = (req, res, next) ->
 
 
 
-        #Generate track metadata.
-        albumData =
-            name: fields.album
+        # Retrieve all metaData
+        data =
+            title: title
+            trackNb: fields.trackNb
+            album: fields.album
             artist: fields.artist
             year: fields.year
             genre: fields.genre
             lastModification: lastModification
-
-        trackData =
-            title: title
-            trackNb: fields.trackNb
             time: fields.time
             docType: fields.dockType
             creationDate: now
@@ -213,29 +211,37 @@ module.exports.create = (req, res, next) ->
             plays: 0
 
 
-        # TODO: Check rights
-
-        #TODO: change lastModification date playlist
-
+        # We create the album first for check if the album already exist. If
+        # it's not the case we create it and add the data relative to it. In the
+        # other case we check if the data recieve match with the existing album
+        # data. If there not match we add them to the track wich will ovewrite
+        # theme.
+        album.set data, (err, dataTrack) ->
             # Save track metadata
-        Track.create trackData, (err, newTrack) ->
-            return next err if err
+            Track.create dataTrack, (err, newTrack) ->
+                return next err if err
 
-            # Ask for the data system to not run autostop
-            # while the upload is running.
-            keepAlive()
+                # Ask for the data system to not run autostop
+                # while the upload is running.
+                keepAlive()
 
-            # If user stops the upload, the track is deleted.
-            err = new Error 'Request canceled by user'
-            res.on 'close', ->
-                log.info 'Upload request closed by user'
-                uploadStream.abort()
+                # If user stops the upload, the track is deleted.
+                err = new Error 'Request canceled by user'
+                res.on 'close', ->
+                    log.info 'Upload request closed by user'
+                    uploadStream.abort()
 
-            # Attach track in database.
-            attachBinary newTrack
+                # Attach track in database.
+                attachBinary newTrack
 
 
     form.on 'error', (err) ->
         log.error err
 
     form.parse req
+
+module.exports =
+    fetchRange: fetchRange
+    all: all
+    update: update
+    create: create
