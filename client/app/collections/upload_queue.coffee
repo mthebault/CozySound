@@ -55,6 +55,7 @@ module.exports = class UploadQueue
             # TODO: Later check if it's a picture to get the covert
             if not blob.type.match /audio\/(mp3|mpeg)/ #list of supported filetype
                 @trigger 'badFileType'
+                console.log blob.name, ' => BadFileType'
             else
                 @retrieveMetaDataBlob blob, (model) =>
                     # Check if a same track is already stored in the base collection

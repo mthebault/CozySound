@@ -13,13 +13,15 @@
 cozydb = require 'cozydb'
 
 module.exports = Album = cozydb.getModel 'Album',
-    name:     type: String
-    genre:    type: String
-    year:     type: String
-    artist:   type: String
-    feat:     type: String
-    tracks:   type: [String]
-    cover:    type: Object
+    name:   		type: String
+    genre:  		type: String
+    year:   		type: String
+    artist: 		type: String
+    feat:   		type: String
+    tracks: 		type: [String]
+    creationDate:       type: String
+    lastModification:   type: String
+    cover:              type: Object
 
 Album.search = (name, callback) ->
     Album.request 'all', (err, data) ->

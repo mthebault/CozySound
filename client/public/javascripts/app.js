@@ -447,7 +447,8 @@ module.exports = UploadQueue = (function() {
           return;
         }
         if (!blob.type.match(/audio\/(mp3|mpeg)/)) {
-          return _this.trigger('badFileType');
+          _this.trigger('badFileType');
+          return console.log(blob.name, ' => BadFileType');
         } else {
           _this.retrieveMetaDataBlob(blob, function(model) {
             var existingModel;

@@ -11,7 +11,6 @@
 # **************************************************************************** #
 
 multiparty = require 'multiparty'
-moment = require 'moment'
 crypto = require 'crypto'
 feed = require '../lib/feed'
 log = require('printit')
@@ -26,11 +25,16 @@ fetchRange = (req, res, next) ->
         err = new Error "Bad arguments, no range given"
         err.status = 400
         return next err
-    Track.fetchByRange
-        skip: req.params.start
-        limit: req.params.nbTracks
+    Track.fetchByRange {skip: req.params.start, limit: req.params.nbTracks}
         , (err, data) ->
+        if err
+            res.sent
+                error: true
+                code: 'EFRETREIVE'
+                , 500
+        else
             res.status(200).send(data)
+
 
 
 all = (req, res, next) ->
@@ -51,7 +55,6 @@ update = (req, res, next) ->
         return next err if err
         data.lastModified = moment(Date.now())
         #TODO: set correctly the date
-        console.log data.lastModified
         trackFind.updateAttributes data, (err) ->
             if err
                 res.send
@@ -100,7 +103,6 @@ create = (req, res, next) ->
         # we do not write a subfunction because it seems to load the whole
         # stream in memory.
         title = fields.title
-        lastModification = moment(new Date(fields.lastModification)).toISOString()
         upload = true
         canceled = false
         uploadStream = null
@@ -136,15 +138,16 @@ create = (req, res, next) ->
 
 
         attachBinary = (track) ->
-            # request-json requires a path field to be set
-            # before uploading
             part.title = track.title
             checksum = crypto.createHash 'sha1'
             checksum.setEncoding 'hex'
             part.pause()
             part.pipe checksum
             metadata = name: "track"
+            console.log 'plop3'
+            console.log 'track: ', track
             uploadStream = track.attachBinary part, metadata, (err) ->
+                console.log 'plop4'
                 upload = false
                 # rollback if there was an error
                 return rollback track, err if err #and not canceled
@@ -173,21 +176,15 @@ create = (req, res, next) ->
                             # Retrieve binary metadata
                             Track.find track.id, (err, track) =>
                                 log.debug err if err
+                                console.log 'plop1'
 
-
-                                if albumData.name
-                                    # Create or set an album
-                                    albumData.tracks = track.id
-                                    album.set albumData, res, (err) ->
-                                        return next err if err
-                                        res.send track, 200
-                                        #end
-                                else
-                                    res.send track, 200
+                                album.addTrack track.album, track.id, (err, album) =>
+                                    console.log 'plop'
+                                    return next err if err
+                                    res.status(200).send(track)
                                     #end
 
 
-        now = moment().toISOString()
 
         # TODO: Check if track already exist
 
@@ -201,14 +198,9 @@ create = (req, res, next) ->
             artist: fields.artist
             year: fields.year
             genre: fields.genre
-            lastModification: lastModification
             time: fields.time
             docType: fields.dockType
-            creationDate: now
-            lastModification: lastModification
             size: part.byteCount
-            uploading: true
-            plays: 0
 
 
         # We create the album first for check if the album already exist. If
@@ -232,6 +224,7 @@ create = (req, res, next) ->
                     uploadStream.abort()
 
                 # Attach track in database.
+                console.log 'newTrack: ', newTrack
                 attachBinary newTrack
 
 
