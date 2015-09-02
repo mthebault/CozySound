@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/19 06:50:00 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/02 12:28:38 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/02 15:02:15 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -24,8 +24,7 @@ fetchRange = (req, res, next) ->
         err = new Error "Bad arguments, no range given"
         err.status = 400
         return next err
-    Track.fetchByRange {skip: req.params.start, limit: req.params.nbTracks}
-        , (err, data) ->
+    Track.fetchByRange {skip: req.params.start, limit: req.params.nbTracks}, (err, data) ->
         if err
             res.send
                 error: true
@@ -172,12 +171,7 @@ create = (req, res, next) ->
                             # Retrieve binary metadata
                             Track.find track.id, (err, track) =>
                                 log.debug err if err
-
-                                #album.addTrack track.album, track.id, (err, album) =>
-                                    #return next err if err
-                                    #res.status(200).send(track)
-                                    ##end
-
+                                res.status(200).send(track)
 
 
         # TODO: Check if track already exist

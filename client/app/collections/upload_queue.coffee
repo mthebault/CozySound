@@ -6,11 +6,12 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 23:50:03 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/02 13:18:29 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/02 19:12:54 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 Track = require './../models/track'
+app = require './../application'
 
 ###
 # The UploadQueue is a mix of async.queue & BackboneCollection
@@ -38,8 +39,10 @@ module.exports = class UploadQueue
         # Backbone.Events is a mixin, not a "class" you can extend.
         _.extend @, Backbone.Events
 
-        @asyncQueue = async.queue @uploadWorker, 5
-        @asyncQueue.drain = @completeUpload.bind @
+        @trackQueue = async.queue @uploadTrackWorker, 5
+        @trackQueue.drain = @completeUpload.bind @
+
+
 
 
     addBlobs: (blobs) ->
@@ -133,19 +136,18 @@ module.exports = class UploadQueue
     add: (model) ->
         window.pendingOperations.upload++ # set in initialize.coffee
 
-        window.app.albumCollection.upload model, (err, track) ->
-            # don't override conflict status
-            track.markAsUploading() unless track.isConflict()
+        # don't override conflict status
+        model.markAsUploading() if not model.isConflict()
 
-            # Push it at the end of the queue
-            @asyncQueue.push model
+        # Push it at the end of the queue
+        window.app.albumCollection.albumQueue.push model
 
-            model.set 'plays', 0
-            # Add to the base collection to print it
-            @baseCollection.add model
+        model.set 'plays', 0
+        # Add to the base collection to print it
+        @baseCollection.add model
 
-            # Add to the upload collection so it can be precessed
-            @uploadCollection.add model
+        # Add to the upload collection so it can be processed
+        @uploadCollection.add model
 
 
 
@@ -157,6 +159,7 @@ module.exports = class UploadQueue
             model.save null,
                 success: (model) =>
                     model.track = null
+                    window.app.albumCollection.addTrackToAlbum model
                     # Make sure progress is uniform, we force it a 100%
                     model.loaded = model.total
                     model.markAsUploaded()
@@ -181,26 +184,23 @@ module.exports = class UploadQueue
                             model.markAsErrored error
                         else
                             # let's try again
-                            @asyncQueue.push model
+                            @trackQueue.push model
                 #done()
         else
             done()
 
 
     # Process each element in the queue
-       uploadWorker: (model, next) =>
+    uploadTrackWorker: (model, next) =>
         # Skip if there is an error.
         if model.error
             setTimeout next, 10
 
-        # If there is a conflict, the queue waits for the user to
-        # make a decision.
-        # Not implemented yep
-        else if model.isConflict()
-            alert 'CONFLICT'
         # Otherwise, the upload starts directly.
         else
             @_processSave model, next
+
+
 
 
     # Reset variables and trigger completion events.

@@ -146,6 +146,7 @@ module.exports = {
 
 ;require.register("collections/album_list", function(exports, require, module) {
 var Album, AlbumList,
+  __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
@@ -155,12 +156,19 @@ module.exports = AlbumList = (function(_super) {
   __extends(AlbumList, _super);
 
   function AlbumList() {
+    this.upload = __bind(this.upload, this);
     return AlbumList.__super__.constructor.apply(this, arguments);
   }
 
   AlbumList.prototype.url = 'album';
 
   AlbumList.prototype.model = Album;
+
+  AlbumList.ATTRIBUTES = ['name', 'genre', 'year', 'artist', 'feat'];
+
+  AlbumList.prototype.initialize = function() {
+    return this.albumQueue = async.queue(this.upload, 1);
+  };
 
   AlbumList.prototype.createAlbum = function(model, callback) {
     return $.ajax({
@@ -171,11 +179,13 @@ module.exports = AlbumList = (function(_super) {
       },
       success: (function(_this) {
         return function(album) {
-          console.log('response: ', album);
+          var track;
           if (album != null ? album.name : void 0) {
-            return console.log('Album exist');
+            _this.add(album);
+            album = _this.get(album.id);
+            track = _this.mergeDataAlbum(album, model);
+            return callback(null, track);
           } else {
-            console.log('Album NO exist');
             album = new Album({
               name: model.get('album'),
               artist: model.get('artist'),
@@ -188,13 +198,10 @@ module.exports = AlbumList = (function(_super) {
               },
               success: function(newAlbum) {
                 _this.add(newAlbum);
-                album = newAlbum;
                 model.unset('artist', 'silent');
                 model.unset('year', 'silent');
                 model.unset('genre', 'silent');
                 model.set('album', newAlbum.id);
-                console.log('model after: ', model);
-                console.log('Album Collection: ', _this);
                 return callback(null, model);
               }
             });
@@ -204,14 +211,50 @@ module.exports = AlbumList = (function(_super) {
     });
   };
 
-  AlbumList.prototype.upload = function(model, callback) {
-    var album;
-    console.log('DATA: ', model);
+  AlbumList.prototype.mergeDataAlbum = function(album, model) {
+    AlbumList.ATTRIBUTES.forEach(function(elem) {
+      var elemAlbum, elemModel;
+      elemModel = model.get(elem);
+      elemAlbum = album.get(elem);
+      if (elemModel != null) {
+        if (elemModel === elemAlbum) {
+          return model.unset(elem, 'silent');
+        } else if (elemAlbum == null) {
+          elemAlbum = elemModel;
+          return model.unset(elem, 'silent');
+        }
+      }
+    });
+    model.set('album', album.id);
+    return model;
+  };
+
+  AlbumList.prototype.addTrackToAlbum = function(track, callback) {
+    var album, tracks;
+    album = this.get(track.get('album'));
+    tracks = album.get('tracks');
+    tracks.push(track.id);
+    return album.sync('update', album, {
+      error: function(xhr) {
+        return console.error('ERROR: ', xhr);
+      }
+    });
+  };
+
+  AlbumList.prototype.upload = function(model, next) {
+    var album, track;
     album = this.findWhere({
       name: model.get('album')
     });
     if (album == null) {
-      return this.createAlbum(model, function(err, album) {});
+      return this.createAlbum(model, function(err, track) {
+        window.app.uploadQueue.trackQueue.push(track);
+        return next();
+      });
+    } else {
+      track = this.mergeDataAlbum(album, model);
+      window.app.uploadQueue.trackQueue.push(track);
+      return next();
     }
   };
 
@@ -489,10 +532,12 @@ module.exports = TracksList = (function(_super) {
 });
 
 ;require.register("collections/upload_queue", function(exports, require, module) {
-var Track, UploadQueue,
+var Track, UploadQueue, app,
   __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
 
 Track = require('./../models/track');
+
+app = require('./../application');
 
 
 /*
@@ -509,11 +554,11 @@ module.exports = UploadQueue = (function() {
   function UploadQueue(baseCollection) {
     this.baseCollection = baseCollection;
     this.completeUpload = __bind(this.completeUpload, this);
-    this.uploadWorker = __bind(this.uploadWorker, this);
+    this.uploadTrackWorker = __bind(this.uploadTrackWorker, this);
     this.uploadCollection = new Backbone.Collection();
     _.extend(this, Backbone.Events);
-    this.asyncQueue = async.queue(this.uploadWorker, 5);
-    this.asyncQueue.drain = this.completeUpload.bind(this);
+    this.trackQueue = async.queue(this.uploadTrackWorker, 5);
+    this.trackQueue.drain = this.completeUpload.bind(this);
   }
 
   UploadQueue.prototype.addBlobs = function(blobs) {
@@ -598,15 +643,13 @@ module.exports = UploadQueue = (function() {
 
   UploadQueue.prototype.add = function(model) {
     window.pendingOperations.upload++;
-    return window.app.albumCollection.upload(model, function(err, track) {
-      if (!track.isConflict()) {
-        track.markAsUploading();
-      }
-      this.asyncQueue.push(model);
-      model.set('plays', 0);
-      this.baseCollection.add(model);
-      return this.uploadCollection.add(model);
-    });
+    if (!model.isConflict()) {
+      model.markAsUploading();
+    }
+    window.app.albumCollection.albumQueue.push(model);
+    model.set('plays', 0);
+    this.baseCollection.add(model);
+    return this.uploadCollection.add(model);
   };
 
   UploadQueue.prototype._processSave = function(model, done) {
@@ -615,6 +658,7 @@ module.exports = UploadQueue = (function() {
         success: (function(_this) {
           return function(model) {
             model.track = null;
+            window.app.albumCollection.addTrackToAlbum(model);
             model.loaded = model.total;
             model.markAsUploaded();
             return done(null);
@@ -647,7 +691,7 @@ module.exports = UploadQueue = (function() {
                 error = t(errorKey);
                 return model.markAsErrored(error);
               } else {
-                return _this.asyncQueue.push(model);
+                return _this.trackQueue.push(model);
               }
             }
           };
@@ -658,11 +702,9 @@ module.exports = UploadQueue = (function() {
     }
   };
 
-  UploadQueue.prototype.uploadWorker = function(model, next) {
+  UploadQueue.prototype.uploadTrackWorker = function(model, next) {
     if (model.error) {
       return setTimeout(next, 10);
-    } else if (model.isConflict()) {
-      return alert('CONFLICT');
     } else {
       return this._processSave(model, next);
     }
