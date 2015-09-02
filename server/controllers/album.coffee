@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/28 12:12:19 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/02 15:39:19 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/02 21:34:15 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -17,13 +17,23 @@ albumAttributes = ['name', 'genre', 'year', 'artist', 'feat']
 
 now = moment().toISOString()
 
-get = (req, res, next) ->
+getByName = (req, res, next) ->
     Album.search req.params.name, (err, album) ->
         return next err if err
         if album?
             res.status(200).send(album)
         else
             res.status(200).send({})
+
+
+getById = (req, res, next) ->
+    Album.find req.params.id, (err, album) ->
+        return next err if err
+        if album?
+            res.status(200).send(album)
+        else
+            res.status(200).send({})
+
 
 # Create a new album
 create = (req, res, next) ->
@@ -58,5 +68,6 @@ update = (req, res, next) ->
 
 module.exports =
     create: create
-    get: get
+    getByName: getByName
+    getById: getById
     update: update

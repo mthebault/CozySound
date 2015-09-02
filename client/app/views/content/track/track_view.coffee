@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/20 18:08:58 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/27 01:57:37 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/02 21:30:20 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -23,6 +23,7 @@ module.exports = class TrackView extends BaseView
 
 
     afterRender: ->
+        console.log 'model: ', @model
         @$el.data 'cid', @model.cid
         if @model.isUploading()
             @$el.addClass 'warning'

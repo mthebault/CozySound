@@ -1,6 +1,13 @@
+
 td #{model.title}
-td #{model.artist}
-td #{model.album}
+if model.artist != 'undefined'
+    td #{model.artist}
+else
+    td #{model.album.artist}
+if model.album != 'undefined'
+    td #{model.album.name}
+else
+    td
 td #{model.plays}
 td #{model.time}
 

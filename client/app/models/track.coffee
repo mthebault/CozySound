@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 22:06:02 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/02 15:39:58 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/02 21:43:49 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -57,6 +57,19 @@ module.exports = class Track extends Backbone.Model
     markAsUploaded: -> @_setUploadStatus 'uploaded'
     markAsConflict: -> @_setUploadStatus 'conflict'
     markAsErrored: (error) -> @_setUploadStatus 'errored', error
+
+
+    #TODO: currently each model will request the DB, improve it by fetching the
+    #album in tracks-list with a queue
+    initialize: ->
+        @albumCollection = window.app.albumCollection
+        album = @albumCollection.get @get('album')
+        if not album?
+            @albumCollection.fetchAlbumById @get('album'), (err, album) =>
+                return console.error err if err
+                @set 'album', album
+        else
+            @set 'album', album
 
 
     ###

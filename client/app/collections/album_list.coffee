@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/09/02 11:16:41 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/02 19:18:06 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/02 21:43:34 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -23,35 +23,55 @@ module.exports = class AlbumList extends Backbone.Collection
         @albumQueue = async.queue @upload, 1
 
 
+    fetchAlbumByName: (albumName, callback) =>
+        console.log 'albumName: ',albumName
+        $.ajax
+            url: "album/name/#{albumName}"
+            type: 'GET'
+            error: (error) =>
+                callback error
+            success: (album) =>
+                callback null, album
+
+    fetchAlbumById: (albumId, callback) ->
+        $.ajax
+            url: "album/#{albumId}"
+            type: 'GET'
+            error: (error) ->
+                callback error
+            success: (album) ->
+                callback null, album
 
     createAlbum: (model, callback) ->
-        $.ajax
-            url: "album/#{model.get 'album'}"
-            type: 'GET'
-            error: (xhr) ->
-                console.error xhr
-            success: (album) =>
-                if album?.name
-                    @add album
-                    album = @get album.id
-                    track = @mergeDataAlbum album, model
-                    callback null, track
-                else
-                    album = new Album
-                        name: model.get 'album'
-                        artist: model.get 'artist'
-                        year: model.get 'year'
-                        genre: model.get 'genre'
-                    @.sync 'create', album,
-                        error: (res) ->
-                            console.log error
-                        success: (newAlbum) =>
-                            @add newAlbum
-                            model.unset 'artist', 'silent'
-                            model.unset 'year', 'silent'
-                            model.unset 'genre', 'silent'
-                            model.set 'album', newAlbum.id
-                            callback null, model
+        album = new Album
+            name: model.get 'album'
+            artist: model.get 'artist'
+            year: model.get 'year'
+            genre: model.get 'genre'
+        @.sync 'create', album,
+            error: (res) ->
+                console.log error
+            success: (newAlbum) =>
+                @add newAlbum
+                model.unset 'artist', 'silent'
+                model.unset 'year', 'silent'
+                model.unset 'genre', 'silent'
+                model.set 'album', newAlbum.id
+                callback null, model
+
+
+    checkRemoteAlbum: (model, callback) ->
+        @fetchAlbumByName model.get('album'), (err, album) =>
+            if err
+                console.error err
+                return
+            if album?.name
+                @add album
+                album = @get album.id
+                track = @mergeDataAlbum album, model
+                callback null, track
+            else
+                @createAlbum model, callback
 
 
     mergeDataAlbum: (album, model) ->
@@ -88,7 +108,7 @@ module.exports = class AlbumList extends Backbone.Collection
         album = @findWhere
             name: model.get 'album'
         if not album?
-            @createAlbum model, (err, track) ->
+            @checkRemoteAlbum model, (err, track) ->
                 window.app.uploadQueue.trackQueue.push track
                 next()
         else

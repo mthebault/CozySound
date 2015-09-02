@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/19 06:50:00 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/02 15:02:15 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/02 21:33:22 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -189,6 +189,7 @@ create = (req, res, next) ->
             time: fields.time
             docType: fields.dockType
             size: part.byteCount
+            plays: 0
 
         # Save track metadata
         Track.create data, (err, newTrack) ->
