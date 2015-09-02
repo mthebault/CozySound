@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 23:50:03 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/28 22:21:26 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/02 13:18:29 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -55,6 +55,7 @@ module.exports = class UploadQueue
             # TODO: Later check if it's a picture to get the covert
             if not blob.type.match /audio\/(mp3|mpeg)/ #list of supported filetype
                 @trigger 'badFileType'
+                console.log blob.name, ' => BadFileType'
             else
                 @retrieveMetaDataBlob blob, (model) =>
                     # Check if a same track is already stored in the base collection
@@ -107,7 +108,7 @@ module.exports = class UploadQueue
         reader = new FileReader()
         reader.onload = (event) ->
             ID3.loadTags blob.name, ( ->
-                tags =  ID3.getAllTags blob.name
+                tags = ID3.getAllTags blob.name
                 console.log 'TAGS UPLOAD: ', tags
                 model.set
                     title: if tags.title? then tags.title else model.title
@@ -132,18 +133,19 @@ module.exports = class UploadQueue
     add: (model) ->
         window.pendingOperations.upload++ # set in initialize.coffee
 
-        # don't override conflict status
-        model.markAsUploading() unless model.isConflict()
+        window.app.albumCollection.upload model, (err, track) ->
+            # don't override conflict status
+            track.markAsUploading() unless track.isConflict()
 
-        # Push it at the end of the queue
-        @asyncQueue.push model
+            # Push it at the end of the queue
+            @asyncQueue.push model
 
-        model.set 'plays', 0
-        # Add to the base collection to print it
-        @baseCollection.add model
+            model.set 'plays', 0
+            # Add to the base collection to print it
+            @baseCollection.add model
 
-        # Add to the upload collection so it can be precessed
-        @uploadCollection.add model
+            # Add to the upload collection so it can be precessed
+            @uploadCollection.add model
 
 
 

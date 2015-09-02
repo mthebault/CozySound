@@ -110,13 +110,15 @@
   globals.require = require;
 })();
 require.register("application", function(exports, require, module) {
-var AppView, TracksList, UploadQueue;
+var AlbumList, AppView, TracksList, UploadQueue;
 
 AppView = require('./views/app_view');
 
 TracksList = require('./collections/tracks_list');
 
 UploadQueue = require('./collections/upload_queue');
+
+AlbumList = require('./collections/album_list');
 
 
 /*
@@ -128,6 +130,7 @@ module.exports = {
     var Router, mainView;
     window.app = this;
     this.baseCollection = new TracksList;
+    this.albumCollection = new AlbumList;
     mainView = new AppView;
     mainView.render();
     Router = require('router');
@@ -139,6 +142,82 @@ module.exports = {
     }
   }
 };
+});
+
+;require.register("collections/album_list", function(exports, require, module) {
+var Album, AlbumList,
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+Album = require('../models/album');
+
+module.exports = AlbumList = (function(_super) {
+  __extends(AlbumList, _super);
+
+  function AlbumList() {
+    return AlbumList.__super__.constructor.apply(this, arguments);
+  }
+
+  AlbumList.prototype.url = 'album';
+
+  AlbumList.prototype.model = Album;
+
+  AlbumList.prototype.createAlbum = function(model, callback) {
+    return $.ajax({
+      url: "album/" + (model.get('album')),
+      type: 'GET',
+      error: function(xhr) {
+        return console.error(xhr);
+      },
+      success: (function(_this) {
+        return function(album) {
+          console.log('response: ', album);
+          if (album != null ? album.name : void 0) {
+            return console.log('Album exist');
+          } else {
+            console.log('Album NO exist');
+            album = new Album({
+              name: model.get('album'),
+              artist: model.get('artist'),
+              year: model.get('year'),
+              genre: model.get('genre')
+            });
+            return _this.sync('create', album, {
+              error: function(res) {
+                return console.log(error);
+              },
+              success: function(newAlbum) {
+                _this.add(newAlbum);
+                album = newAlbum;
+                model.unset('artist', 'silent');
+                model.unset('year', 'silent');
+                model.unset('genre', 'silent');
+                model.set('album', newAlbum.id);
+                console.log('model after: ', model);
+                console.log('Album Collection: ', _this);
+                return callback(null, model);
+              }
+            });
+          }
+        };
+      })(this)
+    });
+  };
+
+  AlbumList.prototype.upload = function(model, callback) {
+    var album;
+    console.log('DATA: ', model);
+    album = this.findWhere({
+      name: model.get('album')
+    });
+    if (album == null) {
+      return this.createAlbum(model, function(err, album) {});
+    }
+  };
+
+  return AlbumList;
+
+})(Backbone.Collection);
 });
 
 ;require.register("collections/playlist_items", function(exports, require, module) {
@@ -447,7 +526,8 @@ module.exports = UploadQueue = (function() {
           return;
         }
         if (!blob.type.match(/audio\/(mp3|mpeg)/)) {
-          return _this.trigger('badFileType');
+          _this.trigger('badFileType');
+          return console.log(blob.name, ' => BadFileType');
         } else {
           _this.retrieveMetaDataBlob(blob, function(model) {
             var existingModel;
@@ -493,7 +573,7 @@ module.exports = UploadQueue = (function() {
       return ID3.loadTags(blob.name, (function() {
         var tags, _ref;
         tags = ID3.getAllTags(blob.name);
-        console.log(tags);
+        console.log('TAGS UPLOAD: ', tags);
         model.set({
           title: tags.title != null ? tags.title : model.title,
           artist: tags.artist != null ? tags.artist : void 0,
@@ -518,13 +598,15 @@ module.exports = UploadQueue = (function() {
 
   UploadQueue.prototype.add = function(model) {
     window.pendingOperations.upload++;
-    if (!model.isConflict()) {
-      model.markAsUploading();
-    }
-    this.asyncQueue.push(model);
-    model.set('plays', 0);
-    this.baseCollection.add(model);
-    return this.uploadCollection.add(model);
+    return window.app.albumCollection.upload(model, function(err, track) {
+      if (!track.isConflict()) {
+        track.markAsUploading();
+      }
+      this.asyncQueue.push(model);
+      model.set('plays', 0);
+      this.baseCollection.add(model);
+      return this.uploadCollection.add(model);
+    });
   };
 
   UploadQueue.prototype._processSave = function(model, done) {
@@ -816,6 +898,25 @@ module.exports = {
   '#': '#',
   'status': 'Status'
 };
+});
+
+;require.register("models/album", function(exports, require, module) {
+var Album,
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+module.exports = Album = (function(_super) {
+  __extends(Album, _super);
+
+  function Album() {
+    return Album.__super__.constructor.apply(this, arguments);
+  }
+
+  Album.prototype.url = 'album';
+
+  return Album;
+
+})(Backbone.Model);
 });
 
 ;require.register("models/content_screen", function(exports, require, module) {

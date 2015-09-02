@@ -18,7 +18,7 @@ module.exports = Track = cozydb.getModel 'Track',
     feat:               String
     year:               String
     genre:              String
-    album:      	Object
+    album:      	String
     trackNb:    	String
     time:       	Number #not sur that is the right type
     size:       	Number
@@ -26,7 +26,7 @@ module.exports = Track = cozydb.getModel 'Track',
     docType:            String
     lastModification:   String
     creationDate:       String
-    clearance:          cozydb.NoSchema
+    #clearance:          cozydb.NoSchema
     binary:             Object
     uploading:          Boolean
     checksum:           String

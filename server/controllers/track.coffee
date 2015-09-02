@@ -6,34 +6,37 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/19 06:50:00 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/28 22:15:39 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/02 12:28:38 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 multiparty = require 'multiparty'
-moment = require 'moment'
 crypto = require 'crypto'
 feed = require '../lib/feed'
 log = require('printit')
     prefix: 'track'
 Track = require './../models/track'
-album = require './album'
 
 
 # Fetch params.nbTracks tracks from params.start
-module.exports.fetchRange = (req, res, next) ->
+fetchRange = (req, res, next) ->
     if not req.params.start or not req.params.nbTracks
         err = new Error "Bad arguments, no range given"
         err.status = 400
         return next err
-    Track.fetchByRange
-        skip: req.params.start
-        limit: req.params.nbTracks
+    Track.fetchByRange {skip: req.params.start, limit: req.params.nbTracks}
         , (err, data) ->
+        if err
+            res.send
+                error: true
+                code: 'EFRETREIVE'
+                , 500
+        else
             res.status(200).send(data)
 
 
-module.exports.all = (req, res, next) ->
+
+all = (req, res, next) ->
     Track.request 'all', (err, data) ->
         if err
             res.send
@@ -45,13 +48,12 @@ module.exports.all = (req, res, next) ->
             res.status(200).send(data)
 
 
-module.exports.update = (req, res, next) ->
+update = (req, res, next) ->
     data = req.body
     Track.find data.id, (err, trackFind) ->
         return next err if err
         data.lastModified = moment(Date.now())
         #TODO: set correctly the date
-        console.log data.lastModified
         trackFind.updateAttributes data, (err) ->
             if err
                 res.send
@@ -74,7 +76,7 @@ timeout = null
 isStorageError = (err) ->
     return err.toString().indexOf('enough storage') isnt -1
 
-module.exports.create = (req, res, next) ->
+create = (req, res, next) ->
     clearTimeout(timeout) if timeout?
 
     # Represent all fields retrieved
@@ -100,7 +102,6 @@ module.exports.create = (req, res, next) ->
         # we do not write a subfunction because it seems to load the whole
         # stream in memory.
         title = fields.title
-        lastModification = moment(new Date(fields.lastModification)).toISOString()
         upload = true
         canceled = false
         uploadStream = null
@@ -136,8 +137,6 @@ module.exports.create = (req, res, next) ->
 
 
         attachBinary = (track) ->
-            # request-json requires a path field to be set
-            # before uploading
             part.title = track.title
             checksum = crypto.createHash 'sha1'
             checksum.setEncoding 'hex'
@@ -174,51 +173,31 @@ module.exports.create = (req, res, next) ->
                             Track.find track.id, (err, track) =>
                                 log.debug err if err
 
-
-                                if albumData.name
-                                    # Create or set an album
-                                    albumData.tracks = track.id
-                                    album.set albumData, res, (err) ->
-                                        return next err if err
-                                        res.send track, 200
-                                        #end
-                                else
-                                    res.send track, 200
-                                    #end
+                                #album.addTrack track.album, track.id, (err, album) =>
+                                    #return next err if err
+                                    #res.status(200).send(track)
+                                    ##end
 
 
-        now = moment().toISOString()
 
         # TODO: Check if track already exist
 
 
 
-        #Generate track metadata.
-        albumData =
-            name: fields.album
+        # Retrieve all metaData
+        data =
+            title: title
+            trackNb: fields.trackNb
+            album: fields.album
             artist: fields.artist
             year: fields.year
             genre: fields.genre
-            lastModification: lastModification
-
-        trackData =
-            title: title
-            trackNb: fields.trackNb
             time: fields.time
             docType: fields.dockType
-            creationDate: now
-            lastModification: lastModification
             size: part.byteCount
-            uploading: true
-            plays: 0
 
-
-        # TODO: Check rights
-
-        #TODO: change lastModification date playlist
-
-            # Save track metadata
-        Track.create trackData, (err, newTrack) ->
+        # Save track metadata
+        Track.create data, (err, newTrack) ->
             return next err if err
 
             # Ask for the data system to not run autostop
@@ -239,3 +218,9 @@ module.exports.create = (req, res, next) ->
         log.error err
 
     form.parse req
+
+module.exports =
+    fetchRange: fetchRange
+    all: all
+    update: update
+    create: create
