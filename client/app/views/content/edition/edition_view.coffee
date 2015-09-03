@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/25 19:58:03 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/27 02:00:51 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/03 12:26:29 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -33,30 +33,11 @@ module.exports = class EditionView extends BaseView
         'click #edit-submit': 'submitEdition'
 
     initialize: ->
-        @collection = window.selectedTracksList
+        @selection = window.selectedTracksList
 
 
     render: ->
-        @mergeMetaData()
-        @cleanProcessedAttr()
-        @$el.append(@template {attr: @processedAttr})
-
-    mergeMetaData: ->
-        EditionView.MERGED_ATTRIBUTES.forEach (attribute) =>
-            lastAttribute = undefined
-            isSimilar = true
-            @collection.models.forEach (track) ->
-                if lastAttribute != undefined and track.get(attribute) != lastAttribute
-                    isSimilar = false
-                if lastAttribute == undefined
-                    lastAttribute = track.get attribute
-            if lastAttribute != undefined && isSimilar == true
-                @processedAttr[attribute] = lastAttribute
-
-    cleanProcessedAttr: ->
-        EditionView.MERGED_ATTRIBUTES.forEach (attr) =>
-            if @processedAttr[attr] == undefined
-                @processedAttr[attr] = ''
+        @$el.append(@template {attr: @selection})
 
     saveEditionChanges: ->
         newInputAttr = new Array
@@ -65,10 +46,10 @@ module.exports = class EditionView extends BaseView
             inputValue = @$("#edit-#{attr}").val()
             if inputValue != '' and attrValue != inputValue
                 newInputAttr.push [attr, inputValue]
-        @collection.updateTracks newInputAttr
+        @selection.updateTracks newInputAttr
 
     computeChangeAttr: (attribute, inputValue) ->
-        @collection.models.forEach (track) ->
+        @selection.models.forEach (track) ->
             track.set attribute, inputValue
 
 
@@ -83,6 +64,6 @@ module.exports = class EditionView extends BaseView
 
     freeSelectedTracksList: ->
         loop
-            track = @collection.pop()
+            track = @selection.pop()
             track.setAsNoSelected()
-            break if @collection.length == 0
+            break if @selection.length == 0

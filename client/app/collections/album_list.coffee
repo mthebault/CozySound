@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/09/02 11:16:41 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/03 11:51:02 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/03 12:06:30 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -42,7 +42,6 @@ module.exports = class AlbumList extends Backbone.Collection
                 callback null, album
 
     createAlbum: (model, callback) ->
-        console.log 'CREATE ALBUM'
         album = new Album
             name: model.get 'album'
             artist: model.get 'artist'
@@ -57,7 +56,6 @@ module.exports = class AlbumList extends Backbone.Collection
                 model.unset 'year', 'silent'
                 model.unset 'genre', 'silent'
                 model.set 'album', newAlbum.id
-                console.log 'before track creation: ', model
                 callback null, model
 
 
@@ -74,7 +72,6 @@ module.exports = class AlbumList extends Backbone.Collection
 
 
     mergeDataAlbum: (album, model) ->
-        console.log 'MERGE DATA : ', model
         AlbumList.ATTRIBUTES.forEach (elem) ->
             elemModel = model.get elem
             elemAlbum = album.get elem
@@ -89,8 +86,6 @@ module.exports = class AlbumList extends Backbone.Collection
                 # attribute we keep it in the track and that will overprint the
                 # album data
         model.set 'album', album.id
-        console.log 'model merge: ', model
-        console.log 'merge before track creation: ', model
 
         return model
 
@@ -111,7 +106,6 @@ module.exports = class AlbumList extends Backbone.Collection
             name: model.get 'album'
         if not album?
             @checkRemoteAlbum model, (err, track) ->
-                console.log 'track upload: ', track
                 window.app.uploadQueue.trackQueue.push track
                 next()
         else

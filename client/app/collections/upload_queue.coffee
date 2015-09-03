@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 23:50:03 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/03 12:04:29 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/03 12:06:11 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -86,7 +86,6 @@ module.exports = class UploadQueue
                             # Prevent the track from being added to the queue.
                             model = null
                     if model?
-                        console.log 'beg add model: ', model
                         @add model
 
                 setTimeout nonBlockingLoop, 2
@@ -146,7 +145,6 @@ module.exports = class UploadQueue
         # Push it at the end of the queue
         window.app.albumCollection.albumQueue.push model
 
-        console.log 'track model: ', model
 
         model.set 'plays', 0
         # Add to the base collection to print it

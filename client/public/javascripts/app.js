@@ -203,7 +203,6 @@ module.exports = AlbumList = (function(_super) {
 
   AlbumList.prototype.createAlbum = function(model, callback) {
     var album;
-    console.log('CREATE ALBUM');
     album = new Album({
       name: model.get('album'),
       artist: model.get('artist'),
@@ -221,7 +220,6 @@ module.exports = AlbumList = (function(_super) {
           model.unset('year', 'silent');
           model.unset('genre', 'silent');
           model.set('album', newAlbum.id);
-          console.log('before track creation: ', model);
           return callback(null, model);
         };
       })(this)
@@ -248,7 +246,6 @@ module.exports = AlbumList = (function(_super) {
   };
 
   AlbumList.prototype.mergeDataAlbum = function(album, model) {
-    console.log('MERGE DATA : ', model);
     AlbumList.ATTRIBUTES.forEach(function(elem) {
       var elemAlbum, elemModel;
       elemModel = model.get(elem);
@@ -263,8 +260,6 @@ module.exports = AlbumList = (function(_super) {
       }
     });
     model.set('album', album.id);
-    console.log('model merge: ', model);
-    console.log('merge before track creation: ', model);
     return model;
   };
 
@@ -287,7 +282,6 @@ module.exports = AlbumList = (function(_super) {
     });
     if (album == null) {
       return this.checkRemoteAlbum(model, function(err, track) {
-        console.log('track upload: ', track);
         window.app.uploadQueue.trackQueue.push(track);
         return next();
       });
@@ -633,7 +627,6 @@ module.exports = UploadQueue = (function() {
               }
             }
             if (model != null) {
-              console.log('beg add model: ', model);
               return _this.add(model);
             }
           });
@@ -688,7 +681,6 @@ module.exports = UploadQueue = (function() {
       model.markAsUploading();
     }
     window.app.albumCollection.albumQueue.push(model);
-    console.log('track model: ', model);
     model.set('plays', 0);
     this.baseCollection.add(model);
     return this.uploadCollection.add(model);
@@ -1607,46 +1599,13 @@ module.exports = EditionView = (function(_super) {
   };
 
   EditionView.prototype.initialize = function() {
-    return this.collection = window.selectedTracksList;
+    return this.selection = window.selectedTracksList;
   };
 
   EditionView.prototype.render = function() {
-    this.mergeMetaData();
-    this.cleanProcessedAttr();
     return this.$el.append(this.template({
-      attr: this.processedAttr
+      attr: this.selection
     }));
-  };
-
-  EditionView.prototype.mergeMetaData = function() {
-    return EditionView.MERGED_ATTRIBUTES.forEach((function(_this) {
-      return function(attribute) {
-        var isSimilar, lastAttribute;
-        lastAttribute = void 0;
-        isSimilar = true;
-        _this.collection.models.forEach(function(track) {
-          if (lastAttribute !== void 0 && track.get(attribute) !== lastAttribute) {
-            isSimilar = false;
-          }
-          if (lastAttribute === void 0) {
-            return lastAttribute = track.get(attribute);
-          }
-        });
-        if (lastAttribute !== void 0 && isSimilar === true) {
-          return _this.processedAttr[attribute] = lastAttribute;
-        }
-      };
-    })(this));
-  };
-
-  EditionView.prototype.cleanProcessedAttr = function() {
-    return EditionView.MERGED_ATTRIBUTES.forEach((function(_this) {
-      return function(attr) {
-        if (_this.processedAttr[attr] === void 0) {
-          return _this.processedAttr[attr] = '';
-        }
-      };
-    })(this));
   };
 
   EditionView.prototype.saveEditionChanges = function() {
@@ -1662,11 +1621,11 @@ module.exports = EditionView = (function(_super) {
         }
       };
     })(this));
-    return this.collection.updateTracks(newInputAttr);
+    return this.selection.updateTracks(newInputAttr);
   };
 
   EditionView.prototype.computeChangeAttr = function(attribute, inputValue) {
-    return this.collection.models.forEach(function(track) {
+    return this.selection.models.forEach(function(track) {
       return track.set(attribute, inputValue);
     });
   };
@@ -1685,9 +1644,9 @@ module.exports = EditionView = (function(_super) {
     var track, _results;
     _results = [];
     while (true) {
-      track = this.collection.pop();
+      track = this.selection.pop();
       track.setAsNoSelected();
-      if (this.collection.length === 0) {
+      if (this.selection.length === 0) {
         break;
       } else {
         _results.push(void 0);
@@ -1707,7 +1666,7 @@ var buf = [];
 var jade_mixins = {};
 var jade_interp;
 var locals_ = (locals || {}),attr = locals_.attr;
-buf.push("<div class=\"form-group\"><label for=\"Edit-title\">Title</label><input id=\"edit-title\" type=\"text\"" + (jade.attr("value", "" + (attr['title']) + "", true, false)) + " class=\"form-control\"/><label for=\"Edit-artist\">Artist</label><input id=\"edit-artist\" type=\"text\"" + (jade.attr("value", "" + (attr['artist']) + "", true, false)) + " class=\"form-control\"/><label for=\"Edit-album\">Album</label><input id=\"edit-album\" type=\"text\"" + (jade.attr("value", "" + (attr['album']) + "", true, false)) + " class=\"form-control\"/><label for=\"Edit-year\">Year</label><input id=\"edit-year\" type=\"text\"" + (jade.attr("value", "" + (attr['year']) + "", true, false)) + " class=\"form-control\"/><label for=\"Edit-genre\">Genre</label><input id=\"edit-genre\" type=\"text\"" + (jade.attr("value", "" + (attr['genre']) + "", true, false)) + " class=\"form-control\"/></div><button id=\"edit-cancel\" class=\"btn btn-default\">Cancel</button><button id=\"edit-submit\" class=\"btn btn-default\">Change</button>");;return buf.join("");
+buf.push("<div class=\"panel panel-default\"><div class=\"panel-heading\">Track</div><div class=\"panel-body\"><div class=\"form-group\"><label for=\"Edit-title\">Title</label><input id=\"edit-title\" type=\"text\"" + (jade.attr("value", "" + (attr['title']) + "", true, false)) + " class=\"form-control\"/><label for=\"Edit-artist\">Artist</label><input id=\"edit-artist\" type=\"text\"" + (jade.attr("value", "" + (attr['artist']) + "", true, false)) + " class=\"form-control\"/><label for=\"Edit-album\">Album</label><input id=\"edit-album\" type=\"text\"" + (jade.attr("value", "" + (attr['album']) + "", true, false)) + " class=\"form-control\"/><label for=\"Edit-year\">Year</label><input id=\"edit-year\" type=\"text\"" + (jade.attr("value", "" + (attr['year']) + "", true, false)) + " class=\"form-control\"/><label for=\"Edit-genre\">Genre</label><input id=\"edit-genre\" type=\"text\"" + (jade.attr("value", "" + (attr['genre']) + "", true, false)) + " class=\"form-control\"/></div><button id=\"edit-cancel\" class=\"btn btn-default\">Cancel</button><button id=\"edit-submit\" class=\"btn btn-default\">Change</button></div></div><div class=\"panel panel-default\"><div class=\"panel-heading\">Album</div><div class=\"panel-body\"><div class=\"form-group\"><label for=\"Edit-title\">Title</label><input id=\"edit-title\" type=\"text\"" + (jade.attr("value", "" + (attr['title']) + "", true, false)) + " class=\"form-control\"/><label for=\"Edit-artist\">Artist</label><input id=\"edit-artist\" type=\"text\"" + (jade.attr("value", "" + (attr['artist']) + "", true, false)) + " class=\"form-control\"/><label for=\"Edit-album\">Album</label><input id=\"edit-album\" type=\"text\"" + (jade.attr("value", "" + (attr['album']) + "", true, false)) + " class=\"form-control\"/><label for=\"Edit-year\">Year</label><input id=\"edit-year\" type=\"text\"" + (jade.attr("value", "" + (attr['year']) + "", true, false)) + " class=\"form-control\"/><label for=\"Edit-genre\">Genre</label><input id=\"edit-genre\" type=\"text\"" + (jade.attr("value", "" + (attr['genre']) + "", true, false)) + " class=\"form-control\"/></div><button id=\"edit-cancel\" class=\"btn btn-default\">Cancel</button><button id=\"edit-submit\" class=\"btn btn-default\">Change</button></div></div>");;return buf.join("");
 };
 if (typeof define === 'function' && define.amd) {
   define([], function() {
