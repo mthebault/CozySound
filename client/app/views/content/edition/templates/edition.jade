@@ -3,30 +3,43 @@ div.panel.panel-default
     div.panel-body
         div.form-group
             label(for='Edit-title') Title
-            input#edit-title.form-control(type='text' value="#{data.track['title']}")
+            input#edit-title.form-control(type='text' value="#{track['title']}")
             label(for='Edit-artist') Artist
-            input#edit-artist.form-control(type='text' value="#{data.track['artist']}")
+            input#edit-artist.form-control(type='text' value="#{track['artist']}")
             label(for='Edit-year') Year
-            input#edit-year.form-control(type='text' value="#{data.track['year']}")
+            input#edit-year.form-control(type='text' value="#{track['year']}")
             label(for='Edit-genre') Genre
-            input#edit-genre.form-control(type='text' value="#{data.track['genre']}")
+            input#edit-genre.form-control(type='text' value="#{track['genre']}")
         button#edit-cancel.btn.btn-default Cancel
         button#edit-submit.btn.btn-default Change
 div.panel.panel-default
     div.panel-heading ALBUM = data specific to all album track
     div.panel-body
-        each album, index in data.album
+        if allAlbum
+            div.panel.panel-default
+                div.panel-heading #{allAlbum.name}
+                div.panel-body
+                    div.form-group
+                        label(for='Edit-title') Name
+                        input#edit-title.form-control(type='text' value="#{allAlbum.name}")
+                        label(for='Edit-artist') Artist
+                        input#edit-artist.form-control(type='text' value="#{allAlbum.artist}")
+                        label(for='Edit-year') Year
+                        input#edit-year.form-control(type='text' value="#{allAlbum.year}")
+                        label(for='Edit-genre') Genre
+                        input#edit-genre.form-control(type='text' value="#{allAlbum.genre}")
+        each album, index in albums
             div.panel.panel-default
                 div.panel-heading #{album.name}
                 div.panel-body
                     div.form-group
                         label(for='Edit-title') Name
-                        input#edit-title.form-control(type='text' value="#{album.name}")
+                        input#edit-title.form-control(type='text' value="#{albums.name}")
                         label(for='Edit-artist') Artist
-                        input#edit-artist.form-control(type='text' value="#{album.artist}")
+                        input#edit-artist.form-control(type='text' value="#{albums.artist}")
                         label(for='Edit-year') Year
-                        input#edit-year.form-control(type='text' value="#{album.year}")
+                        input#edit-year.form-control(type='text' value="#{albums.year}")
                         label(for='Edit-genre') Genre
-                        input#edit-genre.form-control(type='text' value="#{album.genre}")
+                        input#edit-genre.form-control(type='text' value="#{albums.genre}")
         button#edit-cancel.btn.btn-default Cancel
         button#edit-submit.btn.btn-default Change

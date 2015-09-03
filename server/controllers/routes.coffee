@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/19 06:48:47 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/02 20:14:48 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/03 19:38:26 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -34,5 +34,6 @@ module.exports =
 
 
     'album':
+        get: album.fetchAll
         post: album.create
         put: album.update

@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/28 12:12:19 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/03 11:02:14 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/03 19:38:15 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -16,6 +16,11 @@ moment = require 'moment'
 albumAttributes = ['name', 'genre', 'year', 'artist', 'feat']
 
 now = moment().toISOString()
+
+fetchAll = (req, res, next) ->
+    Album.request 'all', (err, data) ->
+        return next err if err
+        res.status(200).send(data)
 
 getByName = (req, res, next) ->
     Album.search req.params.name, (err, album) ->
@@ -71,3 +76,4 @@ module.exports =
     getByName: getByName
     getById: getById
     update: update
+    fetchAll: fetchAll

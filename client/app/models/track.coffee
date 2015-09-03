@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 22:06:02 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/03 16:43:48 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/03 21:06:26 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -37,11 +37,6 @@ module.exports = class Track extends Backbone.Model
     # Check if conflic must be handled
     @VALID_STATUSES: [null, 'uploading', 'uploaded', 'errored']#, 'conflict']
 
-    # Define if the track is selected or not, it's managed by the selected
-    # tracks collection. This is relevant in the view but it's much easier to
-    # handle it in the models
-    _selectedStatus: false
-
     ###
     # Getters for the local states.
     ###
@@ -64,12 +59,7 @@ module.exports = class Track extends Backbone.Model
     initialize: ->
         @albumCollection = window.app.albumCollection
         album = @albumCollection.get @get('album')
-        if not album?
-            @albumCollection.fetchAlbumById @get('album'), (err, album) =>
-                return console.error err if err
-                @set 'album', album
-        else
-            @set 'album', album
+        @set 'album', album
 
 
     ###
@@ -143,20 +133,3 @@ module.exports = class Track extends Backbone.Model
                     xhr
 
         Backbone.sync.apply @, arguments
-
-
-
-
-    ########################### Manage View stat ################################
-    # Getter
-    isSelected: -> return @_selectedStatus
-    # Setters
-    setAsSelected: ->
-        @_selectedStatus = true
-        @trigger 'toggle-select', cid: @cid
-
-    setAsNoSelected: ->
-        @_selectedStatus = false
-        @trigger 'toggle-select', cid: @cid
-
-    ##################### END - Manage View Stat - END ##########################

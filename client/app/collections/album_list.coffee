@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/09/02 11:16:41 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/03 12:06:30 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/03 19:11:09 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -29,8 +29,9 @@ module.exports = class AlbumList extends Backbone.Collection
             type: 'GET'
             error: (error) =>
                 callback error
-            success: (album) =>
-                callback null, album
+            success: (response) =>
+                @add album
+                callback null, @get(album.id)
 
     fetchAlbumById: (albumId, callback) ->
         $.ajax
@@ -38,8 +39,9 @@ module.exports = class AlbumList extends Backbone.Collection
             type: 'GET'
             error: (error) ->
                 callback error
-            success: (album) ->
-                callback null, album
+            success: (album) =>
+                @add album
+                callback null, @get(album.id)
 
     createAlbum: (model, callback) ->
         album = new Album

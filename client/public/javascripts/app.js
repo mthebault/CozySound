@@ -129,8 +129,9 @@ module.exports = {
   initialize: function() {
     var Router, mainView;
     window.app = this;
-    this.baseCollection = new TracksList;
     this.albumCollection = new AlbumList;
+    this.albumCollection.fetch();
+    this.baseCollection = new TracksList;
     mainView = new AppView;
     mainView.render();
     Router = require('router');
@@ -181,8 +182,9 @@ module.exports = AlbumList = (function(_super) {
         };
       })(this),
       success: (function(_this) {
-        return function(album) {
-          return callback(null, album);
+        return function(response) {
+          _this.add(album);
+          return callback(null, _this.get(album.id));
         };
       })(this)
     });
@@ -195,9 +197,12 @@ module.exports = AlbumList = (function(_super) {
       error: function(error) {
         return callback(error);
       },
-      success: function(album) {
-        return callback(null, album);
-      }
+      success: (function(_this) {
+        return function(album) {
+          _this.add(album);
+          return callback(null, _this.get(album.id));
+        };
+      })(this)
     });
   };
 
@@ -339,170 +344,6 @@ module.exports = PlaylistList = (function(_super) {
   PlaylistList.prototype.url = 'playlist-list';
 
   return PlaylistList;
-
-})(Backbone.Collection);
-});
-
-;require.register("collections/selected_list", function(exports, require, module) {
-var SelectedTracksList, Track,
-  __hasProp = {}.hasOwnProperty,
-  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
-
-Track = require('./../models/track');
-
-
-/*
- * SelectedList is a collection of Track model selected by the user. This Tracks
- * are references to Tracks models contains in the Base collection. So all action
- * on tracks must be handle by this list which update the Base Collection and the
- * view.It's the same collection for all content screen (playlist/all tracks/etc...)
- * which is refresh.
- */
-
-module.exports = SelectedTracksList = (function(_super) {
-  __extends(SelectedTracksList, _super);
-
-  function SelectedTracksList() {
-    return SelectedTracksList.__super__.constructor.apply(this, arguments);
-  }
-
-  SelectedTracksList.prototype.model = Track;
-
-  SelectedTracksList.prototype.url = 'track';
-
-  SelectedTracksList.prototype._lastTrackSelected = null;
-
-  SelectedTracksList.prototype.processingUpdate = 0;
-
-  SelectedTracksList.prototype.errorUpdating = 0;
-
-  SelectedTracksList.prototype.successUpdating = 0;
-
-  SelectedTracksList.prototype.initialize = function() {
-    SelectedTracksList.__super__.initialize.apply(this, arguments);
-    return window.selectedTracksList = this;
-  };
-
-  SelectedTracksList.prototype.onTrackClicked = function(model, isShiftPressed) {
-    if (isShiftPressed == null) {
-      isShiftPressed = false;
-    }
-    if (isShiftPressed === true && this._lastTrackSelected !== null) {
-      this._manageListTracksSelection(model);
-    } else {
-      this._manageTrackSelection(model);
-    }
-    return this._lastTrackSelected = model;
-  };
-
-  SelectedTracksList.prototype._manageListTracksSelection = function(lastModel) {
-    var endIndex, startIndex, _results;
-    startIndex = this.baseCollection.indexOf(this._lastTrackSelected);
-    endIndex = this.baseCollection.indexOf(lastModel);
-    _results = [];
-    while (true) {
-      if (startIndex < endIndex) {
-        startIndex++;
-      } else {
-        startIndex--;
-      }
-      this._manageTrackSelection(this.baseCollection.at(startIndex));
-      if (startIndex === endIndex) {
-        break;
-      } else {
-        _results.push(void 0);
-      }
-    }
-    return _results;
-  };
-
-  SelectedTracksList.prototype._manageTrackSelection = function(model) {
-    if (model.isSelected() === false) {
-      this.add(model);
-      return model.setAsSelected();
-    } else {
-      this.remove(model);
-      return model.setAsNoSelected();
-    }
-  };
-
-  SelectedTracksList.prototype.add = function(models, options) {
-    if (this.length === 0) {
-      this.trigger('selectionTracksState', true);
-    }
-    return SelectedTracksList.__super__.add.call(this, models, options);
-  };
-
-  SelectedTracksList.prototype.remove = function(models, options) {
-    SelectedTracksList.__super__.remove.call(this, models, options);
-    if (this.length === 0) {
-      return this.trigger('selectionTracksState', false);
-    }
-  };
-
-  SelectedTracksList.prototype.updateTracks = function(newAttrs) {
-    var errorUpdating, i, memory, setOfAttr, successUpdating, track, _results;
-    errorUpdating = 0;
-    successUpdating = 0;
-    setOfAttr = null;
-    _results = [];
-    while (true) {
-      track = this.pop();
-      track.setAsNoSelected();
-      i = 0;
-      while (true) {
-        setOfAttr = newAttrs[i];
-        if (track.get(setOfAttr[0]) !== setOfAttr[1]) {
-          memory = track.get(setOfAttr[0]);
-          track.set(setOfAttr[0], setOfAttr[1]);
-        }
-        i++;
-        if (i === newAttrs.length) {
-          break;
-        }
-      }
-      this.processingUpdate++;
-      track.sync('update', track, {
-        error: (function(_this) {
-          return function(res) {
-            _this.setUpdateError();
-            return _this.set(res.data);
-          };
-        })(this),
-        success: (function(_this) {
-          return function(data) {
-            return _this.setUpdateSuccess();
-          };
-        })(this)
-      });
-      if (this.length === 0) {
-        break;
-      } else {
-        _results.push(void 0);
-      }
-    }
-    return _results;
-  };
-
-  SelectedTracksList.prototype.setUpdateError = function() {
-    this.processingUpdate--;
-    this.errorUpdating++;
-    return this.checkProcessingUpdateQueue();
-  };
-
-  SelectedTracksList.prototype.setUpdateSuccess = function() {
-    this.processingUpdate--;
-    this.successUpdating++;
-    return this.checkProcessingUpdateQueue();
-  };
-
-  SelectedTracksList.prototype.checkProcessingUpdateQueue = function() {
-    if (this.processingUpdate === 0) {
-      return console.log('EDITION: ', this.successUpdating, ' successe and ', this.errorUpdating, ' error');
-    }
-  };
-
-  return SelectedTracksList;
 
 })(Backbone.Collection);
 });
@@ -996,9 +837,7 @@ module.exports = Album = (function(_super) {
 });
 
 ;require.register("models/content_screen", function(exports, require, module) {
-var ContentScreen, ContextMenu, EditionView, SelectedTracksList, TracksView;
-
-SelectedTracksList = require('../collections/selected_list');
+var ContentScreen, ContextMenu, EditionView, TracksView;
 
 ContextMenu = require('../views/content/context_menu/context_menu');
 
@@ -1045,11 +884,8 @@ module.exports = ContentScreen = (function() {
     _.extend(this, Backbone.Events);
     this.baseCollection = window.app.baseCollection;
     this.menu = window.app.menuScreen;
-    this.selectedTracksList = new SelectedTracksList;
-    this.selectedTracksList.baseCollection = this.baseCollection;
     this.currentView = new Array;
     this.currentCollection = this.baseCollection;
-    this.listenTo(this.selectedTracksList, 'selectionTracksState', this.updateSelectionTracksState);
     this.listenTo(this.menu, 'content-print-playlist', this.renderPlaylist);
   }
 
@@ -1235,8 +1071,6 @@ module.exports = Track = (function(_super) {
 
   Track.VALID_STATUSES = [null, 'uploading', 'uploaded', 'errored'];
 
-  Track.prototype._selectedStatus = false;
-
 
   /*
    * Getters for the local states.
@@ -1283,18 +1117,7 @@ module.exports = Track = (function(_super) {
     var album;
     this.albumCollection = window.app.albumCollection;
     album = this.albumCollection.get(this.get('album'));
-    if (album == null) {
-      return this.albumCollection.fetchAlbumById(this.get('album'), (function(_this) {
-        return function(err, album) {
-          if (err) {
-            return console.error(err);
-          }
-          return _this.set('album', album);
-        };
-      })(this));
-    } else {
-      return this.set('album', album);
-    }
+    return this.set('album', album);
   };
 
 
@@ -1366,24 +1189,6 @@ module.exports = Track = (function(_super) {
       });
     }
     return Backbone.sync.apply(this, arguments);
-  };
-
-  Track.prototype.isSelected = function() {
-    return this._selectedStatus;
-  };
-
-  Track.prototype.setAsSelected = function() {
-    this._selectedStatus = true;
-    return this.trigger('toggle-select', {
-      cid: this.cid
-    });
-  };
-
-  Track.prototype.setAsNoSelected = function() {
-    this._selectedStatus = false;
-    return this.trigger('toggle-select', {
-      cid: this.cid
-    });
   };
 
   return Track;
@@ -1585,13 +1390,14 @@ module.exports = EditionView = (function(_super) {
 
   EditionView.prototype.el = '#edition-screen';
 
-  EditionView.MERGED_ATTRIBUTES = ['title', 'artist', 'album', 'year', 'genre'];
+  EditionView.MERGED_ATTRIBUTES = ['title', 'artist', 'year', 'genre', 'name'];
 
   EditionView.prototype.processingUpdate = 0;
 
   EditionView.prototype.processedAttr = {
     track: {},
-    album: []
+    album: [],
+    allAlbum: null
   };
 
   EditionView.prototype.events = function() {
@@ -1605,56 +1411,72 @@ module.exports = EditionView = (function(_super) {
     return this.selection = window.selectedTracksList;
   };
 
-  EditionView.prototype.prepareSelection = function() {
-    if (this.selection.length === 1) {
-      return this.renderSingleTrackEdition();
-    } else {
-      return console.log('print list track');
-    }
-  };
-
-  EditionView.prototype.renderSingleTrackEdition = function() {
-    return this.mergeTrackData();
-  };
-
-  EditionView.prototype.render = function() {
-    this.prepareSelection();
+  EditionView.prototype.beforeRender = function() {
+    this.mergeArrayOfData(this.selection.models, this.processedAttr.track);
+    console.log('final track data: ', this.processedAttr.track);
     this.mergeAlbumData();
-    this.cleanProcessedAttr();
-    return this.$el.append(this.template({
-      data: this.processedAttr
-    }));
+    return this.cleanProcessedAttr();
+  };
+
+  EditionView.prototype.getRenderData = function() {
+    console.log('album: ', this.processedAttr.album);
+    console.log('track: ', this.processedAttr.track);
+    return {
+      albums: this.processedAttr.album,
+      track: this.processedAttr.track,
+      allAlbum: this.processedAttr.allAlbum
+    };
   };
 
   EditionView.prototype.mergeAlbumData = function() {
-    return this.selection.models.forEach((function(_this) {
+    this.selection.models.forEach((function(_this) {
       return function(track) {
-        var album, dataAlbum;
+        var album, merged;
         album = track.get('album');
-        dataAlbum = track.get('album');
-        _this.processedAttr.album.push(dataAlbum);
-        return console.log('attr album: ', _this.processedAttr.album);
+        merged = _this.processedAttr.album.find(function(elem, index, array) {
+          if (elem.name === album.name) {
+            return true;
+          }
+          return false;
+        });
+        if (!merged) {
+          return _this.processedAttr.album.push(album.toJSON());
+        }
       };
     })(this));
+    if (this.processedAttr.album.length > 1) {
+      return this.mergeArrayOfData(this.processedAttr.album, this.processedAttr.allAlbum);
+    }
   };
 
-  EditionView.prototype.mergeTrackData = function() {
+  EditionView.prototype.mergeArrayOfData = function(array, dest) {
+    console.log('array: ', array);
     return EditionView.MERGED_ATTRIBUTES.forEach((function(_this) {
       return function(attribute) {
-        var isSimilar, lastAttribute;
-        lastAttribute = void 0;
-        isSimilar = true;
-        _this.selection.models.forEach(function(track) {
-          if (lastAttribute !== void 0 && track.get(attribute) !== lastAttribute) {
-            isSimilar = false;
+        var elem, elemAttr, i, mergedAttr;
+        console.log('ATTRIBUTE: ', attribute);
+        mergedAttr = void 0;
+        i = 0;
+        while (true) {
+          if (i >= array.length) {
+            break;
           }
-          if (lastAttribute === void 0) {
-            return lastAttribute = track.get(attribute);
+          elem = array[i];
+          console.log('elem: ', elem);
+          console.log('match: ', elem.get(attribute), ' / ', mergedAttr);
+          elemAttr = elem.get(attribute);
+          if (elemAttr != null) {
+            if (mergedAttr !== void 0 && elemAttr !== mergedAttr) {
+              mergedAttr = '';
+              break;
+            }
+            if (mergedAttr === void 0) {
+              mergedAttr = elemAttr;
+            }
           }
-        });
-        if (lastAttribute !== void 0 && isSimilar === true) {
-          return _this.processedAttr.track[attribute] = lastAttribute;
+          i++;
         }
+        return dest[attribute] = mergedAttr;
       };
     })(this));
   };
@@ -1665,7 +1487,11 @@ module.exports = EditionView = (function(_super) {
         if (_this.processedAttr.track[attr] === void 0) {
           _this.processedAttr.track[attr] = '';
         }
-        return _this.selection.models.forEach(function(track) {});
+        return _this.processedAttr.album.forEach(function(album) {
+          if (album[attr] === void 0) {
+            return album[attr] = '';
+          }
+        });
       };
     })(this));
   };
@@ -1727,17 +1553,21 @@ var __templateData = function template(locals) {
 var buf = [];
 var jade_mixins = {};
 var jade_interp;
-var locals_ = (locals || {}),data = locals_.data;
-buf.push("<div class=\"panel panel-default\"><div class=\"panel-heading\">TRACK - data specific to the track</div><div class=\"panel-body\"><div class=\"form-group\"><label for=\"Edit-title\">Title</label><input id=\"edit-title\" type=\"text\"" + (jade.attr("value", "" + (data.track['title']) + "", true, false)) + " class=\"form-control\"/><label for=\"Edit-artist\">Artist</label><input id=\"edit-artist\" type=\"text\"" + (jade.attr("value", "" + (data.track['artist']) + "", true, false)) + " class=\"form-control\"/><label for=\"Edit-year\">Year</label><input id=\"edit-year\" type=\"text\"" + (jade.attr("value", "" + (data.track['year']) + "", true, false)) + " class=\"form-control\"/><label for=\"Edit-genre\">Genre</label><input id=\"edit-genre\" type=\"text\"" + (jade.attr("value", "" + (data.track['genre']) + "", true, false)) + " class=\"form-control\"/></div><button id=\"edit-cancel\" class=\"btn btn-default\">Cancel</button><button id=\"edit-submit\" class=\"btn btn-default\">Change</button></div></div><div class=\"panel panel-default\"><div class=\"panel-heading\">ALBUM = data specific to all album track</div><div class=\"panel-body\">");
-// iterate data.album
+var locals_ = (locals || {}),track = locals_.track,allAlbum = locals_.allAlbum,albums = locals_.albums;
+buf.push("<div class=\"panel panel-default\"><div class=\"panel-heading\">TRACK - data specific to the track</div><div class=\"panel-body\"><div class=\"form-group\"><label for=\"Edit-title\">Title</label><input id=\"edit-title\" type=\"text\"" + (jade.attr("value", "" + (track['title']) + "", true, false)) + " class=\"form-control\"/><label for=\"Edit-artist\">Artist</label><input id=\"edit-artist\" type=\"text\"" + (jade.attr("value", "" + (track['artist']) + "", true, false)) + " class=\"form-control\"/><label for=\"Edit-year\">Year</label><input id=\"edit-year\" type=\"text\"" + (jade.attr("value", "" + (track['year']) + "", true, false)) + " class=\"form-control\"/><label for=\"Edit-genre\">Genre</label><input id=\"edit-genre\" type=\"text\"" + (jade.attr("value", "" + (track['genre']) + "", true, false)) + " class=\"form-control\"/></div><button id=\"edit-cancel\" class=\"btn btn-default\">Cancel</button><button id=\"edit-submit\" class=\"btn btn-default\">Change</button></div></div><div class=\"panel panel-default\"><div class=\"panel-heading\">ALBUM = data specific to all album track</div><div class=\"panel-body\">");
+if ( allAlbum)
+{
+buf.push("<div class=\"panel panel-default\"><div class=\"panel-heading\">" + (jade.escape((jade_interp = allAlbum.name) == null ? '' : jade_interp)) + "</div><div class=\"panel-body\"><div class=\"form-group\"><label for=\"Edit-title\">Name</label><input id=\"edit-title\" type=\"text\"" + (jade.attr("value", "" + (allAlbum.name) + "", true, false)) + " class=\"form-control\"/><label for=\"Edit-artist\">Artist</label><input id=\"edit-artist\" type=\"text\"" + (jade.attr("value", "" + (allAlbum.artist) + "", true, false)) + " class=\"form-control\"/><label for=\"Edit-year\">Year</label><input id=\"edit-year\" type=\"text\"" + (jade.attr("value", "" + (allAlbum.year) + "", true, false)) + " class=\"form-control\"/><label for=\"Edit-genre\">Genre</label><input id=\"edit-genre\" type=\"text\"" + (jade.attr("value", "" + (allAlbum.genre) + "", true, false)) + " class=\"form-control\"/></div></div></div>");
+}
+// iterate albums
 ;(function(){
-  var $$obj = data.album;
+  var $$obj = albums;
   if ('number' == typeof $$obj.length) {
 
     for (var index = 0, $$l = $$obj.length; index < $$l; index++) {
       var album = $$obj[index];
 
-buf.push("<div class=\"panel panel-default\"><div class=\"panel-heading\">" + (jade.escape((jade_interp = album.name) == null ? '' : jade_interp)) + "</div><div class=\"panel-body\"><div class=\"form-group\"><label for=\"Edit-title\">Name</label><input id=\"edit-title\" type=\"text\"" + (jade.attr("value", "" + (album.name) + "", true, false)) + " class=\"form-control\"/><label for=\"Edit-artist\">Artist</label><input id=\"edit-artist\" type=\"text\"" + (jade.attr("value", "" + (album.artist) + "", true, false)) + " class=\"form-control\"/><label for=\"Edit-year\">Year</label><input id=\"edit-year\" type=\"text\"" + (jade.attr("value", "" + (album.year) + "", true, false)) + " class=\"form-control\"/><label for=\"Edit-genre\">Genre</label><input id=\"edit-genre\" type=\"text\"" + (jade.attr("value", "" + (album.genre) + "", true, false)) + " class=\"form-control\"/></div></div></div>");
+buf.push("<div class=\"panel panel-default\"><div class=\"panel-heading\">" + (jade.escape((jade_interp = album.name) == null ? '' : jade_interp)) + "</div><div class=\"panel-body\"><div class=\"form-group\"><label for=\"Edit-title\">Name</label><input id=\"edit-title\" type=\"text\"" + (jade.attr("value", "" + (albums.name) + "", true, false)) + " class=\"form-control\"/><label for=\"Edit-artist\">Artist</label><input id=\"edit-artist\" type=\"text\"" + (jade.attr("value", "" + (albums.artist) + "", true, false)) + " class=\"form-control\"/><label for=\"Edit-year\">Year</label><input id=\"edit-year\" type=\"text\"" + (jade.attr("value", "" + (albums.year) + "", true, false)) + " class=\"form-control\"/><label for=\"Edit-genre\">Genre</label><input id=\"edit-genre\" type=\"text\"" + (jade.attr("value", "" + (albums.genre) + "", true, false)) + " class=\"form-control\"/></div></div></div>");
     }
 
   } else {
@@ -1745,7 +1575,7 @@ buf.push("<div class=\"panel panel-default\"><div class=\"panel-heading\">" + (j
     for (var index in $$obj) {
       $$l++;      var album = $$obj[index];
 
-buf.push("<div class=\"panel panel-default\"><div class=\"panel-heading\">" + (jade.escape((jade_interp = album.name) == null ? '' : jade_interp)) + "</div><div class=\"panel-body\"><div class=\"form-group\"><label for=\"Edit-title\">Name</label><input id=\"edit-title\" type=\"text\"" + (jade.attr("value", "" + (album.name) + "", true, false)) + " class=\"form-control\"/><label for=\"Edit-artist\">Artist</label><input id=\"edit-artist\" type=\"text\"" + (jade.attr("value", "" + (album.artist) + "", true, false)) + " class=\"form-control\"/><label for=\"Edit-year\">Year</label><input id=\"edit-year\" type=\"text\"" + (jade.attr("value", "" + (album.year) + "", true, false)) + " class=\"form-control\"/><label for=\"Edit-genre\">Genre</label><input id=\"edit-genre\" type=\"text\"" + (jade.attr("value", "" + (album.genre) + "", true, false)) + " class=\"form-control\"/></div></div></div>");
+buf.push("<div class=\"panel panel-default\"><div class=\"panel-heading\">" + (jade.escape((jade_interp = album.name) == null ? '' : jade_interp)) + "</div><div class=\"panel-body\"><div class=\"form-group\"><label for=\"Edit-title\">Name</label><input id=\"edit-title\" type=\"text\"" + (jade.attr("value", "" + (albums.name) + "", true, false)) + " class=\"form-control\"/><label for=\"Edit-artist\">Artist</label><input id=\"edit-artist\" type=\"text\"" + (jade.attr("value", "" + (albums.artist) + "", true, false)) + " class=\"form-control\"/><label for=\"Edit-year\">Year</label><input id=\"edit-year\" type=\"text\"" + (jade.attr("value", "" + (albums.year) + "", true, false)) + " class=\"form-control\"/><label for=\"Edit-genre\">Genre</label><input id=\"edit-genre\" type=\"text\"" + (jade.attr("value", "" + (albums.genre) + "", true, false)) + " class=\"form-control\"/></div></div></div>");
     }
 
   }
@@ -1807,7 +1637,7 @@ var __templateData = function template(locals) {
 var buf = [];
 var jade_mixins = {};
 var jade_interp;
-var locals_ = (locals || {}),model = locals_.model;
+var locals_ = (locals || {}),model = locals_.model,album = locals_.album;
 buf.push("<td>" + (jade.escape((jade_interp = model.title) == null ? '' : jade_interp)) + "</td>");
 if ( model.artist)
 {
@@ -1815,11 +1645,11 @@ buf.push("<td>" + (jade.escape((jade_interp = model.artist) == null ? '' : jade_
 }
 else
 {
-buf.push("<td>" + (jade.escape((jade_interp = model.album.artist) == null ? '' : jade_interp)) + "</td>");
+buf.push("<td>" + (jade.escape((jade_interp = album.artist) == null ? '' : jade_interp)) + "</td>");
 }
-if ( model.album)
+if ( album)
 {
-buf.push("<td>" + (jade.escape((jade_interp = model.album.name) == null ? '' : jade_interp)) + "</td>");
+buf.push("<td>" + (jade.escape((jade_interp = album.name) == null ? '' : jade_interp)) + "</td>");
 }
 else
 {
@@ -1882,6 +1712,15 @@ module.exports = TrackView = (function(_super) {
 
   TrackView.prototype.tagName = 'tr';
 
+  TrackView.prototype.getRenderData = function() {
+    var album, _ref, _ref1;
+    album = (_ref = this.model) != null ? _ref.get('album') : void 0;
+    return {
+      model: (_ref1 = this.model) != null ? _ref1.toJSON() : void 0,
+      album: album.toJSON()
+    };
+  };
+
   TrackView.prototype.afterRender = function() {
     this.$el.data('cid', this.model.cid);
     if (this.model.isUploading()) {
@@ -1895,18 +1734,12 @@ module.exports = TrackView = (function(_super) {
     return this.render();
   };
 
-  TrackView.prototype.onTrackClicked = function(event) {
-    var isShiftPressed;
-    isShiftPressed = event.shiftKey || false;
-    return window.selectedTracksList.onTrackClicked(this.model, isShiftPressed);
+  TrackView.prototype.setAsSelected = function() {
+    return this.$el.addClass('success');
   };
 
-  TrackView.prototype.changeSelectStat = function() {
-    if (this.model.isSelected()) {
-      return this.$el.addClass('success');
-    } else {
-      return this.$el.removeClass('success');
-    }
+  TrackView.prototype.setAsNoSelected = function() {
+    return this.$el.removeClass('success');
   };
 
   return TrackView;
@@ -1943,10 +1776,10 @@ module.exports = TracksView = (function(_super) {
 
   TracksView.prototype.collectionEl = '#table-items-content';
 
+  TracksView.prototype.selectedTrack = null;
+
   TracksView.prototype.events = {
-    'click tr.track-row': function(e) {
-      return this.viewProxy('onTrackClicked', e);
-    }
+    'click tr.track-row': 'onSelectTrack'
   };
 
   TracksView.prototype.initialize = function(options) {
@@ -1971,6 +1804,26 @@ module.exports = TracksView = (function(_super) {
     if (view != null) {
       args = [].splice.call(arguments, 1);
       return view[methodName].apply(view, args);
+    }
+  };
+
+  TracksView.prototype.onSelectTrack = function(event) {
+    var cid, view;
+    cid = this.$(event.target).parents('tr').data('cid');
+    view = _.find(this.views, function(view) {
+      return view.model.cid === cid;
+    });
+    console.log('clicked view: ', view);
+    if (this.selectedTrack === view) {
+      view.setAsNoSelected();
+      return this.selectedTrack = null;
+    } else {
+      if (this.selectedTrack !== null) {
+        console.log('unselect: ', this.selectedTrack);
+        this.selectedTrack.setAsNoSelected();
+      }
+      this.selectedTrack = view;
+      return view.setAsSelected();
     }
   };
 

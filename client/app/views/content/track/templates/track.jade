@@ -1,11 +1,10 @@
-
 td #{model.title}
 if model.artist
     td #{model.artist}
 else
-    td #{model.album.artist}
-if model.album
-    td #{model.album.name}
+    td #{album.artist}
+if album
+    td #{album.name}
 else
     td
 td #{model.plays}
