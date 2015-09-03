@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/19 06:50:00 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/02 21:33:22 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/03 12:04:25 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -16,6 +16,7 @@ feed = require '../lib/feed'
 log = require('printit')
     prefix: 'track'
 Track = require './../models/track'
+moment = require 'moment'
 
 
 # Fetch params.nbTracks tracks from params.start
@@ -178,6 +179,8 @@ create = (req, res, next) ->
 
 
 
+        ATTRIBUTES = ["title","artist","album","track","year","genre","TLEN", 'time', 'docType', 'size']
+
         # Retrieve all metaData
         data =
             title: title
@@ -190,6 +193,13 @@ create = (req, res, next) ->
             docType: fields.dockType
             size: part.byteCount
             plays: 0
+
+        ATTRIBUTES.forEach (attr) ->
+            elem = data[attr]
+            console.log 'attr : ', attr, ' / elem : ', elem
+            if not elem? or elem == "undefined"
+                delete data[attr]
+
 
         # Save track metadata
         Track.create data, (err, newTrack) ->

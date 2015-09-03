@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 23:50:03 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/02 19:20:02 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/03 12:04:29 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -27,6 +27,9 @@ module.exports = class UploadQueue
     # TODO: Catch event "badFileType" and prompt an error
     # TODO: Catch event "upload-complete"
     # TODO: Catch event "metaDataError"
+
+
+    @ATTRIBUTES: ["title","artist","album","track","year","genre","TLEN"]
 
     constructor: (@baseCollection) ->
 
@@ -83,6 +86,7 @@ module.exports = class UploadQueue
                             # Prevent the track from being added to the queue.
                             model = null
                     if model?
+                        console.log 'beg add model: ', model
                         @add model
 
                 setTimeout nonBlockingLoop, 2
@@ -123,7 +127,7 @@ module.exports = class UploadQueue
                     time: if tags.TLEN?.data? then tags.TLEN.data else undefined
                 callback(model)
             ),
-            tags: ["title","artist","album","track","year","genre","TLEN"]
+            tags: UploadQueue.ATTRIBUTES
             dataReader: FileAPIReader blob
         reader.readAsArrayBuffer blob
         reader.onabort = (event) ->
@@ -141,6 +145,8 @@ module.exports = class UploadQueue
 
         # Push it at the end of the queue
         window.app.albumCollection.albumQueue.push model
+
+        console.log 'track model: ', model
 
         model.set 'plays', 0
         # Add to the base collection to print it

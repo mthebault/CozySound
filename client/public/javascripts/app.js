@@ -172,7 +172,6 @@ module.exports = AlbumList = (function(_super) {
   };
 
   AlbumList.prototype.fetchAlbumByName = function(albumName, callback) {
-    console.log('albumName: ', albumName);
     return $.ajax({
       url: "album/name/" + albumName,
       type: 'GET',
@@ -204,6 +203,7 @@ module.exports = AlbumList = (function(_super) {
 
   AlbumList.prototype.createAlbum = function(model, callback) {
     var album;
+    console.log('CREATE ALBUM');
     album = new Album({
       name: model.get('album'),
       artist: model.get('artist'),
@@ -212,7 +212,7 @@ module.exports = AlbumList = (function(_super) {
     });
     return this.sync('create', album, {
       error: function(res) {
-        return console.log(error);
+        return console.error(error);
       },
       success: (function(_this) {
         return function(newAlbum) {
@@ -221,6 +221,7 @@ module.exports = AlbumList = (function(_super) {
           model.unset('year', 'silent');
           model.unset('genre', 'silent');
           model.set('album', newAlbum.id);
+          console.log('before track creation: ', model);
           return callback(null, model);
         };
       })(this)
@@ -232,8 +233,7 @@ module.exports = AlbumList = (function(_super) {
       return function(err, album) {
         var track;
         if (err) {
-          console.error(err);
-          return;
+          return console.error(err);
         }
         if (album != null ? album.name : void 0) {
           _this.add(album);
@@ -248,6 +248,7 @@ module.exports = AlbumList = (function(_super) {
   };
 
   AlbumList.prototype.mergeDataAlbum = function(album, model) {
+    console.log('MERGE DATA : ', model);
     AlbumList.ATTRIBUTES.forEach(function(elem) {
       var elemAlbum, elemModel;
       elemModel = model.get(elem);
@@ -262,6 +263,8 @@ module.exports = AlbumList = (function(_super) {
       }
     });
     model.set('album', album.id);
+    console.log('model merge: ', model);
+    console.log('merge before track creation: ', model);
     return model;
   };
 
@@ -284,6 +287,7 @@ module.exports = AlbumList = (function(_super) {
     });
     if (album == null) {
       return this.checkRemoteAlbum(model, function(err, track) {
+        console.log('track upload: ', track);
         window.app.uploadQueue.trackQueue.push(track);
         return next();
       });
@@ -585,6 +589,8 @@ module.exports = UploadQueue = (function() {
 
   UploadQueue.prototype.loaded = 0;
 
+  UploadQueue.ATTRIBUTES = ["title", "artist", "album", "track", "year", "genre", "TLEN"];
+
   function UploadQueue(baseCollection) {
     this.baseCollection = baseCollection;
     this.completeUpload = __bind(this.completeUpload, this);
@@ -627,6 +633,7 @@ module.exports = UploadQueue = (function() {
               }
             }
             if (model != null) {
+              console.log('beg add model: ', model);
               return _this.add(model);
             }
           });
@@ -664,7 +671,7 @@ module.exports = UploadQueue = (function() {
         });
         return callback(model);
       }), {
-        tags: ["title", "artist", "album", "track", "year", "genre", "TLEN"],
+        tags: UploadQueue.ATTRIBUTES,
         dataReader: FileAPIReader(blob)
       });
     };
@@ -681,6 +688,7 @@ module.exports = UploadQueue = (function() {
       model.markAsUploading();
     }
     window.app.albumCollection.albumQueue.push(model);
+    console.log('track model: ', model);
     model.set('plays', 0);
     this.baseCollection.add(model);
     return this.uploadCollection.add(model);
@@ -1757,7 +1765,7 @@ var jade_mixins = {};
 var jade_interp;
 var locals_ = (locals || {}),model = locals_.model;
 buf.push("<td>" + (jade.escape((jade_interp = model.title) == null ? '' : jade_interp)) + "</td>");
-if ( model.artist != 'undefined')
+if ( model.artist)
 {
 buf.push("<td>" + (jade.escape((jade_interp = model.artist) == null ? '' : jade_interp)) + "</td>");
 }
@@ -1765,7 +1773,7 @@ else
 {
 buf.push("<td>" + (jade.escape((jade_interp = model.album.artist) == null ? '' : jade_interp)) + "</td>");
 }
-if ( model.album != 'undefined')
+if ( model.album)
 {
 buf.push("<td>" + (jade.escape((jade_interp = model.album.name) == null ? '' : jade_interp)) + "</td>");
 }
@@ -1831,7 +1839,6 @@ module.exports = TrackView = (function(_super) {
   TrackView.prototype.tagName = 'tr';
 
   TrackView.prototype.afterRender = function() {
-    console.log('model: ', this.model);
     this.$el.data('cid', this.model.cid);
     if (this.model.isUploading()) {
       return this.$el.addClass('warning');

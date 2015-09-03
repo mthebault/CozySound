@@ -1,10 +1,10 @@
 
 td #{model.title}
-if model.artist != 'undefined'
+if model.artist
     td #{model.artist}
 else
     td #{model.album.artist}
-if model.album != 'undefined'
+if model.album
     td #{model.album.name}
 else
     td

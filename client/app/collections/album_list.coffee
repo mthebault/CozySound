@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/09/02 11:16:41 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/02 21:43:34 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/03 11:51:02 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -24,7 +24,6 @@ module.exports = class AlbumList extends Backbone.Collection
 
 
     fetchAlbumByName: (albumName, callback) =>
-        console.log 'albumName: ',albumName
         $.ajax
             url: "album/name/#{albumName}"
             type: 'GET'
@@ -43,6 +42,7 @@ module.exports = class AlbumList extends Backbone.Collection
                 callback null, album
 
     createAlbum: (model, callback) ->
+        console.log 'CREATE ALBUM'
         album = new Album
             name: model.get 'album'
             artist: model.get 'artist'
@@ -50,21 +50,20 @@ module.exports = class AlbumList extends Backbone.Collection
             genre: model.get 'genre'
         @.sync 'create', album,
             error: (res) ->
-                console.log error
+                console.error error
             success: (newAlbum) =>
                 @add newAlbum
                 model.unset 'artist', 'silent'
                 model.unset 'year', 'silent'
                 model.unset 'genre', 'silent'
                 model.set 'album', newAlbum.id
+                console.log 'before track creation: ', model
                 callback null, model
 
 
     checkRemoteAlbum: (model, callback) ->
         @fetchAlbumByName model.get('album'), (err, album) =>
-            if err
-                console.error err
-                return
+            return console.error err if err
             if album?.name
                 @add album
                 album = @get album.id
@@ -75,6 +74,7 @@ module.exports = class AlbumList extends Backbone.Collection
 
 
     mergeDataAlbum: (album, model) ->
+        console.log 'MERGE DATA : ', model
         AlbumList.ATTRIBUTES.forEach (elem) ->
             elemModel = model.get elem
             elemAlbum = album.get elem
@@ -89,6 +89,8 @@ module.exports = class AlbumList extends Backbone.Collection
                 # attribute we keep it in the track and that will overprint the
                 # album data
         model.set 'album', album.id
+        console.log 'model merge: ', model
+        console.log 'merge before track creation: ', model
 
         return model
 
@@ -109,6 +111,7 @@ module.exports = class AlbumList extends Backbone.Collection
             name: model.get 'album'
         if not album?
             @checkRemoteAlbum model, (err, track) ->
+                console.log 'track upload: ', track
                 window.app.uploadQueue.trackQueue.push track
                 next()
         else
