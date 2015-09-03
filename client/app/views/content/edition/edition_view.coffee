@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/25 19:58:03 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/03 12:28:12 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/03 16:55:47 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -26,7 +26,9 @@ module.exports = class EditionView extends BaseView
     # notification when it's finish
     processingUpdate: 0
 
-    processedAttr: {}
+    processedAttr:
+        track: {}
+        album: []
 
     events: ->
         'click #edit-cancel': 'cancelEdition'
@@ -36,8 +38,49 @@ module.exports = class EditionView extends BaseView
         @selection = window.selectedTracksList
 
 
+    prepareSelection: ->
+        if @selection.length == 1
+            @renderSingleTrackEdition()
+        else
+            console.log 'print list track'
+
+    renderSingleTrackEdition: ->
+        @mergeTrackData()
+
     render: ->
-        @$el.append(@template {attr: @selection})
+        @prepareSelection()
+        @mergeAlbumData()
+        @cleanProcessedAttr()
+        @$el.append(@template {data: @processedAttr})
+
+    mergeAlbumData: ->
+        @selection.models.forEach (track) =>
+            album = track.get 'album'
+            dataAlbum = track.get('album')
+            @processedAttr.album.push dataAlbum
+            console.log 'attr album: ', @processedAttr.album
+
+
+
+
+    mergeTrackData: ->
+        EditionView.MERGED_ATTRIBUTES.forEach (attribute) =>
+            lastAttribute = undefined
+            isSimilar = true
+            @selection.models.forEach (track) ->
+                if lastAttribute != undefined and track.get(attribute) != lastAttribute
+                    isSimilar = false
+                if lastAttribute == undefined
+                    lastAttribute = track.get attribute
+            if lastAttribute != undefined && isSimilar == true
+                @processedAttr.track[attribute] = lastAttribute
+
+    cleanProcessedAttr: ->
+        EditionView.MERGED_ATTRIBUTES.forEach (attr) =>
+            if @processedAttr.track[attr] == undefined
+                @processedAttr.track[attr] = ''
+            @selection.models.forEach (track) ->
+
 
     saveEditionChanges: ->
         newInputAttr = new Array

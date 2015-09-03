@@ -1589,7 +1589,10 @@ module.exports = EditionView = (function(_super) {
 
   EditionView.prototype.processingUpdate = 0;
 
-  EditionView.prototype.processedAttr = {};
+  EditionView.prototype.processedAttr = {
+    track: {},
+    album: []
+  };
 
   EditionView.prototype.events = function() {
     return {
@@ -1602,10 +1605,69 @@ module.exports = EditionView = (function(_super) {
     return this.selection = window.selectedTracksList;
   };
 
+  EditionView.prototype.prepareSelection = function() {
+    if (this.selection.length === 1) {
+      return this.renderSingleTrackEdition();
+    } else {
+      return console.log('print list track');
+    }
+  };
+
+  EditionView.prototype.renderSingleTrackEdition = function() {
+    return this.mergeTrackData();
+  };
+
   EditionView.prototype.render = function() {
+    this.prepareSelection();
+    this.mergeAlbumData();
+    this.cleanProcessedAttr();
     return this.$el.append(this.template({
-      attr: this.selection
+      data: this.processedAttr
     }));
+  };
+
+  EditionView.prototype.mergeAlbumData = function() {
+    return this.selection.models.forEach((function(_this) {
+      return function(track) {
+        var album, dataAlbum;
+        album = track.get('album');
+        dataAlbum = track.get('album');
+        _this.processedAttr.album.push(dataAlbum);
+        return console.log('attr album: ', _this.processedAttr.album);
+      };
+    })(this));
+  };
+
+  EditionView.prototype.mergeTrackData = function() {
+    return EditionView.MERGED_ATTRIBUTES.forEach((function(_this) {
+      return function(attribute) {
+        var isSimilar, lastAttribute;
+        lastAttribute = void 0;
+        isSimilar = true;
+        _this.selection.models.forEach(function(track) {
+          if (lastAttribute !== void 0 && track.get(attribute) !== lastAttribute) {
+            isSimilar = false;
+          }
+          if (lastAttribute === void 0) {
+            return lastAttribute = track.get(attribute);
+          }
+        });
+        if (lastAttribute !== void 0 && isSimilar === true) {
+          return _this.processedAttr.track[attribute] = lastAttribute;
+        }
+      };
+    })(this));
+  };
+
+  EditionView.prototype.cleanProcessedAttr = function() {
+    return EditionView.MERGED_ATTRIBUTES.forEach((function(_this) {
+      return function(attr) {
+        if (_this.processedAttr.track[attr] === void 0) {
+          _this.processedAttr.track[attr] = '';
+        }
+        return _this.selection.models.forEach(function(track) {});
+      };
+    })(this));
   };
 
   EditionView.prototype.saveEditionChanges = function() {
@@ -1665,8 +1727,31 @@ var __templateData = function template(locals) {
 var buf = [];
 var jade_mixins = {};
 var jade_interp;
-var locals_ = (locals || {}),attr = locals_.attr;
-buf.push("<div class=\"panel panel-default\"><div class=\"panel-heading\">Track</div><div class=\"panel-body\"><div class=\"form-group\"><label for=\"Edit-title\">Title</label><input id=\"edit-title\" type=\"text\"" + (jade.attr("value", "" + (attr['title']) + "", true, false)) + " class=\"form-control\"/><label for=\"Edit-artist\">Artist</label><input id=\"edit-artist\" type=\"text\"" + (jade.attr("value", "" + (attr['artist']) + "", true, false)) + " class=\"form-control\"/><label for=\"Edit-album\">Album</label><input id=\"edit-album\" type=\"text\"" + (jade.attr("value", "" + (attr['album']) + "", true, false)) + " class=\"form-control\"/><label for=\"Edit-year\">Year</label><input id=\"edit-year\" type=\"text\"" + (jade.attr("value", "" + (attr['year']) + "", true, false)) + " class=\"form-control\"/><label for=\"Edit-genre\">Genre</label><input id=\"edit-genre\" type=\"text\"" + (jade.attr("value", "" + (attr['genre']) + "", true, false)) + " class=\"form-control\"/></div><button id=\"edit-cancel\" class=\"btn btn-default\">Cancel</button><button id=\"edit-submit\" class=\"btn btn-default\">Change</button></div></div><div class=\"panel panel-default\"><div class=\"panel-heading\">Album</div><div class=\"panel-body\"><div class=\"form-group\"><label for=\"Edit-title\">Title</label><input id=\"edit-title\" type=\"text\"" + (jade.attr("value", "" + (attr['title']) + "", true, false)) + " class=\"form-control\"/><label for=\"Edit-artist\">Artist</label><input id=\"edit-artist\" type=\"text\"" + (jade.attr("value", "" + (attr['artist']) + "", true, false)) + " class=\"form-control\"/><label for=\"Edit-album\">Album</label><input id=\"edit-album\" type=\"text\"" + (jade.attr("value", "" + (attr['album']) + "", true, false)) + " class=\"form-control\"/><label for=\"Edit-year\">Year</label><input id=\"edit-year\" type=\"text\"" + (jade.attr("value", "" + (attr['year']) + "", true, false)) + " class=\"form-control\"/><label for=\"Edit-genre\">Genre</label><input id=\"edit-genre\" type=\"text\"" + (jade.attr("value", "" + (attr['genre']) + "", true, false)) + " class=\"form-control\"/></div><button id=\"edit-cancel\" class=\"btn btn-default\">Cancel</button><button id=\"edit-submit\" class=\"btn btn-default\">Change</button></div></div>");;return buf.join("");
+var locals_ = (locals || {}),data = locals_.data;
+buf.push("<div class=\"panel panel-default\"><div class=\"panel-heading\">TRACK - data specific to the track</div><div class=\"panel-body\"><div class=\"form-group\"><label for=\"Edit-title\">Title</label><input id=\"edit-title\" type=\"text\"" + (jade.attr("value", "" + (data.track['title']) + "", true, false)) + " class=\"form-control\"/><label for=\"Edit-artist\">Artist</label><input id=\"edit-artist\" type=\"text\"" + (jade.attr("value", "" + (data.track['artist']) + "", true, false)) + " class=\"form-control\"/><label for=\"Edit-year\">Year</label><input id=\"edit-year\" type=\"text\"" + (jade.attr("value", "" + (data.track['year']) + "", true, false)) + " class=\"form-control\"/><label for=\"Edit-genre\">Genre</label><input id=\"edit-genre\" type=\"text\"" + (jade.attr("value", "" + (data.track['genre']) + "", true, false)) + " class=\"form-control\"/></div><button id=\"edit-cancel\" class=\"btn btn-default\">Cancel</button><button id=\"edit-submit\" class=\"btn btn-default\">Change</button></div></div><div class=\"panel panel-default\"><div class=\"panel-heading\">ALBUM = data specific to all album track</div><div class=\"panel-body\">");
+// iterate data.album
+;(function(){
+  var $$obj = data.album;
+  if ('number' == typeof $$obj.length) {
+
+    for (var index = 0, $$l = $$obj.length; index < $$l; index++) {
+      var album = $$obj[index];
+
+buf.push("<div class=\"panel panel-default\"><div class=\"panel-heading\">" + (jade.escape((jade_interp = album.name) == null ? '' : jade_interp)) + "</div><div class=\"panel-body\"><div class=\"form-group\"><label for=\"Edit-title\">Name</label><input id=\"edit-title\" type=\"text\"" + (jade.attr("value", "" + (album.name) + "", true, false)) + " class=\"form-control\"/><label for=\"Edit-artist\">Artist</label><input id=\"edit-artist\" type=\"text\"" + (jade.attr("value", "" + (album.artist) + "", true, false)) + " class=\"form-control\"/><label for=\"Edit-year\">Year</label><input id=\"edit-year\" type=\"text\"" + (jade.attr("value", "" + (album.year) + "", true, false)) + " class=\"form-control\"/><label for=\"Edit-genre\">Genre</label><input id=\"edit-genre\" type=\"text\"" + (jade.attr("value", "" + (album.genre) + "", true, false)) + " class=\"form-control\"/></div></div></div>");
+    }
+
+  } else {
+    var $$l = 0;
+    for (var index in $$obj) {
+      $$l++;      var album = $$obj[index];
+
+buf.push("<div class=\"panel panel-default\"><div class=\"panel-heading\">" + (jade.escape((jade_interp = album.name) == null ? '' : jade_interp)) + "</div><div class=\"panel-body\"><div class=\"form-group\"><label for=\"Edit-title\">Name</label><input id=\"edit-title\" type=\"text\"" + (jade.attr("value", "" + (album.name) + "", true, false)) + " class=\"form-control\"/><label for=\"Edit-artist\">Artist</label><input id=\"edit-artist\" type=\"text\"" + (jade.attr("value", "" + (album.artist) + "", true, false)) + " class=\"form-control\"/><label for=\"Edit-year\">Year</label><input id=\"edit-year\" type=\"text\"" + (jade.attr("value", "" + (album.year) + "", true, false)) + " class=\"form-control\"/><label for=\"Edit-genre\">Genre</label><input id=\"edit-genre\" type=\"text\"" + (jade.attr("value", "" + (album.genre) + "", true, false)) + " class=\"form-control\"/></div></div></div>");
+    }
+
+  }
+}).call(this);
+
+buf.push("<button id=\"edit-cancel\" class=\"btn btn-default\">Cancel</button><button id=\"edit-submit\" class=\"btn btn-default\">Change</button></div></div>");;return buf.join("");
 };
 if (typeof define === 'function' && define.amd) {
   define([], function() {
