@@ -414,6 +414,7 @@ module.exports = TracksList = (function(_super) {
 
   TracksList.prototype.setAlbum = function(model, album, options) {
     this.set(model, options);
+    model = this.get(model.id);
     model.album = album;
     return this.trigger('add', model);
   };
@@ -453,12 +454,6 @@ module.exports = TracksList = (function(_super) {
       }
     }
     return _results;
-  };
-
-  TracksList.prototype.set = function(model, option) {
-    console.log('model set: ', model);
-    TracksList.__super__.set.call(this, model, option);
-    return console.log('albumcollection: ', window.app.albumCollection);
   };
 
   TracksList.prototype.fetch = function() {
@@ -1781,14 +1776,10 @@ module.exports = TrackView = (function(_super) {
   TrackView.prototype.tagName = 'tr';
 
   TrackView.prototype.getRenderData = function() {
-    var _ref, _ref1, _ref2, _ref3, _ref4, _ref5;
-    console.log('model data : ', this.model);
-    console.log('album data : ', this.model.album);
-    console.log('model data view: ', (_ref = this.model) != null ? _ref.toJSON() : void 0);
-    console.log('album data view: ', (_ref1 = this.model) != null ? (_ref2 = _ref1.album) != null ? _ref2.toJSON() : void 0 : void 0);
+    var _ref, _ref1, _ref2;
     return {
-      model: (_ref3 = this.model) != null ? _ref3.toJSON() : void 0,
-      album: (_ref4 = this.model) != null ? (_ref5 = _ref4.album) != null ? _ref5.toJSON() : void 0 : void 0
+      model: (_ref = this.model) != null ? _ref.toJSON() : void 0,
+      album: (_ref1 = this.model) != null ? (_ref2 = _ref1.album) != null ? _ref2.toJSON() : void 0 : void 0
     };
   };
 

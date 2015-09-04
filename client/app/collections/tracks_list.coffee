@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 18:42:03 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/04 14:31:06 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/04 15:07:58 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -55,6 +55,7 @@ module.exports = class TracksList extends Backbone.Collection
 
     setAlbum: (model, album, options) ->
         @set model, options
+        model = @get model.id
         model.album = album
         @trigger 'add', model
 
@@ -78,10 +79,6 @@ module.exports = class TracksList extends Backbone.Collection
             else
                 @setAlbum model, album, options
 
-    set: (model, option) ->
-        console.log 'model set: ', model
-        super model, option
-        console.log 'albumcollection: ', window.app.albumCollection
 
     # Change to fetch data by range, it ask the server to retrieve the number of
     # tracks set in sizeFrameDownload from cursorFrameDownload and in case of

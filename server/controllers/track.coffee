@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/19 06:50:00 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/03 12:04:25 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/04 15:08:39 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -196,7 +196,6 @@ create = (req, res, next) ->
 
         ATTRIBUTES.forEach (attr) ->
             elem = data[attr]
-            console.log 'attr : ', attr, ' / elem : ', elem
             if not elem? or elem == "undefined"
                 delete data[attr]
 
