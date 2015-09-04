@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 23:50:03 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/04 02:38:12 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/04 14:23:47 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -153,7 +153,6 @@ module.exports = class UploadQueue
     # uploadStatus based on response. If there is an unexpected error,
     # it tries again 3 times before failing.
     _processSave: (model, done) ->
-        console.log 'before saving: ', model
         if not model.isErrored() and not model.isConflict()
             model.save null,
                 success: (model) =>
@@ -185,7 +184,6 @@ module.exports = class UploadQueue
                             # let's try again
                             @trackQueue.push model
             # Add to the base collection to print it
-            console.log 'during saving : ', model
             window.app.baseCollection.add model
         else
             done()

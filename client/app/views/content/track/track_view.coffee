@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/20 18:08:58 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/04 00:39:59 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/04 14:32:05 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -22,8 +22,11 @@ module.exports = class TrackView extends BaseView
     tagName: 'tr'
 
     getRenderData: ->
-        album = @model?.get('album')
-        return { model: @model?.toJSON(), album: album.toJSON()}
+        console.log 'model data : ', @model
+        console.log 'album data : ', @model.album
+        console.log 'model data view: ', @model?.toJSON()
+        console.log 'album data view: ', @model?.album?.toJSON()
+        return { model: @model?.toJSON(), album: @model?.album?.toJSON()}
 
     afterRender: ->
         @$el.data 'cid', @model.cid

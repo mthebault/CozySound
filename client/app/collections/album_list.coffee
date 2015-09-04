@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/09/02 11:16:41 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/04 02:48:27 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/04 14:24:45 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -53,9 +53,7 @@ module.exports = class AlbumList extends Backbone.Collection
             error: (res) ->
                 console.error error
             success: (newAlbum) =>
-                console.log 'add new album: ', newAlbum
                 @add newAlbum
-                console.log 'collection after add : ', @
                 model.unset 'artist', 'silent'
                 model.unset 'year', 'silent'
                 model.unset 'genre', 'silent'
@@ -104,14 +102,12 @@ module.exports = class AlbumList extends Backbone.Collection
 
 
     lauchTrackUpload: (track) ->
-        console.log 'lauch track collection album: ', track
         window.app.uploadQueue.trackQueue.push track
         # Add to the upload collection so it can be processed
         #window.app.uploadQueue.uploadCollection.add track
 
 
     upload: (model, next) =>
-        console.log 'start &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&'
         album = @findWhere
             name: model.get 'album'
         if not album?
