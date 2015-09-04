@@ -130,7 +130,6 @@ module.exports = {
     var Router, mainView;
     window.app = this;
     this.albumCollection = new AlbumList;
-    this.albumCollection.fetch();
     this.baseCollection = new TracksList;
     mainView = new AppView;
     mainView.render();
@@ -182,7 +181,7 @@ module.exports = AlbumList = (function(_super) {
         };
       })(this),
       success: (function(_this) {
-        return function(response) {
+        return function(album) {
           _this.add(album);
           return callback(null, _this.get(album.id));
         };
@@ -220,7 +219,9 @@ module.exports = AlbumList = (function(_super) {
       },
       success: (function(_this) {
         return function(newAlbum) {
+          console.log('add new album: ', newAlbum);
           _this.add(newAlbum);
+          console.log('collection after add : ', _this);
           model.unset('artist', 'silent');
           model.unset('year', 'silent');
           model.unset('genre', 'silent');
@@ -280,19 +281,30 @@ module.exports = AlbumList = (function(_super) {
     });
   };
 
+  AlbumList.prototype.lauchTrackUpload = function(track) {
+    console.log('lauch track collection album: ', track);
+    return window.app.uploadQueue.trackQueue.push(track);
+  };
+
   AlbumList.prototype.upload = function(model, next) {
     var album, track;
+    console.log('start &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&');
     album = this.findWhere({
       name: model.get('album')
     });
     if (album == null) {
-      return this.checkRemoteAlbum(model, function(err, track) {
-        window.app.uploadQueue.trackQueue.push(track);
-        return next();
-      });
+      return this.checkRemoteAlbum(model, (function(_this) {
+        return function(err, track) {
+          if (err) {
+            return console.error(err);
+          }
+          _this.lauchTrackUpload(track);
+          return next();
+        };
+      })(this));
     } else {
       track = this.mergeDataAlbum(album, model);
-      window.app.uploadQueue.trackQueue.push(track);
+      this.lauchTrackUpload(track);
       return next();
     }
   };
@@ -383,6 +395,91 @@ module.exports = TracksList = (function(_super) {
     return existingTrack || null;
   };
 
+  TracksList.prototype.newWorker = function(albumId, queue, options) {
+    console.log('queue: ', queue);
+    return window.app.albumCollection.fetchAlbumById(albumId, (function(_this) {
+      return function(err, album) {
+        if (err) {
+          return console.error(err);
+        }
+        console.log('fetch album: ', album);
+        return queue.forEach(function(model) {
+          _this.setAlbum(model, album);
+          console.log('test model : ', model);
+          return _this.set(model, options);
+        });
+      };
+    })(this));
+  };
+
+  TracksList.prototype.getAlbumId = function(model) {
+    if (model instanceof Track) {
+      return model.get('album');
+    } else {
+      return model.album;
+    }
+  };
+
+  TracksList.prototype.setAlbum = function(model, album) {
+    console.log('model: ', model);
+    console.log('album: ', album);
+    if (model instanceof Track) {
+      return model.set('album', album);
+    } else {
+      return model.album = album;
+    }
+  };
+
+  TracksList.prototype.add = function(models, options) {
+    var album, albumId, model, newQueue, _results;
+    console.log('$$$$$$$$$$$$$$ traitement $$$$$$$$$$$$$$$$$');
+    console.log('models start : ', models);
+    if (!_.isArray(models)) {
+      models = [models];
+    }
+    options = _.extend({
+      merge: false
+    }, options, {
+      add: true,
+      remove: false
+    });
+    _results = [];
+    while (true) {
+      if (models.length === 0) {
+        break;
+      }
+      model = models.pop();
+      albumId = this.getAlbumId(model);
+      console.log('album id : ', albumId);
+      album = window.app.albumCollection.get(albumId);
+      console.log('album find in collection : ', album);
+      if (album == null) {
+        console.log('go fetch');
+        newQueue = [];
+        newQueue.push(model);
+        models.forEach((function(_this) {
+          return function(modelQueue) {
+            if (albumId === _this.getAlbumId(modelQueue)) {
+              return newQueue.push(models.splice(models.indexOf(modelQueue), 1)[0]);
+            }
+          };
+        })(this));
+        _results.push(this.newWorker(albumId, newQueue, options));
+      } else {
+        console.log('get local');
+        this.setAlbum(model, album);
+        _results.push(this.set(model, options));
+      }
+    }
+    return _results;
+  };
+
+  TracksList.prototype.set = function(model, option) {
+    console.log('albumcollection: ', window.app.albumCollection);
+    console.log('model set: ', model);
+    return TracksList.__super__.set.call(this, model, option);
+  };
+
   TracksList.prototype.fetch = function() {
     return $.ajax({
       url: "track/" + this.cursorFrameDownload + "/" + this.sizeFrameDownload,
@@ -430,7 +527,6 @@ module.exports = UploadQueue = (function() {
     this.baseCollection = baseCollection;
     this.completeUpload = __bind(this.completeUpload, this);
     this.uploadTrackWorker = __bind(this.uploadTrackWorker, this);
-    this.uploadCollection = new Backbone.Collection();
     _.extend(this, Backbone.Events);
     this.trackQueue = async.queue(this.uploadTrackWorker, 5);
     this.trackQueue.drain = this.completeUpload.bind(this);
@@ -521,22 +617,20 @@ module.exports = UploadQueue = (function() {
     if (!model.isConflict()) {
       model.markAsUploading();
     }
-    window.app.albumCollection.albumQueue.push(model);
-    model.set('plays', 0);
-    this.baseCollection.add(model);
-    return this.uploadCollection.add(model);
+    return window.app.albumCollection.albumQueue.push(model);
   };
 
   UploadQueue.prototype._processSave = function(model, done) {
+    console.log('before saving: ', model);
     if (!model.isErrored() && !model.isConflict()) {
-      return model.save(null, {
+      model.save(null, {
         success: (function(_this) {
           return function(model) {
             model.track = null;
             window.app.albumCollection.addTrackToAlbum(model);
             model.loaded = model.total;
             model.markAsUploaded();
-            return done(null);
+            return done();
           };
         })(this),
         error: (function(_this) {
@@ -572,6 +666,8 @@ module.exports = UploadQueue = (function() {
           };
         })(this)
       });
+      console.log('during saving : ', model);
+      return window.app.baseCollection.add(model);
     } else {
       return done();
     }
@@ -1111,13 +1207,6 @@ module.exports = Track = (function(_super) {
 
   Track.prototype.markAsErrored = function(error) {
     return this._setUploadStatus('errored', error);
-  };
-
-  Track.prototype.initialize = function() {
-    var album;
-    this.albumCollection = window.app.albumCollection;
-    album = this.albumCollection.get(this.get('album'));
-    return this.set('album', album);
   };
 
 

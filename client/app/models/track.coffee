@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 22:06:02 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/03 21:06:26 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/04 01:58:02 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -54,12 +54,6 @@ module.exports = class Track extends Backbone.Model
     markAsErrored: (error) -> @_setUploadStatus 'errored', error
 
 
-    #TODO: currently each model will request the DB, improve it by fetching the
-    #album in tracks-list with a queue
-    initialize: ->
-        @albumCollection = window.app.albumCollection
-        album = @albumCollection.get @get('album')
-        @set 'album', album
 
 
     ###

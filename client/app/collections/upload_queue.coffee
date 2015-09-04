@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 23:50:03 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/03 12:06:11 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/04 02:38:12 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -37,7 +37,7 @@ module.exports = class UploadQueue
         # information is not based on the base collection for performance
         # reasons (it doesn't have to be updated each time a big folder is
         # loaded.)
-        @uploadCollection = new Backbone.Collection()
+        #@uploadCollection = new Backbone.Collection()
 
         # Backbone.Events is a mixin, not a "class" you can extend.
         _.extend @, Backbone.Events
@@ -146,12 +146,6 @@ module.exports = class UploadQueue
         window.app.albumCollection.albumQueue.push model
 
 
-        model.set 'plays', 0
-        # Add to the base collection to print it
-        @baseCollection.add model
-
-        # Add to the upload collection so it can be processed
-        @uploadCollection.add model
 
 
 
@@ -159,6 +153,7 @@ module.exports = class UploadQueue
     # uploadStatus based on response. If there is an unexpected error,
     # it tries again 3 times before failing.
     _processSave: (model, done) ->
+        console.log 'before saving: ', model
         if not model.isErrored() and not model.isConflict()
             model.save null,
                 success: (model) =>
@@ -167,7 +162,7 @@ module.exports = class UploadQueue
                     # Make sure progress is uniform, we force it a 100%
                     model.loaded = model.total
                     model.markAsUploaded()
-                    done null
+                    done()
                 error: (_, err) =>
                     model.track = null
                     body = try JSON.parse(err.responseText)
@@ -189,7 +184,9 @@ module.exports = class UploadQueue
                         else
                             # let's try again
                             @trackQueue.push model
-                #done()
+            # Add to the base collection to print it
+            console.log 'during saving : ', model
+            window.app.baseCollection.add model
         else
             done()
 

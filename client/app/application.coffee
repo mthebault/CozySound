@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 15:30:38 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/03 19:38:59 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/03 23:48:55 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -26,7 +26,7 @@ module.exports =
         window.app = @
 
         @albumCollection = new AlbumList
-        @albumCollection.fetch()
+        #@albumCollection.fetch()
 
         # BaseCollection is the main collection where all the tracks are stored, all
         # the others list must have only a reference to a track of this list
