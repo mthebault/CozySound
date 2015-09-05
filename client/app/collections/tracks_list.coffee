@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 18:42:03 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/25 22:46:58 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/05 19:00:15 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -19,7 +19,8 @@ Track = require './../models/track'
 ###
 module.exports = class TracksList extends Backbone.Collection
     model: Track
-    url: 'tracks'
+    url: 'track'
+
 
     # Number of tracks downloaded to each call of fetch
     sizeFrameDownload: 5
@@ -31,24 +32,62 @@ module.exports = class TracksList extends Backbone.Collection
     # Returns an existing model if a track with a similar id or a similar
     # tack is already in the queue.
     isTrackStored: (model) ->
-
         # first check by id
         existingTrack = @get model.get('id')
-
         # TODO: make the comparisons
-
         return existingTrack or null
+
+    getAlbumId: (model) ->
+        if model instanceof Track
+            model.get 'album'
+        else
+            model.album
+
+
+    setAlbum: (model, album, options) ->
+        allOptions = _.extend({add: true, remove: false, silent: true}, options)
+        model = @set model, allOptions
+        model.album = album
+        if not (options?.silent == true)
+            @trigger 'add', model
+
+
+    newWorker: (albumId, queue, options) ->
+        window.app.albumCollection.fetchAlbumById albumId, (err, album) =>
+            return console.error err if err
+            queue.forEach (model) =>
+                @setAlbum model, album, options
+
+
+    add: (models, options) ->
+        if !_.isArray(models)
+            models = [models]
+
+        loop
+            break if models.length == 0
+            model = models.pop()
+            albumId = @getAlbumId(model)
+            album = window.app.albumCollection.get albumId
+            if not album?
+                newQueue = []
+                newQueue.push model
+                models.forEach (modelQueue) =>
+                    if albumId == @getAlbumId(modelQueue)
+                        newQueue.push models.splice(models.indexOf(modelQueue), 1)[0]
+                @newWorker albumId, newQueue, options
+            else
+                @setAlbum model, album, options
+
 
     # Change to fetch data by range, it ask the server to retrieve the number of
     # tracks set in sizeFrameDownload from cursorFrameDownload and in case of
     # success add the number of tracks retrieved to cursorFramDownload
     fetch: ->
         $.ajax
-            url: "tracks/#{@cursorFrameDownload}/#{@sizeFrameDownload}"
+            url: "track/#{@cursorFrameDownload}/#{@sizeFrameDownload}"
             type: 'GET'
             error: (xhr) ->
                 console.error xhr
             success: (data) =>
                 @cursorFrameDownload += data.length
-                @add data,
-                    remove: false
+                @add data

@@ -6,11 +6,12 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 23:50:03 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/26 12:57:37 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/05 15:43:06 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 Track = require './../models/track'
+app = require './../application'
 
 ###
 # The UploadQueue is a mix of async.queue & BackboneCollection
@@ -27,19 +28,24 @@ module.exports = class UploadQueue
     # TODO: Catch event "upload-complete"
     # TODO: Catch event "metaDataError"
 
+
+    @ATTRIBUTES: ["title","artist","album","track","year","genre","TLEN"]
+
     constructor: (@baseCollection) ->
 
         # Create a collection for elements to be processed by the queue. This
         # information is not based on the base collection for performance
         # reasons (it doesn't have to be updated each time a big folder is
         # loaded.)
-        @uploadCollection = new Backbone.Collection()
+        #@uploadCollection = new Backbone.Collection()
 
         # Backbone.Events is a mixin, not a "class" you can extend.
         _.extend @, Backbone.Events
 
-        @asyncQueue = async.queue @uploadWorker, 5
-        @asyncQueue.drain = @completeUpload.bind @
+        @trackQueue = async.queue @uploadTrackWorker, 5
+        @trackQueue.drain = @completeUpload.bind @
+
+
 
 
     addBlobs: (blobs) ->
@@ -55,6 +61,7 @@ module.exports = class UploadQueue
             # TODO: Later check if it's a picture to get the covert
             if not blob.type.match /audio\/(mp3|mpeg)/ #list of supported filetype
                 @trigger 'badFileType'
+                console.log blob.name, ' => BadFileType'
             else
                 @retrieveMetaDataBlob blob, (model) =>
                     # Check if a same track is already stored in the base collection
@@ -108,6 +115,7 @@ module.exports = class UploadQueue
         reader.onload = (event) ->
             ID3.loadTags blob.name, ( ->
                 tags = ID3.getAllTags blob.name
+                console.log 'TAGS UPLOAD: ', tags
                 model.set
                     title: if tags.title? then tags.title else model.title
                     artist: if tags.artist? then tags.artist else undefined
@@ -118,7 +126,7 @@ module.exports = class UploadQueue
                     time: if tags.TLEN?.data? then tags.TLEN.data else undefined
                 callback(model)
             ),
-            tags: ["title","artist","album","track","year","genre","TLEN"]
+            tags: UploadQueue.ATTRIBUTES
             dataReader: FileAPIReader blob
         reader.readAsArrayBuffer blob
         reader.onabort = (event) ->
@@ -132,17 +140,12 @@ module.exports = class UploadQueue
         window.pendingOperations.upload++ # set in initialize.coffee
 
         # don't override conflict status
-        model.markAsUploading() unless model.isConflict()
+        model.markAsUploading() if not model.isConflict()
 
         # Push it at the end of the queue
-        @asyncQueue.push model
+        window.app.albumCollection.albumQueue.push model
 
-        model.set 'plays', 0
-        # Add to the base collection to print it
-        @baseCollection.add model
 
-        # Add to the upload collection so it can be precessed
-        @uploadCollection.add model
 
 
 
@@ -154,10 +157,11 @@ module.exports = class UploadQueue
             model.save null,
                 success: (model) =>
                     model.track = null
+                    window.app.albumCollection.addTrackToAlbum model
                     # Make sure progress is uniform, we force it a 100%
                     model.loaded = model.total
                     model.markAsUploaded()
-                    done null
+                    done()
                 error: (_, err) =>
                     model.track = null
                     body = try JSON.parse(err.responseText)
@@ -178,26 +182,24 @@ module.exports = class UploadQueue
                             model.markAsErrored error
                         else
                             # let's try again
-                            @asyncQueue.push model
-                #done()
+                            @trackQueue.push model
+            # Add to the base collection to print it
+            window.app.baseCollection.add model
         else
             done()
 
 
     # Process each element in the queue
-       uploadWorker: (model, next) =>
+    uploadTrackWorker: (model, next) =>
         # Skip if there is an error.
         if model.error
             setTimeout next, 10
 
-        # If there is a conflict, the queue waits for the user to
-        # make a decision.
-        # Not implemented yep
-        else if model.isConflict()
-            alert 'CONFLICT'
         # Otherwise, the upload starts directly.
         else
             @_processSave model, next
+
+
 
 
     # Reset variables and trigger completion events.

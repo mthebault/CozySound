@@ -1,6 +1,12 @@
 td #{model.title}
-td #{model.artist}
-td #{model.album}
+if model.artist
+    td #{model.artist}
+else
+    td #{album.artist}
+if album
+    td #{album.name}
+else
+    td
 td #{model.plays}
 td #{model.time}
 

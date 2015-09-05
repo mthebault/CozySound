@@ -213,7 +213,6 @@ cursor not-allowed {
   height: 80%;
   overflow-x: hidden;
   overflow-y: auto;
-  background: #000 none repeat scroll 0% 0%;
 }
 .content {
   background-color: #808080;

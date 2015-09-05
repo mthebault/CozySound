@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/25 19:58:03 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/26 12:29:36 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/03 20:59:41 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -20,43 +20,88 @@ module.exports = class EditionView extends BaseView
     template: require './templates/edition'
     el: '#edition-screen'
 
-    @MERGED_ATTRIBUTES: ['title', 'artist', 'album', 'year', 'genre']
+    @MERGED_ATTRIBUTES: ['title', 'artist', 'year', 'genre', 'name']
 
     # Take a count of the number of track in update processing to send a
     # notification when it's finish
     processingUpdate: 0
 
-    processedAttr: {}
+    processedAttr:
+        track: {}
+        album: []
+        allAlbum: null
 
     events: ->
         'click #edit-cancel': 'cancelEdition'
         'click #edit-submit': 'submitEdition'
 
     initialize: ->
-        @collection = window.selectedTracksList
+        @selection = window.selectedTracksList
 
 
-    render: ->
-        @mergeMetaData()
+    beforeRender: ->
+        @mergeArrayOfData @selection.models, @processedAttr.track
+        console.log 'final track data: ', @processedAttr.track
+        @mergeAlbumData()
         @cleanProcessedAttr()
-        @$el.append(@template {attr: @processedAttr})
 
-    mergeMetaData: ->
+
+    getRenderData: ->
+        console.log 'album: ', @processedAttr.album
+        console.log 'track: ', @processedAttr.track
+        return {
+            albums: @processedAttr.album
+            track: @processedAttr.track
+            allAlbum: @processedAttr.allAlbum}
+
+
+    mergeAlbumData: ->
+        @selection.models.forEach (track) =>
+            album = track.get 'album'
+            merged =  @processedAttr.album.find (elem, index, array) ->
+                if elem.name == album.name
+                    return true
+                return false
+            if not merged
+                @processedAttr.album.push album.toJSON()
+        if @processedAttr.album.length > 1
+            @mergeArrayOfData @processedAttr.album, @processedAttr.allAlbum
+
+
+
+
+    mergeArrayOfData: (array, dest) ->
+        console.log 'array: ', array
         EditionView.MERGED_ATTRIBUTES.forEach (attribute) =>
-            lastAttribute = undefined
-            isSimilar = true
-            @collection.models.forEach (track) ->
-                if lastAttribute != undefined and track.get(attribute) != lastAttribute
-                    isSimilar = false
-                if lastAttribute == undefined
-                    lastAttribute = track.get attribute
-            if lastAttribute != undefined && isSimilar == true
-                @processedAttr[attribute] = lastAttribute
+            console.log 'ATTRIBUTE: ', attribute
+            mergedAttr = undefined
+            #array.find (elem, index, array) ->
+
+            i = 0
+            loop
+                break if i >= array.length
+                elem = array[i]
+                console.log 'elem: ', elem
+                console.log 'match: ', elem.get(attribute), ' / ', mergedAttr
+                elemAttr = elem.get attribute
+                if elemAttr?
+                    if mergedAttr != undefined and elemAttr != mergedAttr
+                        mergedAttr = ''
+                        break
+                    if mergedAttr == undefined
+                        mergedAttr = elemAttr
+                i++
+            dest[attribute] = mergedAttr
 
     cleanProcessedAttr: ->
         EditionView.MERGED_ATTRIBUTES.forEach (attr) =>
-            if @processedAttr[attr] == undefined
-                @processedAttr[attr] = ''
+            if @processedAttr.track[attr] == undefined
+                @processedAttr.track[attr] = ''
+            @processedAttr.album.forEach (album) ->
+                if album[attr] == undefined
+                    album[attr] = ''
+
+
 
     saveEditionChanges: ->
         newInputAttr = new Array
@@ -65,10 +110,10 @@ module.exports = class EditionView extends BaseView
             inputValue = @$("#edit-#{attr}").val()
             if inputValue != '' and attrValue != inputValue
                 newInputAttr.push [attr, inputValue]
-        @collection.updateTracks newInputAttr
+        @selection.updateTracks newInputAttr
 
     computeChangeAttr: (attribute, inputValue) ->
-        @collection.models.forEach (track) ->
+        @selection.models.forEach (track) ->
             track.set attribute, inputValue
 
 
@@ -83,6 +128,6 @@ module.exports = class EditionView extends BaseView
 
     freeSelectedTracksList: ->
         loop
-            track = @collection.pop()
+            track = @selection.pop()
             track.setAsNoSelected()
-            break if @collection.length == 0
+            break if @selection.length == 0

@@ -6,33 +6,37 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/19 06:50:00 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/26 12:57:13 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/04 15:10:44 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 multiparty = require 'multiparty'
-moment = require 'moment'
 crypto = require 'crypto'
 feed = require '../lib/feed'
-Track = require './../models/track'
 log = require('printit')
     prefix: 'track'
+Track = require './../models/track'
+moment = require 'moment'
 
 
 # Fetch params.nbTracks tracks from params.start
-module.exports.fetchRange = (req, res, next) ->
+fetchRange = (req, res, next) ->
     if not req.params.start or not req.params.nbTracks
         err = new Error "Bad arguments, no range given"
         err.status = 400
         return next err
-    Track.fetchByRange
-        skip: req.params.start
-        limit: req.params.nbTracks
-        , (err, data) ->
+    Track.fetchByRange {skip: req.params.start, limit: req.params.nbTracks}, (err, data) ->
+        if err
+            res.send
+                error: true
+                code: 'EFRETREIVE'
+                , 500
+        else
             res.status(200).send(data)
 
 
-module.exports.all = (req, res, next) ->
+
+all = (req, res, next) ->
     Track.request 'all', (err, data) ->
         if err
             res.send
@@ -44,11 +48,12 @@ module.exports.all = (req, res, next) ->
             res.status(200).send(data)
 
 
-module.exports.update = (req, res, next) ->
+update = (req, res, next) ->
     data = req.body
     Track.find data.id, (err, trackFind) ->
         return next err if err
-        data.lastModified = moment(Date.now()).toISOString()
+        data.lastModified = moment(Date.now())
+        #TODO: set correctly the date
         trackFind.updateAttributes data, (err) ->
             if err
                 res.send
@@ -71,7 +76,7 @@ timeout = null
 isStorageError = (err) ->
     return err.toString().indexOf('enough storage') isnt -1
 
-module.exports.create = (req, res, next) ->
+create = (req, res, next) ->
     clearTimeout(timeout) if timeout?
 
     # Represent all fields retrieved
@@ -97,12 +102,10 @@ module.exports.create = (req, res, next) ->
         # we do not write a subfunction because it seems to load the whole
         # stream in memory.
         title = fields.title
-        lastModification = moment(new Date(fields.lastModification)).toISOString()
         upload = true
         canceled = false
         uploadStream = null
 
-        console.log 'MODIF: ', lastModification
         # we have no title for this track, give up
         if not title or title is ""
             err = new Error "Invalid arguments: no title given"
@@ -134,8 +137,6 @@ module.exports.create = (req, res, next) ->
 
 
         attachBinary = (track) ->
-            # request-json requires a path field to be set
-            # before uploading
             part.title = track.title
             checksum = crypto.createHash 'sha1'
             checksum.setEncoding 'hex'
@@ -169,38 +170,37 @@ module.exports.create = (req, res, next) ->
                             log.debug err if err
 
                             # Retrieve binary metadata
-                            Track.find track.id, (err, track) ->
+                            Track.find track.id, (err, track) =>
                                 log.debug err if err
-                                res.send track, 200
-                                #end
+                                res.status(200).send(track)
 
-        now = moment().toISOString()
 
         # TODO: Check if track already exist
 
 
 
-        #Generate track metadata.
+        ATTRIBUTES = ["title","artist","album","track","year","genre","TLEN", 'time', 'docType', 'size']
+
+        # Retrieve all metaData
         data =
             title: title
-            artist: fields.artist
-            album: fields.album
             trackNb: fields.trackNb
+            album: fields.album
+            artist: fields.artist
             year: fields.year
             genre: fields.genre
             time: fields.time
             docType: fields.dockType
-            creationDate: now
-            lastModification: lastModification
             size: part.byteCount
-            uploading: true
             plays: 0
 
-        # TODO: Check rights
+        ATTRIBUTES.forEach (attr) ->
+            elem = data[attr]
+            if not elem? or elem == "undefined"
+                delete data[attr]
 
-        #TODO: change lastModification date playlist
 
-            # Save track metadata
+        # Save track metadata
         Track.create data, (err, newTrack) ->
             return next err if err
 
@@ -217,7 +217,14 @@ module.exports.create = (req, res, next) ->
             # Attach track in database.
             attachBinary newTrack
 
+
     form.on 'error', (err) ->
         log.error err
 
     form.parse req
+
+module.exports =
+    fetchRange: fetchRange
+    all: all
+    update: update
+    create: create

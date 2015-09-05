@@ -5,8 +5,8 @@
 #                                                     +:+ +:+         +:+      #
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
-#    Created: 2015/08/23 19:30:42 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/26 12:57:54 by ppeltier         ###   ########.fr        #
+#    Created: 2015/09/05 19:01:38 by ppeltier          #+#    #+#              #
+#    Updated: 2015/09/05 19:36:25 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -44,8 +44,11 @@ module.exports = class SelectedTracksList extends Backbone.Collection
         if isShiftPressed == true && @_lastTrackSelected != null
             @_manageListTracksSelection model
         else
+            @emptySelectedList()
             @_manageTrackSelection model
         @_lastTrackSelected = model
+        if @length == 1 then state = true else state = false
+        @trigger 'selectionTracksState', state
 
     _manageListTracksSelection: (lastModel) ->
         startIndex = @baseCollection.indexOf @_lastTrackSelected
@@ -57,6 +60,12 @@ module.exports = class SelectedTracksList extends Backbone.Collection
             @_manageTrackSelection @baseCollection.at startIndex
             break if startIndex == endIndex
 
+
+    emptySelectedList: ->
+        loop
+            break if @length == 0
+            model = @pop()
+            model.setAsNoSelected()
 
 
     # Check the select stat of the view and add/remove his to the collection
@@ -71,14 +80,10 @@ module.exports = class SelectedTracksList extends Backbone.Collection
     # Trigger an event when a some track is selected to pop the action track
     # menu. A other event is trigger to remove it
     add: (models, options) ->
-        if @length == 0
-            @trigger 'selectionTracksState', true
         super models, options
 
     remove: (models, options) ->
         super models, options
-        if @length == 0
-            @trigger 'selectionTracksState', false
     #################### END - Manage Select Stat - END #########################
 
 

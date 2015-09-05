@@ -6,13 +6,13 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 15:30:07 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/25 19:20:38 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/03 12:06:45 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 BaseView = require '../lib/base_view'
-LeftMenu = require './left_menu'
-ContentScreen = require './content_screen'
+Menu = require '../models/menu_screen'
+ContentScreen = require '../models/content_screen'
 PlayerScreen = require './player_screen'
 
 ###
@@ -30,9 +30,8 @@ module.exports = class AppView extends BaseView
     afterRender: ->
 
         # Create and render the left menu
-        @leftMenu = new LeftMenu
-        @leftMenu.render()
-
+        @menu = new Menu
+        @menu.render()
 
         # Create and render the player screen
         @playerScreen = new PlayerScreen
