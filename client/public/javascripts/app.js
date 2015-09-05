@@ -356,6 +356,185 @@ module.exports = PlaylistList = (function(_super) {
 })(Backbone.Collection);
 });
 
+;require.register("collections/selected_list", function(exports, require, module) {
+var SelectedTracksList, Track,
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+Track = require('./../models/track');
+
+
+/*
+ * SelectedList is a collection of Track model selected by the user. This Tracks
+ * are references to Tracks models contains in the Base collection. So all action
+ * on tracks must be handle by this list which update the Base Collection and the
+ * view.It's the same collection for all content screen (playlist/all tracks/etc...)
+ * which is refresh.
+ */
+
+module.exports = SelectedTracksList = (function(_super) {
+  __extends(SelectedTracksList, _super);
+
+  function SelectedTracksList() {
+    return SelectedTracksList.__super__.constructor.apply(this, arguments);
+  }
+
+  SelectedTracksList.prototype.model = Track;
+
+  SelectedTracksList.prototype.url = 'tracks';
+
+  SelectedTracksList.prototype._lastTrackSelected = null;
+
+  SelectedTracksList.prototype.processingUpdate = 0;
+
+  SelectedTracksList.prototype.errorUpdating = 0;
+
+  SelectedTracksList.prototype.successUpdating = 0;
+
+  SelectedTracksList.prototype.initialize = function() {
+    SelectedTracksList.__super__.initialize.apply(this, arguments);
+    return window.selectedTracksList = this;
+  };
+
+  SelectedTracksList.prototype.onTrackClicked = function(model, isShiftPressed) {
+    var state;
+    if (isShiftPressed == null) {
+      isShiftPressed = false;
+    }
+    if (isShiftPressed === true && this._lastTrackSelected !== null) {
+      this._manageListTracksSelection(model);
+    } else {
+      this.emptySelectedList();
+      this._manageTrackSelection(model);
+    }
+    this._lastTrackSelected = model;
+    if (this.length === 1) {
+      state = true;
+    } else {
+      state = false;
+    }
+    return this.trigger('selectionTracksState', state);
+  };
+
+  SelectedTracksList.prototype._manageListTracksSelection = function(lastModel) {
+    var endIndex, startIndex, _results;
+    startIndex = this.baseCollection.indexOf(this._lastTrackSelected);
+    endIndex = this.baseCollection.indexOf(lastModel);
+    _results = [];
+    while (true) {
+      if (startIndex < endIndex) {
+        startIndex++;
+      } else {
+        startIndex--;
+      }
+      this._manageTrackSelection(this.baseCollection.at(startIndex));
+      if (startIndex === endIndex) {
+        break;
+      } else {
+        _results.push(void 0);
+      }
+    }
+    return _results;
+  };
+
+  SelectedTracksList.prototype.emptySelectedList = function() {
+    var model, _results;
+    _results = [];
+    while (true) {
+      if (this.length === 0) {
+        break;
+      }
+      model = this.pop();
+      _results.push(model.setAsNoSelected());
+    }
+    return _results;
+  };
+
+  SelectedTracksList.prototype._manageTrackSelection = function(model) {
+    if (model.isSelected() === false) {
+      this.add(model);
+      return model.setAsSelected();
+    } else {
+      this.remove(model);
+      return model.setAsNoSelected();
+    }
+  };
+
+  SelectedTracksList.prototype.add = function(models, options) {
+    return SelectedTracksList.__super__.add.call(this, models, options);
+  };
+
+  SelectedTracksList.prototype.remove = function(models, options) {
+    return SelectedTracksList.__super__.remove.call(this, models, options);
+  };
+
+  SelectedTracksList.prototype.updateTracks = function(newAttrs) {
+    var errorUpdating, i, memory, setOfAttr, successUpdating, track, _results;
+    errorUpdating = 0;
+    successUpdating = 0;
+    setOfAttr = null;
+    _results = [];
+    while (true) {
+      track = this.pop();
+      track.setAsNoSelected();
+      i = 0;
+      while (true) {
+        setOfAttr = newAttrs[i];
+        if (track.get(setOfAttr[0]) !== setOfAttr[1]) {
+          memory = track.get(setOfAttr[0]);
+          track.set(setOfAttr[0], setOfAttr[1]);
+        }
+        i++;
+        if (i === newAttrs.length) {
+          break;
+        }
+      }
+      this.processingUpdate++;
+      track.sync('update', track, {
+        error: (function(_this) {
+          return function(res) {
+            _this.setUpdateError();
+            return _this.set(res.data);
+          };
+        })(this),
+        success: (function(_this) {
+          return function(data) {
+            return _this.setUpdateSuccess();
+          };
+        })(this)
+      });
+      if (this.length === 0) {
+        break;
+      } else {
+        _results.push(void 0);
+      }
+    }
+    return _results;
+  };
+
+  SelectedTracksList.prototype.setUpdateError = function() {
+    this.processingUpdate--;
+    this.errorUpdating++;
+    return this.checkProcessingUpdateQueue();
+  };
+
+  SelectedTracksList.prototype.setUpdateSuccess = function() {
+    this.processingUpdate--;
+    this.successUpdating++;
+    return this.checkProcessingUpdateQueue();
+  };
+
+  SelectedTracksList.prototype.checkProcessingUpdateQueue = function() {
+    if (this.processingUpdate === 0) {
+      return console.log('EDITION: ', this.successUpdating, ' successe and ', this.errorUpdating, ' error');
+    }
+  };
+
+  return SelectedTracksList;
+
+})(Backbone.Collection);
+});
+
 ;require.register("collections/tracks_list", function(exports, require, module) {
 var Track, TracksList,
   __hasProp = {}.hasOwnProperty,
@@ -908,13 +1087,15 @@ module.exports = Album = (function(_super) {
 });
 
 ;require.register("models/content_screen", function(exports, require, module) {
-var ContentScreen, ContextMenu, EditionView, TracksView;
+var ContentScreen, ContextMenu, EditionView, SelectedTracksList, TracksView;
 
 ContextMenu = require('../views/content/context_menu/context_menu');
 
 TracksView = require('../views/content/track/tracks_view');
 
 EditionView = require('../views/content/edition/edition_view');
+
+SelectedTracksList = require('../collections/selected_list');
 
 
 /*
@@ -957,6 +1138,9 @@ module.exports = ContentScreen = (function() {
     this.menu = window.app.menuScreen;
     this.currentView = new Array;
     this.currentCollection = this.baseCollection;
+    this.selectedTracksList = new SelectedTracksList;
+    this.selectedTracksList.baseCollection = this.baseCollection;
+    this.listenTo(this.selectedTracksList, 'selectionTracksState', this.updateSelectionTracksState);
     this.listenTo(this.menu, 'content-print-playlist', this.renderPlaylist);
   }
 
@@ -1142,6 +1326,8 @@ module.exports = Track = (function(_super) {
 
   Track.VALID_STATUSES = [null, 'uploading', 'uploaded', 'errored'];
 
+  Track.prototype._selectedStatus = false;
+
 
   /*
    * Getters for the local states.
@@ -1253,6 +1439,24 @@ module.exports = Track = (function(_super) {
       });
     }
     return Backbone.sync.apply(this, arguments);
+  };
+
+  Track.prototype.isSelected = function() {
+    return this._selectedStatus;
+  };
+
+  Track.prototype.setAsSelected = function() {
+    this._selectedStatus = true;
+    return this.trigger('toggle-select', {
+      cid: this.cid
+    });
+  };
+
+  Track.prototype.setAsNoSelected = function() {
+    this._selectedStatus = false;
+    return this.trigger('toggle-select', {
+      cid: this.cid
+    });
   };
 
   return Track;
@@ -1809,6 +2013,20 @@ module.exports = TrackView = (function(_super) {
     return this.$el.removeClass('success');
   };
 
+  TrackView.prototype.onTrackClicked = function(event) {
+    var isShiftPressed;
+    isShiftPressed = event.shiftKey || false;
+    return window.selectedTracksList.onTrackClicked(this.model, isShiftPressed);
+  };
+
+  TrackView.prototype.changeSelectStat = function() {
+    if (this.model.isSelected()) {
+      return this.$el.addClass('success');
+    } else {
+      return this.$el.removeClass('success');
+    }
+  };
+
   return TrackView;
 
 })(BaseView);
@@ -1846,7 +2064,9 @@ module.exports = TracksView = (function(_super) {
   TracksView.prototype.selectedTrack = null;
 
   TracksView.prototype.events = {
-    'click tr.track-row': 'onSelectTrack'
+    'click tr.track-row': function(e) {
+      return this.viewProxy('onTrackClicked', e);
+    }
   };
 
   TracksView.prototype.initialize = function(options) {
@@ -1871,24 +2091,6 @@ module.exports = TracksView = (function(_super) {
     if (view != null) {
       args = [].splice.call(arguments, 1);
       return view[methodName].apply(view, args);
-    }
-  };
-
-  TracksView.prototype.onSelectTrack = function(event) {
-    var cid, view;
-    cid = this.$(event.target).parents('tr').data('cid');
-    view = _.find(this.views, function(view) {
-      return view.model.cid === cid;
-    });
-    if (this.selectedTrack === view) {
-      view.setAsNoSelected();
-      return this.selectedTrack = null;
-    } else {
-      if (this.selectedTrack !== null) {
-        this.selectedTrack.setAsNoSelected();
-      }
-      this.selectedTrack = view;
-      return view.setAsSelected();
     }
   };
 

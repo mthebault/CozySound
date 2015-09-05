@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 22:06:02 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/05 16:04:01 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/05 19:07:02 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -36,6 +36,13 @@ module.exports = class Track extends Backbone.Model
     # Valid values for `uploadStatus`.
     # Check if conflic must be handled
     @VALID_STATUSES: [null, 'uploading', 'uploaded', 'errored']#, 'conflict']
+
+
+    # Define if the track is selected or not, it's managed by the selected
+    # tracks collection. This is relevant in the view but it's much easier to
+    # handle it in the models
+    _selectedStatus: false
+
 
     ###
     # Getters for the local states.
@@ -127,3 +134,19 @@ module.exports = class Track extends Backbone.Model
                     xhr
 
         Backbone.sync.apply @, arguments
+
+
+
+    ########################### Manage View stat ################################
+    # Getter
+    isSelected: -> return @_selectedStatus
+    # Setters
+    setAsSelected: ->
+        @_selectedStatus = true
+        @trigger 'toggle-select', cid: @cid
+
+    setAsNoSelected: ->
+        @_selectedStatus = false
+        @trigger 'toggle-select', cid: @cid
+
+    ##################### END - Manage View Stat - END ##########################

@@ -6,13 +6,14 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/25 09:53:27 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/03 21:16:26 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/05 19:33:50 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 ContextMenu = require '../views/content/context_menu/context_menu'
 TracksView = require '../views/content/track/tracks_view'
 EditionView = require '../views/content/edition/edition_view'
+SelectedTracksList = require '../collections/selected_list'
 
 ###
 # ContenScreen is the main screen where all tracks are printed. This is a
@@ -58,6 +59,18 @@ module.exports = class ContentScreen
 
         # Set the collection with @baseCollection by default
         @currentCollection = @baseCollection
+
+
+        # SelectedTracksList is a collection of all tracks selected by the user,
+        # all acions on tracks must be handle by it
+        @selectedTracksList = new SelectedTracksList
+        @selectedTracksList.baseCollection = @baseCollection
+
+
+        # Listen if a the selection collection in/out of state empty, pop/remove
+        # the action menu
+        @listenTo @selectedTracksList, 'selectionTracksState', @updateSelectionTracksState
+
 
 
     ################################ EVENTS #####################################

@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/20 17:41:32 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/05 16:04:28 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/05 19:19:05 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -27,8 +27,7 @@ module.exports = class TracksView extends ViewCollection
 
     events:
         # Event delegation
-        #'click tr.track-row': (e) -> @viewProxy 'onTrackClicked', e
-        'click tr.track-row': 'onSelectTrack'
+        'click tr.track-row': (e) -> @viewProxy 'onTrackClicked', e
 
 
 
@@ -66,15 +65,3 @@ module.exports = class TracksView extends ViewCollection
             # Call `methodName` on the related view.
             args = [].splice.call arguments, 1
             view[methodName].apply view, args
-
-    onSelectTrack: (event) ->
-        cid = @$(event.target).parents('tr').data 'cid'
-        view = _.find @views, (view) -> view.model.cid is cid
-        if @selectedTrack == view
-            view.setAsNoSelected()
-            @selectedTrack = null
-        else
-            if @selectedTrack != null
-                @selectedTrack.setAsNoSelected()
-            @selectedTrack = view
-            view.setAsSelected()

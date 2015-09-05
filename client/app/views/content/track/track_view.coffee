@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/20 18:08:58 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/05 16:04:19 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/05 19:21:30 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -44,4 +44,14 @@ module.exports = class TrackView extends BaseView
 
     setAsNoSelected: ->
         @$el.removeClass 'success'
+
+    onTrackClicked: (event) -> # Check if shift or control have been pressed
+        isShiftPressed = event.shiftKey or false
+        window.selectedTracksList.onTrackClicked @model, isShiftPressed
+
+    changeSelectStat: ->
+        if @model.isSelected()
+            @$el.addClass 'success'
+        else
+            @$el.removeClass 'success'
     ##################### END - Manage Select Stat - END #########################
