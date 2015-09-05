@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 18:42:03 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/04 15:07:58 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/05 18:02:47 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -32,13 +32,25 @@ module.exports = class TracksList extends Backbone.Collection
     # Returns an existing model if a track with a similar id or a similar
     # tack is already in the queue.
     isTrackStored: (model) ->
-
         # first check by id
         existingTrack = @get model.get('id')
-
         # TODO: make the comparisons
-
         return existingTrack or null
+
+    getAlbumId: (model) ->
+        if model instanceof Track
+            model.get 'album'
+        else
+            model.album
+
+
+    setAlbum: (model, album, options) ->
+        allOptions = _.extend({add: true, remove: false, silent: true}, options)
+        model = @set model, allOptions
+        model.album = album
+        if not (options?.silent == true)
+            @trigger 'add', model
+
 
     newWorker: (albumId, queue, options) ->
         window.app.albumCollection.fetchAlbumById albumId, (err, album) =>
@@ -47,22 +59,9 @@ module.exports = class TracksList extends Backbone.Collection
                 @setAlbum model, album, options
 
 
-    getAlbumId: (model) ->
-        if model instanceof Track
-            model.get 'album'
-        else
-            model.album
-
-    setAlbum: (model, album, options) ->
-        @set model, options
-        model = @get model.id
-        model.album = album
-        @trigger 'add', model
-
     add: (models, options) ->
         if !_.isArray(models)
             models = [models]
-        options = _.extend({merge: false, add: true, remove: false, silent: true}, options)
 
         loop
             break if models.length == 0

@@ -391,6 +391,28 @@ module.exports = TracksList = (function(_super) {
     return existingTrack || null;
   };
 
+  TracksList.prototype.getAlbumId = function(model) {
+    if (model instanceof Track) {
+      return model.get('album');
+    } else {
+      return model.album;
+    }
+  };
+
+  TracksList.prototype.setAlbum = function(model, album, options) {
+    var allOptions;
+    allOptions = _.extend({
+      add: true,
+      remove: false,
+      silent: true
+    }, options);
+    model = this.set(model, allOptions);
+    model.album = album;
+    if (!((options != null ? options.silent : void 0) === true)) {
+      return this.trigger('add', model);
+    }
+  };
+
   TracksList.prototype.newWorker = function(albumId, queue, options) {
     return window.app.albumCollection.fetchAlbumById(albumId, (function(_this) {
       return function(err, album) {
@@ -404,32 +426,11 @@ module.exports = TracksList = (function(_super) {
     })(this));
   };
 
-  TracksList.prototype.getAlbumId = function(model) {
-    if (model instanceof Track) {
-      return model.get('album');
-    } else {
-      return model.album;
-    }
-  };
-
-  TracksList.prototype.setAlbum = function(model, album, options) {
-    this.set(model, options);
-    model = this.get(model.id);
-    model.album = album;
-    return this.trigger('add', model);
-  };
-
   TracksList.prototype.add = function(models, options) {
     var album, albumId, model, newQueue, _results;
     if (!_.isArray(models)) {
       models = [models];
     }
-    options = _.extend({
-      merge: false,
-      add: true,
-      remove: false,
-      silent: true
-    }, options);
     _results = [];
     while (true) {
       if (models.length === 0) {
@@ -1787,8 +1788,12 @@ module.exports = TrackView = (function(_super) {
     this.$el.data('cid', this.model.cid);
     if (this.model.isUploading()) {
       return this.$el.addClass('warning');
-    } else {
+    } else if (this.model.isUploaded()) {
       return this.$el.removeClass('warning');
+    } else if (this.model.isErrored()) {
+      return this.$el.addClass('danger');
+    } else if (this.model.isConflict()) {
+      return this.$el.addClass('info');
     }
   };
 
@@ -1875,13 +1880,11 @@ module.exports = TracksView = (function(_super) {
     view = _.find(this.views, function(view) {
       return view.model.cid === cid;
     });
-    console.log('clicked view: ', view);
     if (this.selectedTrack === view) {
       view.setAsNoSelected();
       return this.selectedTrack = null;
     } else {
       if (this.selectedTrack !== null) {
-        console.log('unselect: ', this.selectedTrack);
         this.selectedTrack.setAsNoSelected();
       }
       this.selectedTrack = view;

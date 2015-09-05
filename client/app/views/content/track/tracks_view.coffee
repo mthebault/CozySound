@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/20 17:41:32 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/03 21:22:48 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/05 16:04:28 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -70,13 +70,11 @@ module.exports = class TracksView extends ViewCollection
     onSelectTrack: (event) ->
         cid = @$(event.target).parents('tr').data 'cid'
         view = _.find @views, (view) -> view.model.cid is cid
-        console.log 'clicked view: ', view
         if @selectedTrack == view
             view.setAsNoSelected()
             @selectedTrack = null
         else
             if @selectedTrack != null
-                console.log 'unselect: ', @selectedTrack
                 @selectedTrack.setAsNoSelected()
             @selectedTrack = view
             view.setAsSelected()
