@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/25 09:53:27 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/06 18:03:27 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/06 20:54:25 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -47,6 +47,9 @@ module.exports = class ContentScreen
 
     skeletonPlaylist: require '../views/content/track/templates/playlist_skel'
     skeletonEdition: require '../views/content/edition/templates/edition_skel'
+    skeletonTracks: require '../views/content/track/templates/tracks_skel'
+
+    currentView: null
 
     constructor: ->
         _.extend @, Backbone.Events
@@ -61,7 +64,7 @@ module.exports = class ContentScreen
         @selectedTracksList.baseCollection = @baseCollection
 
         # An array of all view currently prompt
-        @currentView = new Array
+        @loadedViews = new Array
 
     ################################ EVENTS #####################################
         # *** content-print-playlist ***
@@ -76,50 +79,51 @@ module.exports = class ContentScreen
     ########################## END - EVENTS - END ###############################
 
 
-
-
     ############################ GENERIQUE ######################################
+    renderSkeleton: (skeleton, data) ->
+        if data?
+            dataParsed = {data: data?.toJSON()}
+        $('#content-screen').append(skeleton(dataParsed))
 
+
+    removeCurrentView: ->
+        switch @currentView
+            when 'allTracks' then @removeAllTracks()
+            when 'trackEdition' then @removeTrackEdition()
+    ###################### END - GENERIQUE - END ################################
+
+
+    ########################### CONTEXT MENU ####################################
     renderContextMenu: ->
+        if @loadedViews['contextMenu']?
+            console.log 'render loaded menu: ', @loadedViews['contextMenu']
+            @loadedViews['contextMenu'].render()
+            return
+
         # Initialize the contextMenu
-        @_contextMenu = new ContextMenu
+        contextMenu = new ContextMenu
+
+        @loadedViews['contextMenu'] = contextMenu
 
         # *** menu-trackEdition-lauch ***
         # from: events - views/content/context_menu/context_menu.coffee
         # argument:
-        @listenTo @_contextMenu, 'menu-trackEdition-lauch', @renderTracksEdition
+        @listenTo contextMenu, 'menu-trackEdition-lauch', @renderTrackEdition
 
         # *** menu-editMenu-prompte ***
         # from: onTrackClicker - collections/selected_list.coffee
         # argument: bool (state)
         @listenTo @selectedTracksList, 'selection-editMenu-prompte', @updateSelectionTracksState
 
-        @_contextMenu.render()
-        @currentView.push @_contextMenu
+        contextMenu.render()
 
+    removeContextMenu: ->
+        @loadedViews['contextMenu'].$el.detach()
 
-    renderTracks: ->
-        # Initialize the tracks displayed
-        @_collectionView = new TracksView
-            collection: @currentCollection
-
-        @_collectionView.render()
-        @currentView.push @_collectionView
-
-    renderSkeleton: (skeleton, data) ->
-        dataParsed = {data: data?.toJSON()}
-        $('#content-screen').append(skeleton(dataParsed))
-
-
-    removeCurrentView: ->
-        loop
-            break if @currentView.length == 0
-            view = @currentView.pop()
-            view.remove()
 
     updateSelectionTracksState: (isUsed) ->
-        @_contextMenu.manageActionTrackMenu isUsed
-    ###################### END - GENERIQUE - END ################################
+        @loadedViews['contextMenu']?.manageActionTrackMenu isUsed
+    ##################### END - CONTEXT MENU- END ##############################
 
 
 
@@ -128,9 +132,32 @@ module.exports = class ContentScreen
     renderAllTracks: ->
         console.log 'plop'
         @removeCurrentView()
-        @currentCollection = @baseCollection
+        @currentView = 'allTracks'
+        @renderSkeleton @skeletonTracks
         @renderContextMenu()
         @renderTracks()
+
+    removeAllTracks: ->
+        @currentView = null
+        @removeContextMenu()
+        @removeTracks()
+
+    renderTracks: ->
+        if @loadedViews['allTracks']?
+            @loadedViews['allTracks'].render()
+            return
+
+        # Initialize the tracks displayed
+        allTracks = new TracksView
+            collection: @baseCollection
+
+        @loadedViews['allTracks'] = allTracks
+
+        allTracks.render()
+
+
+    removeTracks: ->
+        @loadedViews['allTracks'].$el.detach()
     ###################### END - ALL TRACKS - END ###############################
 
 
@@ -152,15 +179,30 @@ module.exports = class ContentScreen
 
     ############################ TRACKS EDITION #################################
     # Remove current content and lauch edition
-    renderTracksEdition: ->
+    renderTrackEdition: ->
         @removeCurrentView()
+        @currentView =  'trackEdition'
         @renderSkeleton @skeletonEdition
+        @renderEdition()
+
+
+    renderEdition: ->
+        if @loadedViews['trackEdition']?
+            @loadedViews['trackEdition'].render()
+            return
+
         # Initialize the Edition view
-        @editionView = new EditionView
+        editionView = new EditionView
+
         # Listen the end of the edition
-        @listenTo @editionView, 'edition-end', @finishEdition
-        @editionView.render()
-        @currentView.push @editionView
+        @listenTo editionView, 'edition-end', @renderAllTracks
+
+        @loadedViews['trackEdition'] = editionView
+
+        editionView.render()
+
+    removeTrackEdition: ->
+        @loadedViews['trackEdition']?.$el.detach()
     ###################### END - TRACKS EDITION - END ###########################
 
 

@@ -1084,6 +1084,10 @@ module.exports = ContentScreen = (function() {
 
   ContentScreen.prototype.skeletonEdition = require('../views/content/edition/templates/edition_skel');
 
+  ContentScreen.prototype.skeletonTracks = require('../views/content/track/templates/tracks_skel');
+
+  ContentScreen.prototype.currentView = null;
+
   function ContentScreen() {
     _.extend(this, Backbone.Events);
     window.app.contentScreen = this;
@@ -1091,58 +1095,83 @@ module.exports = ContentScreen = (function() {
     this.menu = window.app.menuScreen;
     this.selectedTracksList = new SelectedTracksList;
     this.selectedTracksList.baseCollection = this.baseCollection;
-    this.currentView = new Array;
+    this.loadedViews = new Array;
     this.listenTo(this.menu, 'content-print-playlist', this.renderPlaylist);
     this.listenTo(this.menu, 'content-print-allTracks', this.renderAllTracks);
   }
 
-  ContentScreen.prototype.renderContextMenu = function() {
-    this._contextMenu = new ContextMenu;
-    this.listenTo(this._contextMenu, 'menu-trackEdition-lauch', this.renderTracksEdition);
-    this.listenTo(this.selectedTracksList, 'selection-editMenu-prompte', this.updateSelectionTracksState);
-    this._contextMenu.render();
-    return this.currentView.push(this._contextMenu);
-  };
-
-  ContentScreen.prototype.renderTracks = function() {
-    this._collectionView = new TracksView({
-      collection: this.currentCollection
-    });
-    this._collectionView.render();
-    return this.currentView.push(this._collectionView);
-  };
-
   ContentScreen.prototype.renderSkeleton = function(skeleton, data) {
     var dataParsed;
-    dataParsed = {
-      data: data != null ? data.toJSON() : void 0
-    };
+    if (data != null) {
+      dataParsed = {
+        data: data != null ? data.toJSON() : void 0
+      };
+    }
     return $('#content-screen').append(skeleton(dataParsed));
   };
 
   ContentScreen.prototype.removeCurrentView = function() {
-    var view, _results;
-    _results = [];
-    while (true) {
-      if (this.currentView.length === 0) {
-        break;
-      }
-      view = this.currentView.pop();
-      _results.push(view.remove());
+    switch (this.currentView) {
+      case 'allTracks':
+        return this.removeAllTracks();
+      case 'trackEdition':
+        return this.removeTrackEdition();
     }
-    return _results;
+  };
+
+  ContentScreen.prototype.renderContextMenu = function() {
+    var contextMenu;
+    if (this.loadedViews['contextMenu'] != null) {
+      console.log('render loaded menu: ', this.loadedViews['contextMenu']);
+      this.loadedViews['contextMenu'].render();
+      return;
+    }
+    contextMenu = new ContextMenu;
+    this.loadedViews['contextMenu'] = contextMenu;
+    this.listenTo(contextMenu, 'menu-trackEdition-lauch', this.renderTrackEdition);
+    this.listenTo(this.selectedTracksList, 'selection-editMenu-prompte', this.updateSelectionTracksState);
+    return contextMenu.render();
+  };
+
+  ContentScreen.prototype.removeContextMenu = function() {
+    return this.loadedViews['contextMenu'].$el.detach();
   };
 
   ContentScreen.prototype.updateSelectionTracksState = function(isUsed) {
-    return this._contextMenu.manageActionTrackMenu(isUsed);
+    var _ref;
+    return (_ref = this.loadedViews['contextMenu']) != null ? _ref.manageActionTrackMenu(isUsed) : void 0;
   };
 
   ContentScreen.prototype.renderAllTracks = function() {
     console.log('plop');
     this.removeCurrentView();
-    this.currentCollection = this.baseCollection;
+    this.currentView = 'allTracks';
+    this.renderSkeleton(this.skeletonTracks);
     this.renderContextMenu();
     return this.renderTracks();
+  };
+
+  ContentScreen.prototype.removeAllTracks = function() {
+    this.currentView = null;
+    this.removeContextMenu();
+    return this.removeTracks();
+  };
+
+  ContentScreen.prototype.renderTracks = function() {
+    var allTracks;
+    if (this.loadedViews['allTracks'] != null) {
+      this.loadedViews['allTracks'].render();
+      return;
+    }
+    allTracks = new TracksView({
+      collection: this.baseCollection
+    });
+    this.loadedViews['allTracks'] = allTracks;
+    return allTracks.render();
+  };
+
+  ContentScreen.prototype.removeTracks = function() {
+    return this.loadedViews['allTracks'].$el.detach();
   };
 
   ContentScreen.prototype.renderPlaylist = function(playlist) {
@@ -1153,13 +1182,28 @@ module.exports = ContentScreen = (function() {
     return this.renderTracks();
   };
 
-  ContentScreen.prototype.renderTracksEdition = function() {
+  ContentScreen.prototype.renderTrackEdition = function() {
     this.removeCurrentView();
+    this.currentView = 'trackEdition';
     this.renderSkeleton(this.skeletonEdition);
-    this.editionView = new EditionView;
-    this.listenTo(this.editionView, 'edition-end', this.finishEdition);
-    this.editionView.render();
-    return this.currentView.push(this.editionView);
+    return this.renderEdition();
+  };
+
+  ContentScreen.prototype.renderEdition = function() {
+    var editionView;
+    if (this.loadedViews['trackEdition'] != null) {
+      this.loadedViews['trackEdition'].render();
+      return;
+    }
+    editionView = new EditionView;
+    this.listenTo(editionView, 'edition-end', this.renderAllTracks);
+    this.loadedViews['trackEdition'] = editionView;
+    return editionView.render();
+  };
+
+  ContentScreen.prototype.removeTrackEdition = function() {
+    var _ref;
+    return (_ref = this.loadedViews['trackEdition']) != null ? _ref.$el.detach() : void 0;
   };
 
   return ContentScreen;
@@ -1609,8 +1653,6 @@ module.exports = EditionView = (function(_super) {
   };
 
   EditionView.prototype.beforeRender = function() {
-    console.log('Begin EDITION');
-    console.log('selection: ', this.selection);
     this.processeAttr();
     return console.log('processed attr: ', this.processedAttr);
   };
@@ -1625,7 +1667,7 @@ module.exports = EditionView = (function(_super) {
 
   EditionView.prototype.processeAttr = function() {
     var album, model;
-    model = this.selection.pop();
+    model = this.selection.models[0];
     album = model.album;
     return EditionView.MERGED_ATTRIBUTES.forEach((function(_this) {
       return function(attr) {
@@ -1842,6 +1884,25 @@ if (typeof define === 'function' && define.amd) {
 }
 });
 
+;require.register("views/content/track/templates/tracks_skel", function(exports, require, module) {
+var __templateData = function template(locals) {
+var buf = [];
+var jade_mixins = {};
+var jade_interp;
+
+buf.push("<div id=\"context-menu\"></div><div id=\"display-screen\"></div>");;return buf.join("");
+};
+if (typeof define === 'function' && define.amd) {
+  define([], function() {
+    return __templateData;
+  });
+} else if (typeof module === 'object' && module && module.exports) {
+  module.exports = __templateData;
+} else {
+  __templateData;
+}
+});
+
 ;require.register("views/content/track/track_view", function(exports, require, module) {
 var BaseView, TrackView,
   __hasProp = {}.hasOwnProperty,
@@ -2010,9 +2071,6 @@ module.exports = TracksView = (function(_super) {
 
   TracksView.prototype.manageSelectionEvent = function(event) {
     var cid, listTracksModified, view, _manageListTracksSelection, _manageTrackSelection;
-    event.stopPropagation();
-    event.preventDefault();
-    console.log('event: ', event);
     listTracksModified = [];
     cid = this.$(event.target).parents('tr').data('cid');
     view = _.find(this.views, function(view) {
@@ -2264,7 +2322,7 @@ var buf = [];
 var jade_mixins = {};
 var jade_interp;
 
-buf.push("<div class=\"container-fluid\"><div id=\"left-menu\" class=\"sidebar\"></div><div id=\"content-screen\" class=\"content container-fluid\"><div id=\"context-menu\"></div><div id=\"display-screen\"></div></div></div><div id=\"player-screen\" class=\"footer player\"></div>");;return buf.join("");
+buf.push("<div class=\"container-fluid\"><div id=\"left-menu\" class=\"sidebar\"></div><div id=\"content-screen\" class=\"content container-fluid\"></div></div><div id=\"player-screen\" class=\"footer player\"></div>");;return buf.join("");
 };
 if (typeof define === 'function' && define.amd) {
   define([], function() {

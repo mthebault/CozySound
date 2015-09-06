@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/20 17:41:32 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/06 18:03:40 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/06 18:20:43 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -84,9 +84,6 @@ module.exports = class TracksView extends ViewCollection
 
 
     manageSelectionEvent: (event) ->
-        event.stopPropagation()
-        event.preventDefault()
-        console.log 'event: ', event
         listTracksModified = []
         cid = @$(event.target).parents('tr').data 'cid'
         view = _.find @views, (view) -> view.model.cid is cid
