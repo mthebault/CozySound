@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/20 17:41:32 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/05 19:19:05 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/06 15:30:20 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -25,10 +25,16 @@ module.exports = class TracksView extends ViewCollection
 
     selectedTrack: null
 
+    tracksSelected: []
+
     events:
         # Event delegation
-        'click tr.track-row': (e) -> @viewProxy 'onTrackClicked', e
+        # TODO: event is triggered twice: find a way to stop propagation
+        'click tr.track-row': (e) -> @manageSelectionEvent e
 
+    # Keep the last track selected to have a starting point with shift. track is
+    # a model
+    _lastTrackSelected: null
 
 
     initialize: (options) ->
@@ -37,7 +43,6 @@ module.exports = class TracksView extends ViewCollection
         # Event delegation: Take the model send as argument in event and run his
         # methode named as the second argument
         @listenTo @collection, 'change', _.partial(@viewProxy, 'refresh')
-        @listenTo @collection, 'toggle-select', _.partial(@viewProxy, 'changeSelectStat')
 
 
     # Manage event delegation. Events are listen to on the collection level,
@@ -65,3 +70,41 @@ module.exports = class TracksView extends ViewCollection
             # Call `methodName` on the related view.
             args = [].splice.call arguments, 1
             view[methodName].apply view, args
+
+
+    unselectAllTracks: ->
+        loop
+            break if @tracksSelected.length == 0
+            view = @tracksSelected.pop()
+            view.setTrackAsNoSelected()
+        window.app.contentScreen.selectedTracksList.emptySelection()
+
+
+    manageSelectionEvent: (event) ->
+        listTracksModified = []
+        cid = @$(event.target).parents('tr').data 'cid'
+        view = _.find @views, (view) -> view.model.cid is cid
+
+
+        _manageListTracksSelection = (lastView) =>
+            startIndex = @views.indexOf @_lastTrackSelected
+            endIndex = @views.indexOf lastView
+            loop
+                if startIndex < endIndex then startIndex++ else startIndex--
+                _manageTrackSelection @views[startIndex]
+                break if startIndex == endIndex
+
+        _manageTrackSelection = (view) =>
+            view.changeSelectStat()
+            if view.isTrackSelected()
+                @tracksSelected.push view
+            listTracksModified.push view
+
+        if event.shiftKey && @_lastTrackSelected != null
+            _manageListTracksSelection view
+        else
+            @unselectAllTracks()
+            _manageTrackSelection view
+        @_lastTrackSelected = view
+        window.app.contentScreen.selectedTracksList.manageSelectionModification listTracksModified
+

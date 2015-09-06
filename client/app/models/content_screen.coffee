@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/25 09:53:27 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/05 19:33:50 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/06 14:42:03 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -51,25 +51,22 @@ module.exports = class ContentScreen
     constructor: ->
         _.extend @, Backbone.Events
 
+        window.app.contentScreen = @
         @baseCollection = window.app.baseCollection
         @menu = window.app.menuScreen
+
+        # SelectedTracksList is a collection of all tracks selected by the user,
+        # all actions on tracks must be handle by it
+        @selectedTracksList = new SelectedTracksList
+        @selectedTracksList.baseCollection = @baseCollection
 
         # An array of all view currently prompt
         @currentView = new Array
 
-        # Set the collection with @baseCollection by default
-        @currentCollection = @baseCollection
-
-
         # SelectedTracksList is a collection of all tracks selected by the user,
         # all acions on tracks must be handle by it
-        @selectedTracksList = new SelectedTracksList
-        @selectedTracksList.baseCollection = @baseCollection
+        @renderAllTracks()
 
-
-        # Listen if a the selection collection in/out of state empty, pop/remove
-        # the action menu
-        @listenTo @selectedTracksList, 'selectionTracksState', @updateSelectionTracksState
 
 
 
@@ -78,24 +75,38 @@ module.exports = class ContentScreen
         # from: createNewPlaylist - models/menu_screen.coffee
         # argument: Playlist object
         @listenTo @menu, 'content-print-playlist', @renderPlaylist
+
     ########################## END - EVENTS - END ###############################
 
 
 
 
     ############################ GENERIQUE ######################################
-    renderTracks: ->
+
+    renderContextMenu: ->
         # Initialize the contextMenu
         @_contextMenu = new ContextMenu
-            selectedTracksList: @selectedTracksList
-        # Listen if the user want edit the selectioned tracks
-        @listenTo @_contextMenu, 'lauchTracksEdition', @lauchTracksEdition
+
+        # *** menu-trackEdition-lauch ***
+        # from: events - views/content/context_menu/context_menu.coffee
+        # argument:
+        @listenTo @_contextMenu, 'menu-trackEdition-lauch', @lauchTracksEdition
+
+        # *** menu-editMenu-prompte ***
+        # from: onTrackClicker - collections/selected_list.coffee
+        # argument: bool (state)
+        @listenTo @selectedTracksList, 'selection-editMenu-prompte', @updateSelectionTracksState
+
         @_contextMenu.render()
         @currentView.push @_contextMenu
 
+
+    renderTracks: ->
         # Initialize the tracks displayed
         @_collectionView = new TracksView
             collection: @currentCollection
+
+
         @_collectionView.render()
         @currentView.push @_collectionView
 
@@ -118,6 +129,8 @@ module.exports = class ContentScreen
 
     ############################ ALL TRACKS #####################################
     renderAllTracks: ->
+        @currentCollection = @baseCollection
+        @renderContextMenu()
         @renderTracks()
     ###################### END - ALL TRACKS - END ###############################
 
@@ -141,7 +154,6 @@ module.exports = class ContentScreen
     ############################ TRACKS EDITION #################################
     # Remove current content and lauch edition
     lauchTracksEdition: ->
-        @_contextMenu.manageActionTrackMenu false
         @removeCurrentView()
         @renderTracksEdition()
 

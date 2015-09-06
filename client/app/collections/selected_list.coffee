@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/09/05 19:01:38 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/05 19:36:25 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/06 15:30:44 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -23,15 +23,14 @@ module.exports = class SelectedTracksList extends Backbone.Collection
     model: Track
     url: 'tracks'
 
-    # Keep the last track selected to have a starting point with shift. track is
-    # a model
-    _lastTrackSelected: null
 
     # Take a count of the number of track in update processing
     processingUpdate: 0
     # Take a count of the success and error updating
     errorUpdating: 0
     successUpdating: 0
+
+    listEditable: false
 
     initialize: ->
         super
@@ -40,50 +39,16 @@ module.exports = class SelectedTracksList extends Backbone.Collection
         window.selectedTracksList = @
 
     ########################## Manage Select stat ###############################
-    onTrackClicked: (model, isShiftPressed = false) ->
-        if isShiftPressed == true && @_lastTrackSelected != null
-            @_manageListTracksSelection model
-        else
-            @emptySelectedList()
-            @_manageTrackSelection model
-        @_lastTrackSelected = model
-        if @length == 1 then state = true else state = false
-        @trigger 'selectionTracksState', state
+    manageSelectionModification: (listView) ->
+        listView.forEach (view) =>
+            if view.isTrackSelected() then @push view.model else @remove view.model
+        console.log 'collection: ', @models
 
-    _manageListTracksSelection: (lastModel) ->
-        startIndex = @baseCollection.indexOf @_lastTrackSelected
-        endIndex = @baseCollection.indexOf lastModel
-        loop
-            if startIndex < endIndex
-                startIndex++
-            else startIndex--
-            @_manageTrackSelection @baseCollection.at startIndex
-            break if startIndex == endIndex
-
-
-    emptySelectedList: ->
+    emptySelection: ->
         loop
             break if @length == 0
-            model = @pop()
-            model.setAsNoSelected()
+            @pop()
 
-
-    # Check the select stat of the view and add/remove his to the collection
-    _manageTrackSelection: (model) ->
-        if model.isSelected() == false
-            @add model
-            model.setAsSelected()
-        else
-            @remove model
-            model.setAsNoSelected()
-
-    # Trigger an event when a some track is selected to pop the action track
-    # menu. A other event is trigger to remove it
-    add: (models, options) ->
-        super models, options
-
-    remove: (models, options) ->
-        super models, options
     #################### END - Manage Select Stat - END #########################
 
 

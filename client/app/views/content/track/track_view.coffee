@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/20 18:08:58 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/05 19:21:30 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/06 14:56:00 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -20,6 +20,9 @@ module.exports = class TrackView extends BaseView
 
     className: 'track-row'
     tagName: 'tr'
+
+    _selectedStatus: false
+
 
     getRenderData: ->
         return { model: @model?.toJSON(), album: @model?.album?.toJSON()}
@@ -45,13 +48,22 @@ module.exports = class TrackView extends BaseView
     setAsNoSelected: ->
         @$el.removeClass 'success'
 
-    onTrackClicked: (event) -> # Check if shift or control have been pressed
-        isShiftPressed = event.shiftKey or false
-        window.selectedTracksList.onTrackClicked @model, isShiftPressed
-
     changeSelectStat: ->
-        if @model.isSelected()
-            @$el.addClass 'success'
+        if @isTrackSelected()
+            @setTrackAsNoSelected()
         else
-            @$el.removeClass 'success'
+            @setTrackAsSelected()
+
+    isTrackSelected: ->
+        return @_selectedStatus
+
+    setTrackAsSelected: ->
+        @$el.addClass 'success'
+        @_selectedStatus = true
+
+    setTrackAsNoSelected: ->
+        @$el.removeClass 'success'
+        @_selectedStatus = false
+
+
     ##################### END - Manage Select Stat - END #########################
