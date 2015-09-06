@@ -389,7 +389,7 @@ module.exports = SelectedTracksList = (function(_super) {
 
   SelectedTracksList.prototype.successUpdating = 0;
 
-  SelectedTracksList.prototype.listEditable = false;
+  SelectedTracksList.prototype.editionMenuPrompted = false;
 
   SelectedTracksList.prototype.initialize = function() {
     SelectedTracksList.__super__.initialize.apply(this, arguments);
@@ -406,7 +406,13 @@ module.exports = SelectedTracksList = (function(_super) {
         }
       };
     })(this));
-    return console.log('collection: ', this.models);
+    if (this.length === 1 && this.editionMenuPrompted === false) {
+      this.trigger('selection-editMenu-prompte', true);
+      return this.editionMenuPrompted = true;
+    } else if (this.length !== 1 && this.editionMenuPrompted === true) {
+      this.trigger('selection-editMenu-prompte', false);
+      return this.editionMenuPrompted = false;
+    }
   };
 
   SelectedTracksList.prototype.emptySelection = function() {
@@ -1086,13 +1092,13 @@ module.exports = ContentScreen = (function() {
     this.selectedTracksList = new SelectedTracksList;
     this.selectedTracksList.baseCollection = this.baseCollection;
     this.currentView = new Array;
-    this.renderAllTracks();
     this.listenTo(this.menu, 'content-print-playlist', this.renderPlaylist);
+    this.listenTo(this.menu, 'content-print-allTracks', this.renderAllTracks);
   }
 
   ContentScreen.prototype.renderContextMenu = function() {
     this._contextMenu = new ContextMenu;
-    this.listenTo(this._contextMenu, 'menu-trackEdition-lauch', this.lauchTracksEdition);
+    this.listenTo(this._contextMenu, 'menu-trackEdition-lauch', this.renderTracksEdition);
     this.listenTo(this.selectedTracksList, 'selection-editMenu-prompte', this.updateSelectionTracksState);
     this._contextMenu.render();
     return this.currentView.push(this._contextMenu);
@@ -1132,6 +1138,8 @@ module.exports = ContentScreen = (function() {
   };
 
   ContentScreen.prototype.renderAllTracks = function() {
+    console.log('plop');
+    this.removeCurrentView();
     this.currentCollection = this.baseCollection;
     this.renderContextMenu();
     return this.renderTracks();
@@ -1145,22 +1153,13 @@ module.exports = ContentScreen = (function() {
     return this.renderTracks();
   };
 
-  ContentScreen.prototype.lauchTracksEdition = function() {
-    this.removeCurrentView();
-    return this.renderTracksEdition();
-  };
-
   ContentScreen.prototype.renderTracksEdition = function() {
+    this.removeCurrentView();
     this.renderSkeleton(this.skeletonEdition);
     this.editionView = new EditionView;
     this.listenTo(this.editionView, 'edition-end', this.finishEdition);
     this.editionView.render();
     return this.currentView.push(this.editionView);
-  };
-
-  ContentScreen.prototype.finishEdition = function() {
-    this.removeCurrentView();
-    return this.renderAllTracks();
   };
 
   return ContentScreen;
@@ -1610,6 +1609,8 @@ module.exports = EditionView = (function(_super) {
   };
 
   EditionView.prototype.beforeRender = function() {
+    console.log('Begin EDITION');
+    console.log('selection: ', this.selection);
     this.processeAttr();
     return console.log('processed attr: ', this.processedAttr);
   };
@@ -1625,7 +1626,6 @@ module.exports = EditionView = (function(_super) {
   EditionView.prototype.processeAttr = function() {
     var album, model;
     model = this.selection.pop();
-    model.setAsNoSelected();
     album = model.album;
     return EditionView.MERGED_ATTRIBUTES.forEach((function(_this) {
       return function(attr) {
@@ -1963,9 +1963,7 @@ module.exports = TracksView = (function(_super) {
   TracksView.prototype.tracksSelected = [];
 
   TracksView.prototype.events = {
-    'click tr.track-row': function(e) {
-      return this.manageSelectionEvent(e);
-    }
+    'click tr.track-row': 'manageSelectionEvent'
   };
 
   TracksView.prototype._lastTrackSelected = null;
@@ -1973,6 +1971,10 @@ module.exports = TracksView = (function(_super) {
   TracksView.prototype.initialize = function(options) {
     TracksView.__super__.initialize.call(this, options);
     return this.listenTo(this.collection, 'change', _.partial(this.viewProxy, 'refresh'));
+  };
+
+  TracksView.prototype.afterRender = function() {
+    return TracksView.__super__.afterRender.apply(this, arguments);
   };
 
   TracksView.prototype.viewProxy = function(methodName, object) {
@@ -2008,6 +2010,9 @@ module.exports = TracksView = (function(_super) {
 
   TracksView.prototype.manageSelectionEvent = function(event) {
     var cid, listTracksModified, view, _manageListTracksSelection, _manageTrackSelection;
+    event.stopPropagation();
+    event.preventDefault();
+    console.log('event: ', event);
     listTracksModified = [];
     cid = this.$(event.target).parents('tr').data('cid');
     view = _.find(this.views, function(view) {
@@ -2088,7 +2093,10 @@ module.exports = MenuView = (function(_super) {
   MenuView.prototype.el = '#left-menu';
 
   MenuView.prototype.events = {
-    'click #menu-playlist-new': 'createNewPlaylist'
+    'click #menu-playlist-new': 'createNewPlaylist',
+    'click #menu-all-tracks': function() {
+      return this.trigger('content-print-allTracks');
+    }
   };
 
   MenuView.prototype.initialize = function(options) {
@@ -2210,7 +2218,7 @@ var buf = [];
 var jade_mixins = {};
 var jade_interp;
 
-buf.push("<label for=\"menu-section\">Section</label><ul id=\"menu-section\" class=\"nav nav-sidebar\"><li><a>All Tracks</a></li></ul><label for=\"menu-playlist\">Playlist</label><div id=\"menu-playlist\"></div>");;return buf.join("");
+buf.push("<label for=\"menu-section\">Section</label><ul id=\"menu-section\" class=\"nav nav-sidebar\"><li id=\"menu-all-tracks\"><a>All Tracks</a></li></ul><label for=\"menu-playlist\">Playlist</label><div id=\"menu-playlist\"></div>");;return buf.join("");
 };
 if (typeof define === 'function' && define.amd) {
   define([], function() {

@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/25 19:58:03 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/05 21:15:44 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/06 15:52:45 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -39,6 +39,8 @@ module.exports = class EditionView extends BaseView
 
 
     beforeRender: ->
+        console.log 'Begin EDITION'
+        console.log 'selection: ', @selection
         @processeAttr()
         console.log 'processed attr: ', @processedAttr
 
@@ -52,7 +54,6 @@ module.exports = class EditionView extends BaseView
 
     processeAttr: ->
         model = @selection.pop()
-        model.setAsNoSelected()
         album = model.album
         EditionView.MERGED_ATTRIBUTES.forEach (attr) =>
             modelAttr = model.get attr

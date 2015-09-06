@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/20 17:41:32 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/06 15:30:20 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/06 18:03:40 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -29,8 +29,7 @@ module.exports = class TracksView extends ViewCollection
 
     events:
         # Event delegation
-        # TODO: event is triggered twice: find a way to stop propagation
-        'click tr.track-row': (e) -> @manageSelectionEvent e
+        'click tr.track-row': 'manageSelectionEvent'
 
     # Keep the last track selected to have a starting point with shift. track is
     # a model
@@ -43,6 +42,10 @@ module.exports = class TracksView extends ViewCollection
         # Event delegation: Take the model send as argument in event and run his
         # methode named as the second argument
         @listenTo @collection, 'change', _.partial(@viewProxy, 'refresh')
+
+    afterRender: ->
+        super
+
 
 
     # Manage event delegation. Events are listen to on the collection level,
@@ -81,6 +84,9 @@ module.exports = class TracksView extends ViewCollection
 
 
     manageSelectionEvent: (event) ->
+        event.stopPropagation()
+        event.preventDefault()
+        console.log 'event: ', event
         listTracksModified = []
         cid = @$(event.target).parents('tr').data 'cid'
         view = _.find @views, (view) -> view.model.cid is cid

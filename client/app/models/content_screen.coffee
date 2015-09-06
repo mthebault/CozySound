@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/25 09:53:27 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/06 14:42:03 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/06 18:03:27 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -63,19 +63,16 @@ module.exports = class ContentScreen
         # An array of all view currently prompt
         @currentView = new Array
 
-        # SelectedTracksList is a collection of all tracks selected by the user,
-        # all acions on tracks must be handle by it
-        @renderAllTracks()
-
-
-
-
     ################################ EVENTS #####################################
-        # *** menu-cmd-playlist ***
+        # *** content-print-playlist ***
         # from: createNewPlaylist - models/menu_screen.coffee
         # argument: Playlist object
         @listenTo @menu, 'content-print-playlist', @renderPlaylist
 
+        # *** content-print-allTracks ***
+        # from: events - models/menu_screen.coffee
+        # argument:
+        @listenTo @menu, 'content-print-allTracks', @renderAllTracks
     ########################## END - EVENTS - END ###############################
 
 
@@ -90,7 +87,7 @@ module.exports = class ContentScreen
         # *** menu-trackEdition-lauch ***
         # from: events - views/content/context_menu/context_menu.coffee
         # argument:
-        @listenTo @_contextMenu, 'menu-trackEdition-lauch', @lauchTracksEdition
+        @listenTo @_contextMenu, 'menu-trackEdition-lauch', @renderTracksEdition
 
         # *** menu-editMenu-prompte ***
         # from: onTrackClicker - collections/selected_list.coffee
@@ -106,13 +103,13 @@ module.exports = class ContentScreen
         @_collectionView = new TracksView
             collection: @currentCollection
 
-
         @_collectionView.render()
         @currentView.push @_collectionView
 
     renderSkeleton: (skeleton, data) ->
         dataParsed = {data: data?.toJSON()}
         $('#content-screen').append(skeleton(dataParsed))
+
 
     removeCurrentView: ->
         loop
@@ -129,6 +126,8 @@ module.exports = class ContentScreen
 
     ############################ ALL TRACKS #####################################
     renderAllTracks: ->
+        console.log 'plop'
+        @removeCurrentView()
         @currentCollection = @baseCollection
         @renderContextMenu()
         @renderTracks()
@@ -153,11 +152,8 @@ module.exports = class ContentScreen
 
     ############################ TRACKS EDITION #################################
     # Remove current content and lauch edition
-    lauchTracksEdition: ->
-        @removeCurrentView()
-        @renderTracksEdition()
-
     renderTracksEdition: ->
+        @removeCurrentView()
         @renderSkeleton @skeletonEdition
         # Initialize the Edition view
         @editionView = new EditionView
@@ -165,10 +161,6 @@ module.exports = class ContentScreen
         @listenTo @editionView, 'edition-end', @finishEdition
         @editionView.render()
         @currentView.push @editionView
-
-    finishEdition: ->
-        @removeCurrentView()
-        @renderAllTracks()
     ###################### END - TRACKS EDITION - END ###########################
 
 

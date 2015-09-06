@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/09/05 19:01:38 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/06 15:30:44 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/06 16:38:54 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -30,7 +30,7 @@ module.exports = class SelectedTracksList extends Backbone.Collection
     errorUpdating: 0
     successUpdating: 0
 
-    listEditable: false
+    editionMenuPrompted: false
 
     initialize: ->
         super
@@ -42,7 +42,12 @@ module.exports = class SelectedTracksList extends Backbone.Collection
     manageSelectionModification: (listView) ->
         listView.forEach (view) =>
             if view.isTrackSelected() then @push view.model else @remove view.model
-        console.log 'collection: ', @models
+        if @length == 1 and @editionMenuPrompted == false
+            @trigger 'selection-editMenu-prompte', true
+            @editionMenuPrompted = true
+        else if @length != 1 and @editionMenuPrompted == true
+            @trigger 'selection-editMenu-prompte', false
+            @editionMenuPrompted = false
 
     emptySelection: ->
         loop

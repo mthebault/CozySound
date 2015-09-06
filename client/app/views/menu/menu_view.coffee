@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 15:30:40 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/03 22:44:07 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/06 17:56:16 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -26,6 +26,7 @@ module.exports = class MenuView extends BaseView
 
     events:
         'click #menu-playlist-new': 'createNewPlaylist'
+        'click #menu-all-tracks': -> @trigger 'content-print-allTracks'
 
     initialize: (options) ->
 
