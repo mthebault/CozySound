@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 15:30:07 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/06 18:02:58 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/07 20:16:07 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -30,8 +30,8 @@ module.exports = class AppView extends BaseView
     afterRender: ->
 
         # Create and render the left menu
-        @menu = new Menu
-        @menu.render()
+        @menuScreen = new Menu
+        @menuScreen.render()
 
         # Create and render the player screen
         @playerScreen = new PlayerScreen

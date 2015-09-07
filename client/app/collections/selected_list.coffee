@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/09/05 19:01:38 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/07 16:14:39 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/07 21:04:09 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -24,14 +24,6 @@ module.exports = class SelectedTracksList extends Backbone.Collection
     url: 'tracks'
 
 
-    # Take a count of the number of track in update processing
-    processingUpdate: 0
-    # Take a count of the success and error updating
-    errorUpdating: 0
-    successUpdating: 0
-
-    editionMenuPrompted: false
-
     initialize: ->
         super
         # Create a shortcute for each track view can access to the selected
@@ -42,18 +34,18 @@ module.exports = class SelectedTracksList extends Backbone.Collection
     manageSelectionModification: (listView) ->
         listView.forEach (view) =>
             if view.isTrackSelected() then @push view.model else @remove view.model
-        if @length == 1 and @editionMenuPrompted == false
-            @trigger 'selection-editMenu-prompte', true
-            @editionMenuPrompted = true
-        else if @length != 1 and @editionMenuPrompted == true
-            @trigger 'selection-editMenu-prompte', false
-            @editionMenuPrompted = false
+        switch @length
+            when 0 then @trigger 'selection-menu-options', 'empty'
+            when 1 then @trigger 'selection-menu-options', 'unique'
+            else
+                @trigger 'selection-menu-options', 'several'
 
-    emptySelection: (listView) ->
+    emptySelection: ->
         loop
             break if @length == 0
             @pop()
         @editionMenuPrompted = false
+        @trigger 'selection-menu-options', 'empty'
 
 
     #################### END - Manage Select Stat - END #########################

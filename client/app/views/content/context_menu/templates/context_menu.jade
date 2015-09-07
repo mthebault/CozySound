@@ -7,5 +7,7 @@ ul.nav.nav-tabs
         role='presentation'
         )
     li#fetch.btn.btn-default(role='presentation') FETCH
-    if isTrackEdition
+    if statMenu.playlist
+        li#playlist.btn.btn-default(role='presentation') Add TO PLAYLIST
+    if statMenu.edition
         li#edit-tracks.btn.btn-default(role='presentation') EDIT

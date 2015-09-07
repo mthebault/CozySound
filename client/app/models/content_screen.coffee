@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/25 09:53:27 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/07 17:47:36 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/07 21:06:52 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -112,21 +112,12 @@ module.exports = class ContentScreen
         # *** menu-editMenu-prompte ***
         # from: onTrackClicker - collections/selected_list.coffee
         # argument: bool (state)
-        @listenTo @selectedTracksList, 'selection-editMenu-prompte', @updateSelectionTracksState
+        @listenTo @selectedTracksList, 'selection-menu-options', contextMenu.manageOptionsMenu
 
         contextMenu.render()
 
     removeContextMenu: ->
         @loadedViews['contextMenu'].$el.detach()
-
-
-    updateSelectionTracksState: (isUsed) ->
-        @loadedViews['contextMenu']?.manageActionTrackMenu isUsed
-
-    emptySelectionList: ->
-        @selectedTracksList.emptySelection @loadedViews['allTracks']
-        @loadedViews['allTracks']?.unselectAllTracks()
-        @updateSelectionTracksState false
     ##################### END - CONTEXT MENU- END ##############################
 
 
@@ -165,8 +156,6 @@ module.exports = class ContentScreen
 
 
 
-
-
     ############################## PLAYLIST #####################################
     renderPlaylist: (playlist) ->
         @removeCurrentView()
@@ -198,18 +187,15 @@ module.exports = class ContentScreen
         editionView = new EditionView
 
         # Listen the end of the edition
-        @listenTo editionView, 'edition-end', @endTrackEdition
+        @listenTo editionView, 'edition-end', @renderAllTracks
 
         @loadedViews['trackEdition'] = editionView
 
         editionView.render()
 
 
-    endTrackEdition: ->
-        @emptySelectionList()
-        @renderAllTracks()
-
-
     removeTrackEdition: ->
+        @selectedTracksList.emptySelection()
         @loadedViews['trackEdition']?.$el.detach()
+        @loadedViews['allTracks']?.unselectAllTracks()
     ###################### END - TRACKS EDITION - END ###########################

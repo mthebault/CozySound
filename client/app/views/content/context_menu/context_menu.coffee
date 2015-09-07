@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 15:30:42 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/07 16:36:53 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/07 21:05:49 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -24,8 +24,9 @@ module.exports = class ContextMenu extends BaseView
     el: '#context-menu'
     template: require './templates/context_menu'
 
-    # Marquer is the action Menu is active or not
-    trackEditionActive: false
+    statMenu:
+        edition: false
+        playlist: false
 
     events:
         # Event trigger when a user valid the files to upload
@@ -48,7 +49,8 @@ module.exports = class ContextMenu extends BaseView
 
 
     getRenderData: ->
-        return { isTrackEdition: @trackEditionActive }
+        return { statMenu: @statMenu
+        }
 
 
 
@@ -73,9 +75,16 @@ module.exports = class ContextMenu extends BaseView
     # menu pop in the context menu. If it's not used anymore the menu disapear
     # isUser is a bollean
     # TODO: improve it
-    manageActionTrackMenu: (isUsed)->
-        @trackEditionActive = isUsed
+    manageOptionsMenu: (status) =>
+        if status is 'empty'
+            @statMenu.playlist = false
+            @statMenu.edition = false
+        else if status is 'unique'
+            @statMenu.playlist = true
+            @statMenu.edition = true
+        else if status is 'several'
+            @statMenu.playlist = true
+            @statMenu.edition = false
         @render()
-
     ################### END - ACTION TRACKS MENU - END ##########################
 

@@ -383,14 +383,6 @@ module.exports = SelectedTracksList = (function(_super) {
 
   SelectedTracksList.prototype.url = 'tracks';
 
-  SelectedTracksList.prototype.processingUpdate = 0;
-
-  SelectedTracksList.prototype.errorUpdating = 0;
-
-  SelectedTracksList.prototype.successUpdating = 0;
-
-  SelectedTracksList.prototype.editionMenuPrompted = false;
-
   SelectedTracksList.prototype.initialize = function() {
     SelectedTracksList.__super__.initialize.apply(this, arguments);
     return window.selectedTracksList = this;
@@ -406,23 +398,25 @@ module.exports = SelectedTracksList = (function(_super) {
         }
       };
     })(this));
-    if (this.length === 1 && this.editionMenuPrompted === false) {
-      this.trigger('selection-editMenu-prompte', true);
-      return this.editionMenuPrompted = true;
-    } else if (this.length !== 1 && this.editionMenuPrompted === true) {
-      this.trigger('selection-editMenu-prompte', false);
-      return this.editionMenuPrompted = false;
+    switch (this.length) {
+      case 0:
+        return this.trigger('selection-menu-options', 'empty');
+      case 1:
+        return this.trigger('selection-menu-options', 'unique');
+      default:
+        return this.trigger('selection-menu-options', 'several');
     }
   };
 
-  SelectedTracksList.prototype.emptySelection = function(listView) {
+  SelectedTracksList.prototype.emptySelection = function() {
     while (true) {
       if (this.length === 0) {
         break;
       }
       this.pop();
     }
-    return this.editionMenuPrompted = false;
+    this.editionMenuPrompted = false;
+    return this.trigger('selection-menu-options', 'empty');
   };
 
   SelectedTracksList.prototype.updateTracks = function(newAttrs) {
@@ -1139,26 +1133,12 @@ module.exports = ContentScreen = (function() {
     contextMenu = new ContextMenu;
     this.loadedViews['contextMenu'] = contextMenu;
     this.listenTo(contextMenu, 'menu-trackEdition-lauch', this.renderTrackEdition);
-    this.listenTo(this.selectedTracksList, 'selection-editMenu-prompte', this.updateSelectionTracksState);
+    this.listenTo(this.selectedTracksList, 'selection-menu-options', contextMenu.manageOptionsMenu);
     return contextMenu.render();
   };
 
   ContentScreen.prototype.removeContextMenu = function() {
     return this.loadedViews['contextMenu'].$el.detach();
-  };
-
-  ContentScreen.prototype.updateSelectionTracksState = function(isUsed) {
-    var _ref;
-    return (_ref = this.loadedViews['contextMenu']) != null ? _ref.manageActionTrackMenu(isUsed) : void 0;
-  };
-
-  ContentScreen.prototype.emptySelectionList = function() {
-    var _ref;
-    this.selectedTracksList.emptySelection(this.loadedViews['allTracks']);
-    if ((_ref = this.loadedViews['allTracks']) != null) {
-      _ref.unselectAllTracks();
-    }
-    return this.updateSelectionTracksState(false);
   };
 
   ContentScreen.prototype.renderAllTracks = function() {
@@ -1214,19 +1194,18 @@ module.exports = ContentScreen = (function() {
       return;
     }
     editionView = new EditionView;
-    this.listenTo(editionView, 'edition-end', this.endTrackEdition);
+    this.listenTo(editionView, 'edition-end', this.renderAllTracks);
     this.loadedViews['trackEdition'] = editionView;
     return editionView.render();
   };
 
-  ContentScreen.prototype.endTrackEdition = function() {
-    this.emptySelectionList();
-    return this.renderAllTracks();
-  };
-
   ContentScreen.prototype.removeTrackEdition = function() {
-    var _ref;
-    return (_ref = this.loadedViews['trackEdition']) != null ? _ref.$el.detach() : void 0;
+    var _ref, _ref1;
+    this.selectedTracksList.emptySelection();
+    if ((_ref = this.loadedViews['trackEdition']) != null) {
+      _ref.$el.detach();
+    }
+    return (_ref1 = this.loadedViews['allTracks']) != null ? _ref1.unselectAllTracks() : void 0;
   };
 
   return ContentScreen;
@@ -1526,8 +1505,8 @@ module.exports = AppView = (function(_super) {
   AppView.prototype.template = require('./templates/home');
 
   AppView.prototype.afterRender = function() {
-    this.menu = new Menu;
-    this.menu.render();
+    this.menuScreen = new Menu;
+    this.menuScreen.render();
     this.playerScreen = new PlayerScreen;
     this.playerScreen.render();
     this.contentScreen = new ContentScreen;
@@ -1541,6 +1520,7 @@ module.exports = AppView = (function(_super) {
 
 ;require.register("views/content/context_menu/context_menu", function(exports, require, module) {
 var BaseView, ContextMenu, PlaylistList,
+  __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
@@ -1559,6 +1539,7 @@ module.exports = ContextMenu = (function(_super) {
   __extends(ContextMenu, _super);
 
   function ContextMenu() {
+    this.manageOptionsMenu = __bind(this.manageOptionsMenu, this);
     return ContextMenu.__super__.constructor.apply(this, arguments);
   }
 
@@ -1566,7 +1547,10 @@ module.exports = ContextMenu = (function(_super) {
 
   ContextMenu.prototype.template = require('./templates/context_menu');
 
-  ContextMenu.prototype.trackEditionActive = false;
+  ContextMenu.prototype.statMenu = {
+    edition: false,
+    playlist: false
+  };
 
   ContextMenu.prototype.events = {
     'change #upload-files': 'lauchUploadFiles',
@@ -1586,7 +1570,7 @@ module.exports = ContextMenu = (function(_super) {
 
   ContextMenu.prototype.getRenderData = function() {
     return {
-      isTrackEdition: this.trackEditionActive
+      statMenu: this.statMenu
     };
   };
 
@@ -1602,8 +1586,17 @@ module.exports = ContextMenu = (function(_super) {
     }
   };
 
-  ContextMenu.prototype.manageActionTrackMenu = function(isUsed) {
-    this.trackEditionActive = isUsed;
+  ContextMenu.prototype.manageOptionsMenu = function(status) {
+    if (status === 'empty') {
+      this.statMenu.playlist = false;
+      this.statMenu.edition = false;
+    } else if (status === 'unique') {
+      this.statMenu.playlist = true;
+      this.statMenu.edition = true;
+    } else if (status === 'several') {
+      this.statMenu.playlist = true;
+      this.statMenu.edition = false;
+    }
     return this.render();
   };
 
@@ -1617,9 +1610,13 @@ var __templateData = function template(locals) {
 var buf = [];
 var jade_mixins = {};
 var jade_interp;
-var locals_ = (locals || {}),isTrackEdition = locals_.isTrackEdition;
+var locals_ = (locals || {}),statMenu = locals_.statMenu;
 buf.push("<ul class=\"nav nav-tabs\"><input id=\"upload-files\" name=\"upload-files\" type=\"file\" multiple=\"multiple\" accept=\"audio/*\" role=\"presentation\" class=\"btn btn-default btn-file\"/><li id=\"fetch\" role=\"presentation\" class=\"btn btn-default\">FETCH</li>");
-if ( isTrackEdition)
+if ( statMenu.playlist)
+{
+buf.push("<li id=\"playlist\" role=\"presentation\" class=\"btn btn-default\">Add TO PLAYLIST</li>");
+}
+if ( statMenu.edition)
 {
 buf.push("<li id=\"edit-tracks\" role=\"presentation\" class=\"btn btn-default\">EDIT</li>");
 }
@@ -1710,8 +1707,13 @@ module.exports = EditionView = (function(_super) {
   };
 
   EditionView.prototype.saveTrackChanges = function() {
-    return this.selection.models.forEach(function(track) {
-      var newInputAttr;
+    var newInputAttr, track, _results;
+    _results = [];
+    while (true) {
+      if (this.selection.length === 0) {
+        break;
+      }
+      track = this.selection.pop();
       newInputAttr = null;
       EditionView.MERGED_ATTRIBUTES.forEach((function(_this) {
         return function(attr) {
@@ -1725,43 +1727,39 @@ module.exports = EditionView = (function(_super) {
           }
         };
       })(this));
+      this.saveAlbumChanges(track);
       if (newInputAttr != null) {
-        return track.save(newInputAttr);
+        _results.push(track.save(newInputAttr));
+      } else {
+        _results.push(void 0);
       }
-    });
+    }
+    return _results;
   };
 
-  EditionView.prototype.saveAlbumChanges = function() {
-    return this.selection.models.forEach(function(track) {
-      var album, newInputAttr;
-      newInputAttr = null;
-      album = track.album;
-      EditionView.MERGED_ATTRIBUTES.forEach((function(_this) {
-        return function(attr) {
-          var inputValue;
-          inputValue = _this.$("#edit-album-" + attr).val();
-          if (inputValue !== '' && album.get(attr) !== inputValue) {
-            if (newInputAttr === null) {
-              newInputAttr = {};
-            }
-            return newInputAttr[attr] = inputValue;
+  EditionView.prototype.saveAlbumChanges = function(track) {
+    var album, newInputAttr;
+    newInputAttr = null;
+    album = track.album;
+    EditionView.MERGED_ATTRIBUTES.forEach((function(_this) {
+      return function(attr) {
+        var inputValue;
+        inputValue = _this.$("#edit-album-" + attr).val();
+        if (inputValue !== '' && album.get(attr) !== inputValue) {
+          if (newInputAttr === null) {
+            newInputAttr = {};
           }
-        };
-      })(this));
-      if (newInputAttr != null) {
-        return album.save(newInputAttr);
-      }
-    });
-  };
-
-  EditionView.prototype.saveEditionChanges = function() {
-    this.saveTrackChanges();
-    this.saveAlbumChanges();
-    return this.trigger('edition-end');
+          return newInputAttr[attr] = inputValue;
+        }
+      };
+    })(this));
+    if (newInputAttr != null) {
+      return album.save(newInputAttr);
+    }
   };
 
   EditionView.prototype.submitEdition = function() {
-    this.saveEditionChanges();
+    this.saveTrackChanges();
     return this.trigger('edition-end');
   };
 
@@ -2210,13 +2208,12 @@ module.exports = MenuView = (function(_super) {
 
   MenuView.prototype.events = {
     'click #menu-playlist-new': 'createNewPlaylist',
-    'click #menu-all-tracks': function() {
-      return this.trigger('content-print-allTracks');
-    }
+    'click #menu-all-tracks': 'printAllTracks'
   };
 
   MenuView.prototype.initialize = function(options) {
-    return this.playlistsCollection = options.playlistsCollection;
+    this.playlistsCollection = options.playlistsCollection;
+    return window.app.menuScreen = this;
   };
 
   MenuView.prototype.render = function() {
@@ -2229,6 +2226,10 @@ module.exports = MenuView = (function(_super) {
 
   MenuView.prototype.createNewPlaylist = function() {
     return this.trigger('playlist-create');
+  };
+
+  MenuView.prototype.printAllTracks = function() {
+    return this.trigger('content-print-allTracks');
   };
 
   return MenuView;
@@ -2334,7 +2335,7 @@ var buf = [];
 var jade_mixins = {};
 var jade_interp;
 
-buf.push("<label for=\"menu-section\">Section</label><ul id=\"menu-section\" class=\"nav nav-sidebar\"><li id=\"menu-all-tracks\"><a>All Tracks</a></li></ul><label for=\"menu-playlist\">Playlist</label><div id=\"menu-playlist\"></div>");;return buf.join("");
+buf.push("<label for=\"menu-section\">Section</label><ul id=\"menu-section\" class=\"nav nav-sidebar\"><li><a id=\"menu-all-tracks\">All Tracks</a></li></ul><label for=\"menu-playlist\">Playlist</label><div id=\"menu-playlist\"></div>");;return buf.join("");
 };
 if (typeof define === 'function' && define.amd) {
   define([], function() {
