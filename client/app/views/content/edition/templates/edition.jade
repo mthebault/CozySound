@@ -7,8 +7,8 @@ div.panel.panel-default
         div.form-group
             each attribute in trackAttributes
                 if track[attribute]
-                    label(for='Edit-#{attribute}') #{attribute}
-                    input.form-control(id='edit-#{attribute}' type='text' value="#{track[attribute]}")
+                    label(for='edit-track-#{attribute}') #{attribute}
+                    input(id='edit-track-#{attribute}' class='form-control track-edition #{attribute}' type='text' value="#{track[attribute]}")
             label(for='plays') Plays
             p(id='plays') #{track['plays']}
 div.panel.panel-default
@@ -17,7 +17,7 @@ div.panel.panel-default
         div.form-group
             each attribute in albumAttributes
                 if album[attribute]
-                    label(for='Edit-#{attribute}') #{attribute}
-                    input.form-control(id='edit-#{attribute}' type='text' value="#{album[attribute]}")
+                    label(for='Edit-album-#{attribute}') #{attribute}
+                    input(id='edit-album-#{attribute}' class='form-control album-edition #{attribute}' type='text' value="#{album[attribute]}")
 button#edit-cancel.btn.btn-default Cancel
 button#edit-submit.btn.btn-default Change

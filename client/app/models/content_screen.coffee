@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/25 09:53:27 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/07 16:14:31 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/07 17:47:36 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -172,7 +172,6 @@ module.exports = class ContentScreen
         @removeCurrentView()
         @renderSkeleton @skeletonPlaylist, playlist
         @currentCollection = playlist.collection
-        console.log @currentCollection
         @renderTracks()
     ######################## END - PLAYLIST END - ###############################
 

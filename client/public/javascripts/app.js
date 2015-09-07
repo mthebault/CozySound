@@ -1031,6 +1031,19 @@ module.exports = Album = (function(_super) {
 
   Album.prototype.url = 'album';
 
+  Album.prototype.set = function(attr, options) {
+    var tracks;
+    tracks = this.get('tracks');
+    if (tracks != null) {
+      tracks.forEach(function(trackId) {
+        var track;
+        track = window.app.baseCollection.get(trackId);
+        return track != null ? track.set(attr) : void 0;
+      });
+    }
+    return Album.__super__.set.call(this, attr, options);
+  };
+
   return Album;
 
 })(Backbone.Model);
@@ -1183,7 +1196,6 @@ module.exports = ContentScreen = (function() {
     this.removeCurrentView();
     this.renderSkeleton(this.skeletonPlaylist, playlist);
     this.currentCollection = playlist.collection;
-    console.log(this.currentCollection);
     return this.renderTracks();
   };
 
@@ -1671,8 +1683,7 @@ module.exports = EditionView = (function(_super) {
   };
 
   EditionView.prototype.beforeRender = function() {
-    this.processeAttr();
-    return console.log('processed attr: ', this.processedAttr);
+    return this.processeAttr();
   };
 
   EditionView.prototype.getRenderData = function() {
@@ -1685,7 +1696,6 @@ module.exports = EditionView = (function(_super) {
 
   EditionView.prototype.processeAttr = function() {
     var album, model;
-    console.log('selection: ', this.selection);
     model = this.selection.models[0];
     album = model.album;
     return EditionView.MERGED_ATTRIBUTES.forEach((function(_this) {
@@ -1699,26 +1709,55 @@ module.exports = EditionView = (function(_super) {
     })(this));
   };
 
-  EditionView.prototype.saveEditionChanges = function() {
-    var newInputAttr;
-    newInputAttr = new Array;
-    EditionView.MERGED_ATTRIBUTES.forEach((function(_this) {
-      return function(attr) {
-        var attrValue, inputValue;
-        attrValue = _this.processedAttr[attr];
-        inputValue = _this.$("#edit-" + attr).val();
-        if (inputValue !== '' && attrValue !== inputValue) {
-          return newInputAttr.push([attr, inputValue]);
-        }
-      };
-    })(this));
-    return this.selection.updateTracks(newInputAttr);
+  EditionView.prototype.saveTrackChanges = function() {
+    return this.selection.models.forEach(function(track) {
+      var newInputAttr;
+      newInputAttr = null;
+      EditionView.MERGED_ATTRIBUTES.forEach((function(_this) {
+        return function(attr) {
+          var inputValue;
+          inputValue = _this.$("#edit-track-" + attr).val();
+          if (inputValue !== '' && track.get(attr) !== inputValue) {
+            if (newInputAttr === null) {
+              newInputAttr = {};
+            }
+            return newInputAttr[attr] = inputValue;
+          }
+        };
+      })(this));
+      if (newInputAttr != null) {
+        return track.save(newInputAttr);
+      }
+    });
   };
 
-  EditionView.prototype.computeChangeAttr = function(attribute, inputValue) {
+  EditionView.prototype.saveAlbumChanges = function() {
     return this.selection.models.forEach(function(track) {
-      return track.set(attribute, inputValue);
+      var album, newInputAttr;
+      newInputAttr = null;
+      album = track.album;
+      EditionView.MERGED_ATTRIBUTES.forEach((function(_this) {
+        return function(attr) {
+          var inputValue;
+          inputValue = _this.$("#edit-album-" + attr).val();
+          if (inputValue !== '' && album.get(attr) !== inputValue) {
+            if (newInputAttr === null) {
+              newInputAttr = {};
+            }
+            return newInputAttr[attr] = inputValue;
+          }
+        };
+      })(this));
+      if (newInputAttr != null) {
+        return album.save(newInputAttr);
+      }
     });
+  };
+
+  EditionView.prototype.saveEditionChanges = function() {
+    this.saveTrackChanges();
+    this.saveAlbumChanges();
+    return this.trigger('edition-end');
   };
 
   EditionView.prototype.submitEdition = function() {
@@ -1750,7 +1789,7 @@ buf.push("<div class=\"panel panel-default\"><div class=\"panel-heading\">TRACK 
 
 if ( track[attribute])
 {
-buf.push("<label" + (jade.attr("for", 'Edit-' + (attribute) + '', true, false)) + ">" + (jade.escape((jade_interp = attribute) == null ? '' : jade_interp)) + "</label><input" + (jade.attr("id", 'edit-' + (attribute) + '', true, false)) + " type=\"text\"" + (jade.attr("value", "" + (track[attribute]) + "", true, false)) + " class=\"form-control\"/>");
+buf.push("<label" + (jade.attr("for", 'edit-track-' + (attribute) + '', true, false)) + ">" + (jade.escape((jade_interp = attribute) == null ? '' : jade_interp)) + "</label><input" + (jade.attr("id", 'edit-track-' + (attribute) + '', true, false)) + " type=\"text\"" + (jade.attr("value", "" + (track[attribute]) + "", true, false)) + (jade.cls(['form-control track-edition ' + (attribute) + ''], [true])) + "/>");
 }
     }
 
@@ -1761,7 +1800,7 @@ buf.push("<label" + (jade.attr("for", 'Edit-' + (attribute) + '', true, false)) 
 
 if ( track[attribute])
 {
-buf.push("<label" + (jade.attr("for", 'Edit-' + (attribute) + '', true, false)) + ">" + (jade.escape((jade_interp = attribute) == null ? '' : jade_interp)) + "</label><input" + (jade.attr("id", 'edit-' + (attribute) + '', true, false)) + " type=\"text\"" + (jade.attr("value", "" + (track[attribute]) + "", true, false)) + " class=\"form-control\"/>");
+buf.push("<label" + (jade.attr("for", 'edit-track-' + (attribute) + '', true, false)) + ">" + (jade.escape((jade_interp = attribute) == null ? '' : jade_interp)) + "</label><input" + (jade.attr("id", 'edit-track-' + (attribute) + '', true, false)) + " type=\"text\"" + (jade.attr("value", "" + (track[attribute]) + "", true, false)) + (jade.cls(['form-control track-edition ' + (attribute) + ''], [true])) + "/>");
 }
     }
 
@@ -1779,7 +1818,7 @@ buf.push("<label for=\"plays\">Plays</label><p id=\"plays\">" + (jade.escape((ja
 
 if ( album[attribute])
 {
-buf.push("<label" + (jade.attr("for", 'Edit-' + (attribute) + '', true, false)) + ">" + (jade.escape((jade_interp = attribute) == null ? '' : jade_interp)) + "</label><input" + (jade.attr("id", 'edit-' + (attribute) + '', true, false)) + " type=\"text\"" + (jade.attr("value", "" + (album[attribute]) + "", true, false)) + " class=\"form-control\"/>");
+buf.push("<label" + (jade.attr("for", 'Edit-album-' + (attribute) + '', true, false)) + ">" + (jade.escape((jade_interp = attribute) == null ? '' : jade_interp)) + "</label><input" + (jade.attr("id", 'edit-album-' + (attribute) + '', true, false)) + " type=\"text\"" + (jade.attr("value", "" + (album[attribute]) + "", true, false)) + (jade.cls(['form-control album-edition ' + (attribute) + ''], [true])) + "/>");
 }
     }
 
@@ -1790,7 +1829,7 @@ buf.push("<label" + (jade.attr("for", 'Edit-' + (attribute) + '', true, false)) 
 
 if ( album[attribute])
 {
-buf.push("<label" + (jade.attr("for", 'Edit-' + (attribute) + '', true, false)) + ">" + (jade.escape((jade_interp = attribute) == null ? '' : jade_interp)) + "</label><input" + (jade.attr("id", 'edit-' + (attribute) + '', true, false)) + " type=\"text\"" + (jade.attr("value", "" + (album[attribute]) + "", true, false)) + " class=\"form-control\"/>");
+buf.push("<label" + (jade.attr("for", 'Edit-album-' + (attribute) + '', true, false)) + ">" + (jade.escape((jade_interp = attribute) == null ? '' : jade_interp)) + "</label><input" + (jade.attr("id", 'edit-album-' + (attribute) + '', true, false)) + " type=\"text\"" + (jade.attr("value", "" + (album[attribute]) + "", true, false)) + (jade.cls(['form-control album-edition ' + (attribute) + ''], [true])) + "/>");
 }
     }
 

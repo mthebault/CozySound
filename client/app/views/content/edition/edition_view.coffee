@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/25 19:58:03 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/07 15:15:10 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/07 17:48:03 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -40,7 +40,6 @@ module.exports = class EditionView extends BaseView
 
     beforeRender: ->
         @processeAttr()
-        console.log 'processed attr: ', @processedAttr
 
 
     getRenderData: ->
@@ -51,7 +50,6 @@ module.exports = class EditionView extends BaseView
 
 
     processeAttr: ->
-        console.log 'selection: ', @selection
         model = @selection.models[0]
         album = model.album
         EditionView.MERGED_ATTRIBUTES.forEach (attr) =>
@@ -60,20 +58,36 @@ module.exports = class EditionView extends BaseView
             @processedAttr.track[attr] = if modelAttr then modelAttr else ''
             @processedAttr.album[attr] = if albumAttr then albumAttr else ''
 
+    saveTrackChanges: ->
+        @selection.models.forEach (track) ->
+            newInputAttr = null
+            EditionView.MERGED_ATTRIBUTES.forEach (attr) =>
+                inputValue = @$("#edit-track-#{attr}").val()
+                if inputValue != '' and track.get(attr) != inputValue
+                    if newInputAttr == null then newInputAttr = {}
+                    newInputAttr[attr] = inputValue
+
+            if newInputAttr?
+                track.save newInputAttr
+
+    saveAlbumChanges: ->
+        @selection.models.forEach (track) ->
+            newInputAttr = null
+            album = track.album
+            EditionView.MERGED_ATTRIBUTES.forEach (attr) =>
+                inputValue = @$("#edit-album-#{attr}").val()
+                if inputValue != '' and album.get(attr) != inputValue
+                    if newInputAttr == null then newInputAttr = {}
+                    newInputAttr[attr] = inputValue
+
+            if newInputAttr?
+                album.save newInputAttr
+
 
     saveEditionChanges: ->
-        newInputAttr = new Array
-        EditionView.MERGED_ATTRIBUTES.forEach (attr) =>
-            attrValue = @processedAttr[attr]
-            inputValue = @$("#edit-#{attr}").val()
-            if inputValue != '' and attrValue != inputValue
-                newInputAttr.push [attr, inputValue]
-        @selection.updateTracks newInputAttr
-
-
-    computeChangeAttr: (attribute, inputValue) ->
-        @selection.models.forEach (track) ->
-            track.set attribute, inputValue
+        @saveTrackChanges()
+        @saveAlbumChanges()
+        @trigger 'edition-end'
 
 
     submitEdition: ->
