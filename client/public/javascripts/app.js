@@ -110,7 +110,7 @@
   globals.require = require;
 })();
 require.register("application", function(exports, require, module) {
-var AlbumList, AppView, TracksList, UploadQueue;
+var AlbumList, AppView, PlaylistList, TracksList, UploadQueue;
 
 AppView = require('./views/app_view');
 
@@ -119,6 +119,8 @@ TracksList = require('./collections/tracks_list');
 UploadQueue = require('./collections/upload_queue');
 
 AlbumList = require('./collections/album_list');
+
+PlaylistList = require('./collections/playlists_list');
 
 
 /*
@@ -131,6 +133,8 @@ module.exports = {
     window.app = this;
     this.albumCollection = new AlbumList;
     this.baseCollection = new TracksList;
+    this.playlistsCollection = new PlaylistList;
+    this.playlistsCollection.fetch();
     mainView = new AppView;
     mainView.render();
     Router = require('router');
@@ -1237,14 +1241,14 @@ module.exports = Menu_Screen = (function() {
     _.extend(this, Backbone.Events);
     window.app.menuScreen = this;
     this.playlistsCollection = new PlaylistsList;
-    this.view = new MenuView({
+    this.menuView = new MenuView({
       playlistsCollection: this.playlistsCollection
     });
-    this.listenTo(this.view, 'playlist-create', this.createNewPlaylist);
+    this.listenTo(this.menuView, 'playlist-create', this.createNewPlaylist);
   }
 
   Menu_Screen.prototype.render = function() {
-    return this.view.render();
+    return this.menuView.render();
   };
 
   Menu_Screen.prototype.createNewPlaylist = function() {
@@ -2212,7 +2216,7 @@ module.exports = MenuView = (function(_super) {
   };
 
   MenuView.prototype.initialize = function(options) {
-    this.playlistsCollection = options.playlistsCollection;
+    this.playlistsCollection = window.app.playlistsCollection;
     return window.app.menuScreen = this;
   };
 
@@ -2253,6 +2257,8 @@ module.exports = PlaylistView = (function(_super) {
 
   PlaylistView.prototype.template = require('./templates/playlist');
 
+  PlaylistView.prototype.tagName = 'li';
+
   return PlaylistView;
 
 })(BaseView);
@@ -2282,10 +2288,6 @@ module.exports = PlaylistsView = (function(_super) {
 
   PlaylistsView.prototype.collectionEl = '#menu-playlist-list';
 
-  PlaylistsView.prototype.initialize = function(options) {
-    return PlaylistsView.__super__.initialize.call(this, options);
-  };
-
   return PlaylistsView;
 
 })(ViewCollection);
@@ -2297,7 +2299,7 @@ var buf = [];
 var jade_mixins = {};
 var jade_interp;
 var locals_ = (locals || {}),model = locals_.model;
-buf.push("<li><a>" + (jade.escape((jade_interp = model.name) == null ? '' : jade_interp)) + "</a></li>");;return buf.join("");
+buf.push("<a>" + (jade.escape((jade_interp = model.name) == null ? '' : jade_interp)) + "</a>");;return buf.join("");
 };
 if (typeof define === 'function' && define.amd) {
   define([], function() {
@@ -2316,7 +2318,7 @@ var buf = [];
 var jade_mixins = {};
 var jade_interp;
 
-buf.push("<ul id=\"menu-playlist-list\" class=\"nav nav-sidebar\"><li id=\"menu-playlist-new\"><a>Create a Playlist</a></li></ul>");;return buf.join("");
+buf.push("<ul id=\"menu-playlist-list\" class=\"nav nav-sidebar\"></ul><li id=\"menu-playlist-new\"><a>Create a Playlist</a></li>");;return buf.join("");
 };
 if (typeof define === 'function' && define.amd) {
   define([], function() {

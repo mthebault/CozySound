@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/26 17:19:49 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/27 02:02:00 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/07 21:49:22 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -21,6 +21,3 @@ module.exports = class Playlist extends Backbone.Model
 
     initialize: ->
         @collection = new PlaylistItems
-
-
-

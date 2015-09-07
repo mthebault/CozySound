@@ -6,12 +6,24 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/27 16:21:05 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/28 22:18:41 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/07 21:48:42 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
+Playlist = require './../models/playlist'
 
-module.exports.create = (req, res, next) ->
+
+create = (req, res, next) ->
     console.log req.body
-    res.status(200).send(req.body)
+    Playlist.create {}, (err, newPlaylist) ->
+        return next err if err
+        res.status(200).send(newPlaylist)
 
+fetchAll = (req, res, next) ->
+    Playlist.request 'all', (err, data) ->
+        return next err if err
+        res.status(200).send(data)
+
+module.exports =
+    create: create
+    fetchAll: fetchAll

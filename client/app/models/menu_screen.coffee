@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/26 22:17:02 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/03 22:51:17 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/07 22:41:02 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -34,14 +34,14 @@ module.exports = class Menu_Screen
         @playlistsCollection = new PlaylistsList
 
         # Create the view
-        @view = new MenuView
+        @menuView= new MenuView
             playlistsCollection: @playlistsCollection
 
         # Listen the creation of a new playlist triggered by the view
-        @listenTo @view, 'playlist-create', @createNewPlaylist
+        @listenTo @menuView, 'playlist-create', @createNewPlaylist
 
     render: ->
-        @view.render()
+        @menuView.render()
 
     ################################ EVENTS #####################################
     createNewPlaylist: ->

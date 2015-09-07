@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 15:30:40 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/07 20:20:44 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/07 21:18:05 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -30,7 +30,7 @@ module.exports = class MenuView extends BaseView
 
     initialize: (options) ->
         # Get the collection of playlist
-        @playlistsCollection = options.playlistsCollection
+        @playlistsCollection = window.app.playlistsCollection
 
         window.app.menuScreen = @
 

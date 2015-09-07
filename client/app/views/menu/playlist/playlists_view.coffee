@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/26 20:40:51 by ppeltier          #+#    #+#              #
-#    Updated: 2015/08/27 16:16:08 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/07 22:43:55 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -20,5 +20,3 @@ module.exports = class PlaylistsView extends  ViewCollection
     itemview: PlaylistView
     collectionEl: '#menu-playlist-list'
 
-    initialize: (options) ->
-        super options

@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/19 06:48:47 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/03 19:38:26 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/07 21:46:22 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -25,6 +25,7 @@ module.exports =
 
     'playlist-list':
         post: playlist.create
+        get: playlist.fetchAll
 
     'album/name/:name':
         get: album.getByName

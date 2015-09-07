@@ -8,3 +8,5 @@ module.exports =
         byRange: (doc) -> emit (doc.path + '/' + doc.name), doc
     album:
         all: cozydb.defaultRequests.all
+    playlist:
+        all: cozydb.defaultRequests.all
