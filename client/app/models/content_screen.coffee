@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/25 09:53:27 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/06 20:54:25 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/07 16:14:31 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -96,8 +96,7 @@ module.exports = class ContentScreen
     ########################### CONTEXT MENU ####################################
     renderContextMenu: ->
         if @loadedViews['contextMenu']?
-            console.log 'render loaded menu: ', @loadedViews['contextMenu']
-            @loadedViews['contextMenu'].render()
+            $('#context-menu').append @loadedViews['contextMenu'].el
             return
 
         # Initialize the contextMenu
@@ -123,6 +122,11 @@ module.exports = class ContentScreen
 
     updateSelectionTracksState: (isUsed) ->
         @loadedViews['contextMenu']?.manageActionTrackMenu isUsed
+
+    emptySelectionList: ->
+        @selectedTracksList.emptySelection @loadedViews['allTracks']
+        @loadedViews['allTracks']?.unselectAllTracks()
+        @updateSelectionTracksState false
     ##################### END - CONTEXT MENU- END ##############################
 
 
@@ -130,7 +134,6 @@ module.exports = class ContentScreen
 
     ############################ ALL TRACKS #####################################
     renderAllTracks: ->
-        console.log 'plop'
         @removeCurrentView()
         @currentView = 'allTracks'
         @renderSkeleton @skeletonTracks
@@ -144,7 +147,7 @@ module.exports = class ContentScreen
 
     renderTracks: ->
         if @loadedViews['allTracks']?
-            @loadedViews['allTracks'].render()
+            $('#display-screen').append @loadedViews['allTracks'].el
             return
 
         # Initialize the tracks displayed
@@ -188,21 +191,26 @@ module.exports = class ContentScreen
 
     renderEdition: ->
         if @loadedViews['trackEdition']?
-            @loadedViews['trackEdition'].render()
+            @loadedViews['trackEdition'].processeAttr()
+            $('#edition-screen').append @loadedViews['trackEdition'].el
             return
 
         # Initialize the Edition view
         editionView = new EditionView
 
         # Listen the end of the edition
-        @listenTo editionView, 'edition-end', @renderAllTracks
+        @listenTo editionView, 'edition-end', @endTrackEdition
 
         @loadedViews['trackEdition'] = editionView
 
         editionView.render()
 
+
+    endTrackEdition: ->
+        @emptySelectionList()
+        @renderAllTracks()
+
+
     removeTrackEdition: ->
         @loadedViews['trackEdition']?.$el.detach()
     ###################### END - TRACKS EDITION - END ###########################
-
-

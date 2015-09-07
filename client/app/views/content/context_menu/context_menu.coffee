@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 15:30:42 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/06 15:51:55 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/07 16:15:07 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -25,7 +25,7 @@ module.exports = class ContextMenu extends BaseView
     template: require './templates/context_menu'
 
     # Marquer is the action Menu is active or not
-    trackMenuActive: false
+    trackEditionActive: false
 
     events:
         # Event trigger when a user valid the files to upload
@@ -40,13 +40,15 @@ module.exports = class ContextMenu extends BaseView
 
     afterRender: ->
         @uploader = $('#uploader')
-        @$('#edit-tracks').hide()
 
     # Testing function
     # TODO: delete it
     fetchBaseCollection: ->
         window.app.baseCollection.fetch()
 
+
+    getRenderData: ->
+        return { isTrackEdition: @trackEditionActive }
 
 
 
@@ -72,10 +74,8 @@ module.exports = class ContextMenu extends BaseView
     # isUser is a bollean
     # TODO: improve it
     manageActionTrackMenu: (isUsed)->
-        if (isUsed == true)
-            @$('#edit-tracks').show()
-        else
-            @$('#edit-tracks').hide()
+        @trackEditionActive = isUsed
+        @render()
 
     ################### END - ACTION TRACKS MENU - END ##########################
 

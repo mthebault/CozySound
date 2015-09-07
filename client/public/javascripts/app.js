@@ -415,16 +415,14 @@ module.exports = SelectedTracksList = (function(_super) {
     }
   };
 
-  SelectedTracksList.prototype.emptySelection = function() {
-    var _results;
-    _results = [];
+  SelectedTracksList.prototype.emptySelection = function(listView) {
     while (true) {
       if (this.length === 0) {
         break;
       }
-      _results.push(this.pop());
+      this.pop();
     }
-    return _results;
+    return this.editionMenuPrompted = false;
   };
 
   SelectedTracksList.prototype.updateTracks = function(newAttrs) {
@@ -1122,8 +1120,7 @@ module.exports = ContentScreen = (function() {
   ContentScreen.prototype.renderContextMenu = function() {
     var contextMenu;
     if (this.loadedViews['contextMenu'] != null) {
-      console.log('render loaded menu: ', this.loadedViews['contextMenu']);
-      this.loadedViews['contextMenu'].render();
+      $('#context-menu').append(this.loadedViews['contextMenu'].el);
       return;
     }
     contextMenu = new ContextMenu;
@@ -1142,8 +1139,16 @@ module.exports = ContentScreen = (function() {
     return (_ref = this.loadedViews['contextMenu']) != null ? _ref.manageActionTrackMenu(isUsed) : void 0;
   };
 
+  ContentScreen.prototype.emptySelectionList = function() {
+    var _ref;
+    this.selectedTracksList.emptySelection(this.loadedViews['allTracks']);
+    if ((_ref = this.loadedViews['allTracks']) != null) {
+      _ref.unselectAllTracks();
+    }
+    return this.updateSelectionTracksState(false);
+  };
+
   ContentScreen.prototype.renderAllTracks = function() {
-    console.log('plop');
     this.removeCurrentView();
     this.currentView = 'allTracks';
     this.renderSkeleton(this.skeletonTracks);
@@ -1160,7 +1165,7 @@ module.exports = ContentScreen = (function() {
   ContentScreen.prototype.renderTracks = function() {
     var allTracks;
     if (this.loadedViews['allTracks'] != null) {
-      this.loadedViews['allTracks'].render();
+      $('#display-screen').append(this.loadedViews['allTracks'].el);
       return;
     }
     allTracks = new TracksView({
@@ -1192,13 +1197,19 @@ module.exports = ContentScreen = (function() {
   ContentScreen.prototype.renderEdition = function() {
     var editionView;
     if (this.loadedViews['trackEdition'] != null) {
-      this.loadedViews['trackEdition'].render();
+      this.loadedViews['trackEdition'].processeAttr();
+      $('#edition-screen').append(this.loadedViews['trackEdition'].el);
       return;
     }
     editionView = new EditionView;
-    this.listenTo(editionView, 'edition-end', this.renderAllTracks);
+    this.listenTo(editionView, 'edition-end', this.endTrackEdition);
     this.loadedViews['trackEdition'] = editionView;
     return editionView.render();
+  };
+
+  ContentScreen.prototype.endTrackEdition = function() {
+    this.emptySelectionList();
+    return this.renderAllTracks();
   };
 
   ContentScreen.prototype.removeTrackEdition = function() {
@@ -1543,7 +1554,7 @@ module.exports = ContextMenu = (function(_super) {
 
   ContextMenu.prototype.template = require('./templates/context_menu');
 
-  ContextMenu.prototype.trackMenuActive = false;
+  ContextMenu.prototype.trackEditionActive = false;
 
   ContextMenu.prototype.events = {
     'change #upload-files': 'lauchUploadFiles',
@@ -1554,12 +1565,17 @@ module.exports = ContextMenu = (function(_super) {
   };
 
   ContextMenu.prototype.afterRender = function() {
-    this.uploader = $('#uploader');
-    return this.$('#edit-tracks').hide();
+    return this.uploader = $('#uploader');
   };
 
   ContextMenu.prototype.fetchBaseCollection = function() {
     return window.app.baseCollection.fetch();
+  };
+
+  ContextMenu.prototype.getRenderData = function() {
+    return {
+      isTrackEdition: this.trackEditionActive
+    };
   };
 
   ContextMenu.prototype.lauchUploadFiles = function(event) {
@@ -1575,11 +1591,8 @@ module.exports = ContextMenu = (function(_super) {
   };
 
   ContextMenu.prototype.manageActionTrackMenu = function(isUsed) {
-    if (isUsed === true) {
-      return this.$('#edit-tracks').show();
-    } else {
-      return this.$('#edit-tracks').hide();
-    }
+    this.trackEditionActive = isUsed;
+    return this.render();
   };
 
   return ContextMenu;
@@ -1592,8 +1605,13 @@ var __templateData = function template(locals) {
 var buf = [];
 var jade_mixins = {};
 var jade_interp;
-
-buf.push("<ul class=\"nav nav-tabs\"><input id=\"upload-files\" name=\"upload-files\" type=\"file\" multiple=\"multiple\" accept=\"audio/*\" role=\"presentation\" class=\"btn btn-default btn-file\"/><li id=\"fetch\" role=\"presentation\" class=\"btn btn-default\">FETCH</li><li id=\"edit-tracks\" role=\"presentation\" class=\"btn btn-default\">EDIT</li></ul>");;return buf.join("");
+var locals_ = (locals || {}),isTrackEdition = locals_.isTrackEdition;
+buf.push("<ul class=\"nav nav-tabs\"><input id=\"upload-files\" name=\"upload-files\" type=\"file\" multiple=\"multiple\" accept=\"audio/*\" role=\"presentation\" class=\"btn btn-default btn-file\"/><li id=\"fetch\" role=\"presentation\" class=\"btn btn-default\">FETCH</li>");
+if ( isTrackEdition)
+{
+buf.push("<li id=\"edit-tracks\" role=\"presentation\" class=\"btn btn-default\">EDIT</li>");
+}
+buf.push("</ul>");;return buf.join("");
 };
 if (typeof define === 'function' && define.amd) {
   define([], function() {
@@ -1667,6 +1685,7 @@ module.exports = EditionView = (function(_super) {
 
   EditionView.prototype.processeAttr = function() {
     var album, model;
+    console.log('selection: ', this.selection);
     model = this.selection.models[0];
     album = model.album;
     return EditionView.MERGED_ATTRIBUTES.forEach((function(_this) {

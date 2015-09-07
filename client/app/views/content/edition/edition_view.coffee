@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/25 19:58:03 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/06 20:54:28 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/07 15:15:10 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -51,6 +51,7 @@ module.exports = class EditionView extends BaseView
 
 
     processeAttr: ->
+        console.log 'selection: ', @selection
         model = @selection.models[0]
         album = model.album
         EditionView.MERGED_ATTRIBUTES.forEach (attr) =>
@@ -58,7 +59,6 @@ module.exports = class EditionView extends BaseView
             albumAttr = album.get attr
             @processedAttr.track[attr] = if modelAttr then modelAttr else ''
             @processedAttr.album[attr] = if albumAttr then albumAttr else ''
-
 
 
     saveEditionChanges: ->
@@ -70,9 +70,11 @@ module.exports = class EditionView extends BaseView
                 newInputAttr.push [attr, inputValue]
         @selection.updateTracks newInputAttr
 
+
     computeChangeAttr: (attribute, inputValue) ->
         @selection.models.forEach (track) ->
             track.set attribute, inputValue
+
 
     submitEdition: ->
         @saveEditionChanges()

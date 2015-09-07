@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/09/05 19:01:38 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/06 16:38:54 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/07 16:14:39 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -49,10 +49,12 @@ module.exports = class SelectedTracksList extends Backbone.Collection
             @trigger 'selection-editMenu-prompte', false
             @editionMenuPrompted = false
 
-    emptySelection: ->
+    emptySelection: (listView) ->
         loop
             break if @length == 0
             @pop()
+        @editionMenuPrompted = false
+
 
     #################### END - Manage Select Stat - END #########################
 

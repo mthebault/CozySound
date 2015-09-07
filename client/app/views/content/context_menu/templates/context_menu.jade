@@ -7,4 +7,5 @@ ul.nav.nav-tabs
         role='presentation'
         )
     li#fetch.btn.btn-default(role='presentation') FETCH
-    li#edit-tracks.btn.btn-default(role='presentation') EDIT
+    if isTrackEdition
+        li#edit-tracks.btn.btn-default(role='presentation') EDIT
