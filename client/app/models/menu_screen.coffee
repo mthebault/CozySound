@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/26 22:17:02 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/07 22:41:02 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/08 12:44:49 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -30,12 +30,8 @@ module.exports = class Menu_Screen
         # Set a shortcut
         window.app.menuScreen = @
 
-        # Create the collection of playlists
-        @playlistsCollection = new PlaylistsList
-
         # Create the view
-        @menuView= new MenuView
-            playlistsCollection: @playlistsCollection
+        @menuView = new MenuView
 
         # Listen the creation of a new playlist triggered by the view
         @listenTo @menuView, 'playlist-create', @createNewPlaylist

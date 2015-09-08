@@ -1,23 +1,21 @@
 # **************************************************************************** #
 #                                                                              #
 #                                                         :::      ::::::::    #
-#    playlist_view.coffee                               :+:      :+:    :+:    #
+#    playlist.coffee                                    :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
-#    Created: 2015/08/26 23:04:17 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/08 14:48:13 by ppeltier         ###   ########.fr        #
+#    Created: 2015/09/08 16:13:30 by ppeltier          #+#    #+#              #
+#    Updated: 2015/09/08 18:35:29 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
-BaseView = require '../../../lib/base_view'
 
-module.exports = class PlaylistView extends BaseView
+module.exports = class PlaylistView extends Backbone.View
     template: require './templates/playlist'
+    el: '#playlist-header'
 
-    className: 'playlist-row'
-    tagName: 'li'
 
-    initialize: ->
-        @$el.click => window.app.menuScreen.trigger 'content-print-playlist', @model
-
+    render: ->
+        console.log 'model: ', @model
+        super

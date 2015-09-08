@@ -6,17 +6,32 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/26 20:40:51 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/07 22:43:55 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/08 14:42:22 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 ViewCollection = require '../../../lib/view_collection'
 PlaylistView = require './playlist_view'
 
-module.exports = class PlaylistsView extends  ViewCollection
+module.exports = class PlaylistsView extends ViewCollection
     template: require './templates/playlists'
     el: '#menu-playlist'
 
     itemview: PlaylistView
+
     collectionEl: '#menu-playlist-list'
 
+    #events:
+        #'click li.playlist-row': 'test'
+
+    test: (event) ->
+        playlist = @$(event.target).
+        console.log 'playlist 1: ', playlist
+        playlist = @$(event.target).parents('li')
+        console.log 'playlist 1: ', playlist
+        playlist = @$(event.currentTarget).data()
+        console.log 'playlist 1: ', playlist
+        playlist = @$(event.currentTarget).data()
+        console.log 'playlist 1: ', playlist
+        console.log 'event: ', event
+        #@trigger 'content-print-playlist',

@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/25 19:58:03 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/07 21:05:40 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/08 19:57:21 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -18,13 +18,10 @@ BaseView = require '../../../lib/base_view'
 ###
 module.exports = class EditionView extends BaseView
     template: require './templates/edition'
+
     el: '#edition-screen'
 
     @MERGED_ATTRIBUTES: ['title', 'artist', 'year', 'genre', 'name']
-
-    # Take a count of the number of track in update processing to send a
-    # notification when it's finish
-    processingUpdate: 0
 
     processedAttr:
         track: {}
@@ -34,6 +31,7 @@ module.exports = class EditionView extends BaseView
         'click #edit-cancel': -> @trigger 'edition-end'
         'click #edit-submit': 'submitEdition'
 
+
     initialize: ->
         @selection = window.selectedTracksList
 
@@ -41,12 +39,10 @@ module.exports = class EditionView extends BaseView
     beforeRender: ->
         @processeAttr()
 
-
     getRenderData: ->
         return {
             album: @processedAttr.album
-            track: @processedAttr.track
-            allAlbum: @processedAttr.allAlbum}
+            track: @processedAttr.track}
 
 
     processeAttr: ->

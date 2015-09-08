@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 15:30:40 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/07 21:18:05 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/08 12:45:10 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -28,23 +28,23 @@ module.exports = class MenuView extends BaseView
         'click #menu-playlist-new': 'createNewPlaylist'
         'click #menu-all-tracks': 'printAllTracks'
 
-    initialize: (options) ->
+    initialize: ->
         # Get the collection of playlist
         @playlistsCollection = window.app.playlistsCollection
 
         window.app.menuScreen = @
 
 
-    render: ->
-        super
-
+    afterRender: ->
         # Create a collection of playlist view based on the collection
         @playlistsViews = new PlaylistsView
             collection: @playlistsCollection
         @playlistsViews.render()
 
+
     createNewPlaylist: ->
         @trigger 'playlist-create'
+
 
     printAllTracks: ->
         @trigger 'content-print-allTracks'

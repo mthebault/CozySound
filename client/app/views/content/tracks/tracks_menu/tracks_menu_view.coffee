@@ -6,12 +6,12 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 15:30:42 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/07 21:05:49 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/08 21:51:44 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
-BaseView = require '../../../lib/base_view'
-PlaylistList = require '../../../collections/playlists_list'
+BaseView = require '../../../../lib/base_view'
+PlaylistList = require '../../../../collections/playlists_list'
 
 
 ###
@@ -21,8 +21,8 @@ PlaylistList = require '../../../collections/playlists_list'
 ###
 module.exports = class ContextMenu extends BaseView
 
-    el: '#context-menu'
-    template: require './templates/context_menu'
+    el: '#tracks-menu'
+    template: require './tracks_menu'
 
     statMenu:
         edition: false
@@ -38,6 +38,9 @@ module.exports = class ContextMenu extends BaseView
         # TODO: delete it
         'click #fetch': 'fetchBaseCollection'
 
+    initialize: (options) ->
+        @selection = options.selection
+
 
     afterRender: ->
         @uploader = $('#uploader')
@@ -49,9 +52,7 @@ module.exports = class ContextMenu extends BaseView
 
 
     getRenderData: ->
-        return { statMenu: @statMenu
-        }
-
+        return { statMenu: @statMenu }
 
 
     ############################## UPLOAD #####################################

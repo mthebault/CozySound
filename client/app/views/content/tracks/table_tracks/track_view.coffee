@@ -6,11 +6,11 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/20 18:08:58 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/07 16:14:24 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/08 22:32:08 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
-BaseView = require '../../../lib/base_view'
+BaseView = require '../../../../lib/base_view'
 
 ###
 # Each TrackView represent a track in a collection
@@ -53,15 +53,16 @@ module.exports = class TrackView extends BaseView
             @setTrackAsNoSelected()
         else
             @setTrackAsSelected()
-
-    isTrackSelected: ->
         return @_selectedStatus
 
-    setTrackAsSelected: ->
+    isSelected: ->
+        return @_selectedStatus
+
+    setAsSelected: ->
         @$el.addClass 'success'
         @_selectedStatus = true
 
-    setTrackAsNoSelected: ->
+    setAsNoSelected: ->
         @$el.removeClass 'success'
         @_selectedStatus = false
 

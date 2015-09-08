@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 15:31:19 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/06 20:00:33 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/07 23:44:45 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -96,3 +96,33 @@ module.exports = class ViewCollection extends BaseView
         delete @views[model.cid]
 
         @onChange @views
+
+
+
+    # Manage event delegation. Events are listen to on the collection level,
+    # then the callback are called on the view that originally triggered them.
+    #
+    # * `methodName` is the method that will be called on the View.
+    # * `object` can be a File model or a DOMElement within FileView.$el
+    viewProxy: (methodName, object) ->
+
+        # Get view's cid. Views are indexed by cid. Object can be a File model
+        # or a DOMElement within FileView.$el.
+        if object.cid?
+            cid = object.cid
+        else
+            cid = @$(object.target).parents('tr').data 'cid'
+
+            unless cid?
+                cid = @$(object.currentTarget).data 'cid'
+
+        # Get the view.
+        view = _.find @views, (view) -> view.model.cid is cid
+
+        # In case of deletion, view may not exist anymore.
+        if view?
+            # Call `methodName` on the related view.
+            args = [].splice.call arguments, 1
+            view[methodName].apply view, args
+
+
