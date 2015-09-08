@@ -1,26 +1,26 @@
 # **************************************************************************** #
 #                                                                              #
 #                                                         :::      ::::::::    #
-#    tracks_view.coffee                                 :+:      :+:    :+:    #
+#    tracks_list_view.coffee                            :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
-#    Created: 2015/08/20 17:41:32 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/08 22:33:51 by ppeltier         ###   ########.fr        #
+#    Created: 2015/09/08 23:09:28 by ppeltier          #+#    #+#              #
+#    Updated: 2015/09/08 23:35:40 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 ViewCollection = require '../../../../lib/view_collection'
-TrackView = require './track_view'
+TracksRowView = require './tracks_row_view'
 
 ###
 # TracksView is the structure for put tracks in content view
 ###
-module.exports = class TracksView extends ViewCollection
-    template: require './templates/tracks'
+module.exports = class TracksListView extends ViewCollection
+    template: require '../templates/tracks_list'
     el: '#table-screen'
 
-    itemview: TrackView
+    itemview: TracksRowView
     collectionEl: '#table-items-content'
 
     events:

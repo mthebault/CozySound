@@ -362,8 +362,8 @@ module.exports = PlaylistList = (function(_super) {
 })(Backbone.Collection);
 });
 
-;require.register("collections/selected_list", function(exports, require, module) {
-var SelectedTracksList, Track,
+;require.register("collections/selection_list", function(exports, require, module) {
+var SelectionList, Track,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
@@ -378,23 +378,23 @@ Track = require('./../models/track');
  * which is refresh.
  */
 
-module.exports = SelectedTracksList = (function(_super) {
-  __extends(SelectedTracksList, _super);
+module.exports = SelectionList = (function(_super) {
+  __extends(SelectionList, _super);
 
-  function SelectedTracksList() {
-    return SelectedTracksList.__super__.constructor.apply(this, arguments);
+  function SelectionList() {
+    return SelectionList.__super__.constructor.apply(this, arguments);
   }
 
-  SelectedTracksList.prototype.model = Track;
+  SelectionList.prototype.model = Track;
 
-  SelectedTracksList.prototype.url = 'tracks';
+  SelectionList.prototype.url = 'tracks';
 
-  SelectedTracksList.prototype.initialize = function() {
-    SelectedTracksList.__super__.initialize.apply(this, arguments);
-    return window.selectedTracksList = this;
+  SelectionList.prototype.initialize = function() {
+    SelectionList.__super__.initialize.apply(this, arguments);
+    return window.selection = this;
   };
 
-  SelectedTracksList.prototype.emptySelection = function() {
+  SelectionList.prototype.emptySelection = function() {
     var _results;
     _results = [];
     while (true) {
@@ -406,7 +406,7 @@ module.exports = SelectedTracksList = (function(_super) {
     return _results;
   };
 
-  return SelectedTracksList;
+  return SelectionList;
 
 })(Backbone.Collection);
 });
@@ -987,16 +987,16 @@ module.exports = Album = (function(_super) {
 })(Backbone.Model);
 });
 
-;require.register("models/content_screen", function(exports, require, module) {
-var AllTracksView, ContentScreen, EditionView, PlaylistView, SelectedTracksList;
+;require.register("models/content_manager", function(exports, require, module) {
+var AllTracksScreen, ContentManager, EditionScreen, PlaylistScreen, SelectionList;
 
-AllTracksView = require('../views/content/tracks/all_tracks_view');
+AllTracksScreen = require('../views/content/all_tracks_screen');
 
-PlaylistView = require('../views/content/tracks/playlist_view');
+PlaylistScreen = require('../views/content/playlist_screen');
 
-EditionView = require('../views/content/edition_screen');
+EditionScreen = require('../views/content/edition_screen');
 
-SelectedTracksList = require('../collections/selected_list');
+SelectionList = require('../collections/selection_list');
 
 
 /*
@@ -1028,24 +1028,24 @@ SelectedTracksList = require('../collections/selected_list');
  *
  */
 
-module.exports = ContentScreen = (function() {
-  ContentScreen.prototype.currentView = null;
+module.exports = ContentManager = (function() {
+  ContentManager.prototype.currentView = null;
 
-  ContentScreen.prototype.playlistPrinted = null;
+  ContentManager.prototype.playlistPrinted = null;
 
-  function ContentScreen() {
+  function ContentManager() {
     _.extend(this, Backbone.Events);
     window.app.contentScreen = this;
     this.baseCollection = window.app.baseCollection;
     this.menu = window.app.menuScreen;
-    this.selectedTracksList = new SelectedTracksList;
-    this.selectedTracksList.baseCollection = this.baseCollection;
-    this.loadedViews = new Array;
+    this.selection = new SelectionList;
+    this.selection.baseCollection = this.baseCollection;
+    this.loadedScreens = [];
     this.listenTo(this.menu, 'content-print-playlist', this.renderPlaylist);
     this.listenTo(this.menu, 'content-print-allTracks', this.renderAllTracks);
   }
 
-  ContentScreen.prototype.renderSkeleton = function(skeleton, data) {
+  ContentManager.prototype.renderSkeleton = function(skeleton, data) {
     var dataParsed;
     if (data != null) {
       dataParsed = {
@@ -1055,7 +1055,7 @@ module.exports = ContentScreen = (function() {
     return $('#content-screen').append(skeleton(dataParsed));
   };
 
-  ContentScreen.prototype.removeCurrentView = function() {
+  ContentManager.prototype.removeCurrentView = function() {
     switch (this.currentView) {
       case 'allTracks':
         return this.removeAllTracks();
@@ -1066,86 +1066,84 @@ module.exports = ContentScreen = (function() {
     }
   };
 
-  ContentScreen.prototype.renderAllTracks = function() {
+  ContentManager.prototype.renderAllTracks = function() {
     this.removeCurrentView();
     this.currentView = 'allTracks';
     return this.renderTracks();
   };
 
-  ContentScreen.prototype.removeAllTracks = function() {
+  ContentManager.prototype.removeAllTracks = function() {
     this.currentView = null;
     return this.removeTracks();
   };
 
-  ContentScreen.prototype.renderTracks = function() {
+  ContentManager.prototype.renderTracks = function() {
     var allTracks;
-    if (this.loadedViews['allTracks'] != null) {
-      this.loadedViews['allTracks'].attach();
+    if (this.loadedScreens['allTracks'] != null) {
+      this.loadedScreens['allTracks'].attach();
       return;
     }
-    allTracks = new AllTracksView({
-      selectedTracksList: this.selectedTracksList,
+    allTracks = new AllTracksScreen({
+      selection: this.selection,
       baseCollection: this.baseCollection
     });
-    this.loadedViews['allTracks'] = allTracks;
+    this.loadedScreens['allTracks'] = allTracks;
     allTracks.render();
     return this.listenTo(allTracks.menu, 'menu-trackEdition-lauch', this.renderTrackEdition);
   };
 
-  ContentScreen.prototype.removeTracks = function() {
-    return this.loadedViews['allTracks'].detach();
+  ContentManager.prototype.removeTracks = function() {
+    return this.loadedScreens['allTracks'].detach();
   };
 
-  ContentScreen.prototype.renderPlaylist = function(playlist) {
+  ContentManager.prototype.renderPlaylist = function(playlist) {
     this.removeCurrentView();
     this.currentView = 'playlist';
     playlist.render();
     return this.playlistPrinted = playlist;
   };
 
-  ContentScreen.prototype.removePlaylist = function() {
+  ContentManager.prototype.removePlaylist = function() {
     this.playlistPrinted.remove();
     return this.playlistPrinted = null;
   };
 
-  ContentScreen.prototype.renderTrackEdition = function() {
+  ContentManager.prototype.renderTrackEdition = function() {
     this.removeCurrentView();
     this.currentView = 'trackEdition';
     return this.renderEdition();
   };
 
-  ContentScreen.prototype.renderEdition = function() {
-    var editionView;
-    if (this.loadedViews['trackEdition'] != null) {
-      this.loadedViews['trackEdition'].attach();
+  ContentManager.prototype.renderEdition = function() {
+    var editionScreen;
+    if (this.loadedScreens['trackEdition'] != null) {
+      this.loadedScreens['trackEdition'].attach();
       return;
     }
-    editionView = new EditionView;
-    this.loadedViews['trackEdition'] = editionView;
-    editionView.render();
-    return this.listenTo(editionView.view, 'edition-end', this.renderAllTracks);
+    editionScreen = new EditionScreen;
+    this.loadedScreens['trackEdition'] = editionScreen;
+    editionScreen.render();
+    return this.listenTo(editionScreen.view, 'edition-end', this.renderAllTracks);
   };
 
-  ContentScreen.prototype.removeTrackEdition = function() {
+  ContentManager.prototype.removeTrackEdition = function() {
     var _ref, _ref1;
-    this.selectedTracksList.emptySelection();
-    if ((_ref = this.loadedViews['trackEdition']) != null) {
+    this.selection.emptySelection();
+    if ((_ref = this.loadedScreens['trackEdition']) != null) {
       _ref.detach();
     }
-    return (_ref1 = this.loadedViews['allTracks']) != null ? _ref1.clearSelection() : void 0;
+    return (_ref1 = this.loadedScreens['allTracks']) != null ? _ref1.clearSelection() : void 0;
   };
 
-  return ContentScreen;
+  return ContentManager;
 
 })();
 });
 
-;require.register("models/menu_screen", function(exports, require, module) {
-var MenuView, Menu_Screen, Playlist, PlaylistsList;
+;require.register("models/menu_manager", function(exports, require, module) {
+var MenuManager, MenuView, Playlist;
 
 MenuView = require('../views/menu/menu_view');
-
-PlaylistsList = require('../collections/playlists_list');
 
 Playlist = require('./playlist');
 
@@ -1157,37 +1155,37 @@ Playlist = require('./playlist');
  * as print playlist / print all tracks / etc...
  */
 
-module.exports = Menu_Screen = (function() {
-  Menu_Screen.prototype.currentPlaylist = null;
+module.exports = MenuManager = (function() {
+  MenuManager.prototype.currentPlaylist = null;
 
-  function Menu_Screen() {
+  function MenuManager() {
     _.extend(this, Backbone.Events);
     window.app.menuScreen = this;
     this.menuView = new MenuView;
     this.listenTo(this.menuView, 'playlist-create', this.createNewPlaylist);
   }
 
-  Menu_Screen.prototype.render = function() {
+  MenuManager.prototype.render = function() {
     return this.menuView.render();
   };
 
-  Menu_Screen.prototype.createNewPlaylist = function() {
+  MenuManager.prototype.createNewPlaylist = function() {
     return this.playlistsCollection.create();
   };
 
-  return Menu_Screen;
+  return MenuManager;
 
 })();
 });
 
 ;require.register("models/playlist", function(exports, require, module) {
-var Playlist, PlaylistItems, PlaylistView,
+var Playlist, PlaylistItems, PlaylistScreen,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
 PlaylistItems = require('../collections/playlist_items');
 
-PlaylistView = require('../views/content/tracks/playlist_view');
+PlaylistScreen = require('../views/content/playlist_screen');
 
 module.exports = Playlist = (function(_super) {
   __extends(Playlist, _super);
@@ -1213,12 +1211,11 @@ module.exports = Playlist = (function(_super) {
   };
 
   Playlist.prototype.render = function() {
-    console.log('plop');
     if (this.playlistView != null) {
       $('playlist-header').append(this.playlistView.el);
       return;
     }
-    this.playlistView = new PlaylistView({
+    this.playlistView = new PlaylistScreen({
       model: this
     });
     this.playlistView.render();
@@ -1417,15 +1414,15 @@ module.exports = Router = (function(_super) {
 });
 
 ;require.register("views/app_view", function(exports, require, module) {
-var AppView, BaseView, ContentScreen, Menu, PlayerScreen,
+var AppView, BaseView, ContentManager, MenuManager, PlayerScreen,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
 BaseView = require('../lib/base_view');
 
-Menu = require('../models/menu_screen');
+MenuManager = require('../models/menu_manager');
 
-ContentScreen = require('../models/content_screen');
+ContentManager = require('../models/content_manager');
 
 PlayerScreen = require('./player_screen');
 
@@ -1450,11 +1447,11 @@ module.exports = AppView = (function(_super) {
   AppView.prototype.template = require('./templates/home');
 
   AppView.prototype.afterRender = function() {
-    this.menuScreen = new Menu;
+    this.menuScreen = new MenuManager;
     this.menuScreen.render();
     this.playerScreen = new PlayerScreen;
     this.playerScreen.render();
-    this.contentScreen = new ContentScreen;
+    this.contentScreen = new ContentManager;
     return this.contentScreen.renderAllTracks();
   };
 
@@ -1463,7 +1460,356 @@ module.exports = AppView = (function(_super) {
 })(BaseView);
 });
 
-;require.register("views/content/edition/edition_view", function(exports, require, module) {
+;require.register("views/content/all_tracks_screen", function(exports, require, module) {
+var AllTracksView, TracksListView, TracksMenuView;
+
+TracksMenuView = require('./views/tracks_menu_view');
+
+TracksListView = require('./views/tracks_list_view');
+
+module.exports = AllTracksView = (function() {
+  AllTracksView.prototype.skeleton = require('./skeletons/all_tracks_skel');
+
+  function AllTracksView(options) {
+    _.extend(this, Backbone.Events);
+    this.selection = options.selection;
+    this.baseCollection = options.baseCollection;
+    this.frame = $('#content-screen');
+    this.frame.append(this.skeleton());
+    this.menu = new TracksMenuView({
+      selection: this.selection
+    });
+    this.tracks = new TracksListView({
+      collection: this.baseCollection,
+      selection: this.selection
+    });
+    this.listenTo(this.tracks, 'selection-menu-options', this.menu.manageOptionsMenu);
+  }
+
+  AllTracksView.prototype.render = function() {
+    console.log('menu: ', this.menu);
+    this.menu.render();
+    return this.tracks.render();
+  };
+
+  AllTracksView.prototype.attach = function() {
+    this.frame.append(this.menu.el);
+    return this.frame.append(this.tracks.el);
+  };
+
+  AllTracksView.prototype.detach = function() {
+    this.menu.$el.detach();
+    return this.tracks.$el.detach();
+  };
+
+  AllTracksView.prototype.clearSelection = function() {
+    this.selection.emptySelection();
+    return this.menu.manageOptionsMenu('empty');
+  };
+
+  return AllTracksView;
+
+})();
+});
+
+;require.register("views/content/edition_screen", function(exports, require, module) {
+var EditionScreen, EditionView;
+
+EditionView = require('./views/edition_view');
+
+module.exports = EditionScreen = (function() {
+  EditionScreen.prototype.skeleton = require('./skeletons/edition_skel');
+
+  function EditionScreen() {
+    _.extend(this, Backbone.Events);
+    this.frame = $('#content-screen');
+    this.frame.html(this.skeleton());
+    this.view = new EditionView;
+  }
+
+  EditionScreen.prototype.render = function() {
+    return this.view.render();
+  };
+
+  EditionScreen.prototype.attach = function() {
+    this.view.render();
+    return this.frame.append(this.view.el);
+  };
+
+  EditionScreen.prototype.detach = function() {
+    return this.view.$el.detach();
+  };
+
+  return EditionScreen;
+
+})();
+});
+
+;require.register("views/content/playlist_screen", function(exports, require, module) {
+var PlaylistView,
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+module.exports = PlaylistView = (function(_super) {
+  __extends(PlaylistView, _super);
+
+  function PlaylistView() {
+    return PlaylistView.__super__.constructor.apply(this, arguments);
+  }
+
+  PlaylistView.prototype.template = require('./templates/playlist');
+
+  PlaylistView.prototype.el = '#playlist-header';
+
+  PlaylistView.prototype.render = function() {
+    console.log('model: ', this.model);
+    return PlaylistView.__super__.render.apply(this, arguments);
+  };
+
+  return PlaylistView;
+
+})(Backbone.View);
+});
+
+;require.register("views/content/skeletons/all_tracks_skel", function(exports, require, module) {
+var __templateData = function template(locals) {
+var buf = [];
+var jade_mixins = {};
+var jade_interp;
+
+buf.push("<div id=\"tracks-menu\"></div><div id=\"table-screen\"></div>");;return buf.join("");
+};
+if (typeof define === 'function' && define.amd) {
+  define([], function() {
+    return __templateData;
+  });
+} else if (typeof module === 'object' && module && module.exports) {
+  module.exports = __templateData;
+} else {
+  __templateData;
+}
+});
+
+;require.register("views/content/skeletons/edition_skel", function(exports, require, module) {
+var __templateData = function template(locals) {
+var buf = [];
+var jade_mixins = {};
+var jade_interp;
+
+buf.push("<div id=\"edition-screen\"></div>");;return buf.join("");
+};
+if (typeof define === 'function' && define.amd) {
+  define([], function() {
+    return __templateData;
+  });
+} else if (typeof module === 'object' && module && module.exports) {
+  module.exports = __templateData;
+} else {
+  __templateData;
+}
+});
+
+;require.register("views/content/skeletons/playlist_skel", function(exports, require, module) {
+var __templateData = function template(locals) {
+var buf = [];
+var jade_mixins = {};
+var jade_interp;
+
+buf.push("<div id=\"playlist-header\"></div><div id=\"display-screen\"></div>");;return buf.join("");
+};
+if (typeof define === 'function' && define.amd) {
+  define([], function() {
+    return __templateData;
+  });
+} else if (typeof module === 'object' && module && module.exports) {
+  module.exports = __templateData;
+} else {
+  __templateData;
+}
+});
+
+;require.register("views/content/templates/edition", function(exports, require, module) {
+var __templateData = function template(locals) {
+var buf = [];
+var jade_mixins = {};
+var jade_interp;
+var locals_ = (locals || {}),track = locals_.track,album = locals_.album;
+var trackAttributes = ['title', 'artist', 'year', 'genre', 'trackNb']
+var albumAttributes = ['name', 'artist', 'year', 'genre']
+buf.push("<div class=\"panel panel-default\"><div class=\"panel-heading\">TRACK - data specific to the track</div><div class=\"panel-body\"><div class=\"form-group\">");
+// iterate trackAttributes
+;(function(){
+  var $$obj = trackAttributes;
+  if ('number' == typeof $$obj.length) {
+
+    for (var $index = 0, $$l = $$obj.length; $index < $$l; $index++) {
+      var attribute = $$obj[$index];
+
+if ( track[attribute])
+{
+buf.push("<label" + (jade.attr("for", 'edit-track-' + (attribute) + '', true, false)) + ">" + (jade.escape((jade_interp = attribute) == null ? '' : jade_interp)) + "</label><input" + (jade.attr("id", 'edit-track-' + (attribute) + '', true, false)) + " type=\"text\"" + (jade.attr("value", "" + (track[attribute]) + "", true, false)) + (jade.cls(['form-control track-edition ' + (attribute) + ''], [true])) + "/>");
+}
+    }
+
+  } else {
+    var $$l = 0;
+    for (var $index in $$obj) {
+      $$l++;      var attribute = $$obj[$index];
+
+if ( track[attribute])
+{
+buf.push("<label" + (jade.attr("for", 'edit-track-' + (attribute) + '', true, false)) + ">" + (jade.escape((jade_interp = attribute) == null ? '' : jade_interp)) + "</label><input" + (jade.attr("id", 'edit-track-' + (attribute) + '', true, false)) + " type=\"text\"" + (jade.attr("value", "" + (track[attribute]) + "", true, false)) + (jade.cls(['form-control track-edition ' + (attribute) + ''], [true])) + "/>");
+}
+    }
+
+  }
+}).call(this);
+
+buf.push("<label for=\"plays\">Plays</label><p id=\"plays\">" + (jade.escape((jade_interp = track['plays']) == null ? '' : jade_interp)) + "</p></div></div></div><div class=\"panel panel-default\"><div class=\"panel-heading\">" + (jade.escape((jade_interp = album.name) == null ? '' : jade_interp)) + "</div><div class=\"panel-body\"><div class=\"form-group\">");
+// iterate albumAttributes
+;(function(){
+  var $$obj = albumAttributes;
+  if ('number' == typeof $$obj.length) {
+
+    for (var $index = 0, $$l = $$obj.length; $index < $$l; $index++) {
+      var attribute = $$obj[$index];
+
+if ( album[attribute])
+{
+buf.push("<label" + (jade.attr("for", 'Edit-album-' + (attribute) + '', true, false)) + ">" + (jade.escape((jade_interp = attribute) == null ? '' : jade_interp)) + "</label><input" + (jade.attr("id", 'edit-album-' + (attribute) + '', true, false)) + " type=\"text\"" + (jade.attr("value", "" + (album[attribute]) + "", true, false)) + (jade.cls(['form-control album-edition ' + (attribute) + ''], [true])) + "/>");
+}
+    }
+
+  } else {
+    var $$l = 0;
+    for (var $index in $$obj) {
+      $$l++;      var attribute = $$obj[$index];
+
+if ( album[attribute])
+{
+buf.push("<label" + (jade.attr("for", 'Edit-album-' + (attribute) + '', true, false)) + ">" + (jade.escape((jade_interp = attribute) == null ? '' : jade_interp)) + "</label><input" + (jade.attr("id", 'edit-album-' + (attribute) + '', true, false)) + " type=\"text\"" + (jade.attr("value", "" + (album[attribute]) + "", true, false)) + (jade.cls(['form-control album-edition ' + (attribute) + ''], [true])) + "/>");
+}
+    }
+
+  }
+}).call(this);
+
+buf.push("</div></div></div><button id=\"edit-cancel\" class=\"btn btn-default\">Cancel</button><button id=\"edit-submit\" class=\"btn btn-default\">Change</button>");;return buf.join("");
+};
+if (typeof define === 'function' && define.amd) {
+  define([], function() {
+    return __templateData;
+  });
+} else if (typeof module === 'object' && module && module.exports) {
+  module.exports = __templateData;
+} else {
+  __templateData;
+}
+});
+
+;require.register("views/content/templates/playlist", function(exports, require, module) {
+var __templateData = function template(locals) {
+var buf = [];
+var jade_mixins = {};
+var jade_interp;
+var locals_ = (locals || {}),model = locals_.model;
+buf.push("<h1>" + (jade.escape((jade_interp = model.name) == null ? '' : jade_interp)) + "</h1><h2>plop</h2>");;return buf.join("");
+};
+if (typeof define === 'function' && define.amd) {
+  define([], function() {
+    return __templateData;
+  });
+} else if (typeof module === 'object' && module && module.exports) {
+  module.exports = __templateData;
+} else {
+  __templateData;
+}
+});
+
+;require.register("views/content/templates/track_row", function(exports, require, module) {
+var __templateData = function template(locals) {
+var buf = [];
+var jade_mixins = {};
+var jade_interp;
+var locals_ = (locals || {}),model = locals_.model,album = locals_.album;
+buf.push("<td>" + (jade.escape((jade_interp = model.title) == null ? '' : jade_interp)) + "</td>");
+if ( model.artist)
+{
+buf.push("<td>" + (jade.escape((jade_interp = model.artist) == null ? '' : jade_interp)) + "</td>");
+}
+else
+{
+buf.push("<td>" + (jade.escape((jade_interp = album.artist) == null ? '' : jade_interp)) + "</td>");
+}
+if ( album)
+{
+buf.push("<td>" + (jade.escape((jade_interp = album.name) == null ? '' : jade_interp)) + "</td>");
+}
+else
+{
+buf.push("<td></td>");
+}
+buf.push("<td>" + (jade.escape((jade_interp = model.plays) == null ? '' : jade_interp)) + "</td><td>" + (jade.escape((jade_interp = model.time) == null ? '' : jade_interp)) + "</td>");;return buf.join("");
+};
+if (typeof define === 'function' && define.amd) {
+  define([], function() {
+    return __templateData;
+  });
+} else if (typeof module === 'object' && module && module.exports) {
+  module.exports = __templateData;
+} else {
+  __templateData;
+}
+});
+
+;require.register("views/content/templates/tracks_list", function(exports, require, module) {
+var __templateData = function template(locals) {
+var buf = [];
+var jade_mixins = {};
+var jade_interp;
+
+buf.push("<table class=\"table table-striped\"><thead><tr><th>Title</th><th>Artist</th><th>Album</th><th>#</th><th>Time</th></tr></thead><tbody id=\"table-items-content\"></tbody></table>");;return buf.join("");
+};
+if (typeof define === 'function' && define.amd) {
+  define([], function() {
+    return __templateData;
+  });
+} else if (typeof module === 'object' && module && module.exports) {
+  module.exports = __templateData;
+} else {
+  __templateData;
+}
+});
+
+;require.register("views/content/templates/tracks_menu", function(exports, require, module) {
+var __templateData = function template(locals) {
+var buf = [];
+var jade_mixins = {};
+var jade_interp;
+var locals_ = (locals || {}),statMenu = locals_.statMenu;
+buf.push("<ul class=\"nav nav-tabs\"><input id=\"upload-files\" name=\"upload-files\" type=\"file\" multiple=\"multiple\" accept=\"audio/*\" role=\"presentation\" class=\"btn btn-default btn-file\"/><li id=\"fetch\" role=\"presentation\" class=\"btn btn-default\">FETCH</li>");
+if ( statMenu.playlist)
+{
+buf.push("<li id=\"playlist\" role=\"presentation\" class=\"btn btn-default\">Add TO PLAYLIST</li>");
+}
+if ( statMenu.edition)
+{
+buf.push("<li id=\"edit-tracks\" role=\"presentation\" class=\"btn btn-default\">EDIT</li>");
+}
+buf.push("</ul>");;return buf.join("");
+};
+if (typeof define === 'function' && define.amd) {
+  define([], function() {
+    return __templateData;
+  });
+} else if (typeof module === 'object' && module && module.exports) {
+  module.exports = __templateData;
+} else {
+  __templateData;
+}
+});
+
+;require.register("views/content/views/edition_view", function(exports, require, module) {
 var BaseView, EditionView,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -1473,7 +1819,7 @@ BaseView = require('../../../lib/base_view');
 
 /*
  * Edition View is the view manager of the tracks edition screen. It handle the
- * processing of the data's selectedTracksList tracks to merge it and in case of
+ * processing of the data's selection tracks to merge it and in case of
  */
 
 module.exports = EditionView = (function(_super) {
@@ -1483,7 +1829,7 @@ module.exports = EditionView = (function(_super) {
     return EditionView.__super__.constructor.apply(this, arguments);
   }
 
-  EditionView.prototype.template = require('./templates/edition');
+  EditionView.prototype.template = require('../templates/edition');
 
   EditionView.prototype.el = '#edition-screen';
 
@@ -1504,7 +1850,7 @@ module.exports = EditionView = (function(_super) {
   };
 
   EditionView.prototype.initialize = function() {
-    return this.selection = window.selectedTracksList;
+    return this.selection = window.selection;
   };
 
   EditionView.prototype.beforeRender = function() {
@@ -1595,402 +1941,51 @@ module.exports = EditionView = (function(_super) {
 })(BaseView);
 });
 
-;require.register("views/content/edition/templates/edition", function(exports, require, module) {
-var __templateData = function template(locals) {
-var buf = [];
-var jade_mixins = {};
-var jade_interp;
-var locals_ = (locals || {}),track = locals_.track,album = locals_.album;
-var trackAttributes = ['title', 'artist', 'year', 'genre', 'trackNb']
-var albumAttributes = ['name', 'artist', 'year', 'genre']
-buf.push("<div class=\"panel panel-default\"><div class=\"panel-heading\">TRACK - data specific to the track</div><div class=\"panel-body\"><div class=\"form-group\">");
-// iterate trackAttributes
-;(function(){
-  var $$obj = trackAttributes;
-  if ('number' == typeof $$obj.length) {
-
-    for (var $index = 0, $$l = $$obj.length; $index < $$l; $index++) {
-      var attribute = $$obj[$index];
-
-if ( track[attribute])
-{
-buf.push("<label" + (jade.attr("for", 'edit-track-' + (attribute) + '', true, false)) + ">" + (jade.escape((jade_interp = attribute) == null ? '' : jade_interp)) + "</label><input" + (jade.attr("id", 'edit-track-' + (attribute) + '', true, false)) + " type=\"text\"" + (jade.attr("value", "" + (track[attribute]) + "", true, false)) + (jade.cls(['form-control track-edition ' + (attribute) + ''], [true])) + "/>");
-}
-    }
-
-  } else {
-    var $$l = 0;
-    for (var $index in $$obj) {
-      $$l++;      var attribute = $$obj[$index];
-
-if ( track[attribute])
-{
-buf.push("<label" + (jade.attr("for", 'edit-track-' + (attribute) + '', true, false)) + ">" + (jade.escape((jade_interp = attribute) == null ? '' : jade_interp)) + "</label><input" + (jade.attr("id", 'edit-track-' + (attribute) + '', true, false)) + " type=\"text\"" + (jade.attr("value", "" + (track[attribute]) + "", true, false)) + (jade.cls(['form-control track-edition ' + (attribute) + ''], [true])) + "/>");
-}
-    }
-
-  }
-}).call(this);
-
-buf.push("<label for=\"plays\">Plays</label><p id=\"plays\">" + (jade.escape((jade_interp = track['plays']) == null ? '' : jade_interp)) + "</p></div></div></div><div class=\"panel panel-default\"><div class=\"panel-heading\">" + (jade.escape((jade_interp = album.name) == null ? '' : jade_interp)) + "</div><div class=\"panel-body\"><div class=\"form-group\">");
-// iterate albumAttributes
-;(function(){
-  var $$obj = albumAttributes;
-  if ('number' == typeof $$obj.length) {
-
-    for (var $index = 0, $$l = $$obj.length; $index < $$l; $index++) {
-      var attribute = $$obj[$index];
-
-if ( album[attribute])
-{
-buf.push("<label" + (jade.attr("for", 'Edit-album-' + (attribute) + '', true, false)) + ">" + (jade.escape((jade_interp = attribute) == null ? '' : jade_interp)) + "</label><input" + (jade.attr("id", 'edit-album-' + (attribute) + '', true, false)) + " type=\"text\"" + (jade.attr("value", "" + (album[attribute]) + "", true, false)) + (jade.cls(['form-control album-edition ' + (attribute) + ''], [true])) + "/>");
-}
-    }
-
-  } else {
-    var $$l = 0;
-    for (var $index in $$obj) {
-      $$l++;      var attribute = $$obj[$index];
-
-if ( album[attribute])
-{
-buf.push("<label" + (jade.attr("for", 'Edit-album-' + (attribute) + '', true, false)) + ">" + (jade.escape((jade_interp = attribute) == null ? '' : jade_interp)) + "</label><input" + (jade.attr("id", 'edit-album-' + (attribute) + '', true, false)) + " type=\"text\"" + (jade.attr("value", "" + (album[attribute]) + "", true, false)) + (jade.cls(['form-control album-edition ' + (attribute) + ''], [true])) + "/>");
-}
-    }
-
-  }
-}).call(this);
-
-buf.push("</div></div></div><button id=\"edit-cancel\" class=\"btn btn-default\">Cancel</button><button id=\"edit-submit\" class=\"btn btn-default\">Change</button>");;return buf.join("");
-};
-if (typeof define === 'function' && define.amd) {
-  define([], function() {
-    return __templateData;
-  });
-} else if (typeof module === 'object' && module && module.exports) {
-  module.exports = __templateData;
-} else {
-  __templateData;
-}
-});
-
-;require.register("views/content/edition/templates/edition_skel", function(exports, require, module) {
-var __templateData = function template(locals) {
-var buf = [];
-var jade_mixins = {};
-var jade_interp;
-
-buf.push("<div id=\"edition-screen\"></div>");;return buf.join("");
-};
-if (typeof define === 'function' && define.amd) {
-  define([], function() {
-    return __templateData;
-  });
-} else if (typeof module === 'object' && module && module.exports) {
-  module.exports = __templateData;
-} else {
-  __templateData;
-}
-});
-
-;require.register("views/content/edition_screen", function(exports, require, module) {
-var EditionScreen, EditionView;
-
-EditionView = require('./edition/edition_view');
-
-module.exports = EditionScreen = (function() {
-  EditionScreen.prototype.skeleton = require('./edition/templates/edition_skel');
-
-  function EditionScreen() {
-    _.extend(this, Backbone.Events);
-    this.frame = $('#content-screen');
-    this.frame.html(this.skeleton());
-    this.view = new EditionView;
-  }
-
-  EditionScreen.prototype.render = function() {
-    return this.view.render();
-  };
-
-  EditionScreen.prototype.attach = function() {
-    this.view.render();
-    return this.frame.append(this.view.el);
-  };
-
-  EditionScreen.prototype.detach = function() {
-    return this.view.$el.detach();
-  };
-
-  return EditionScreen;
-
-})();
-});
-
-;require.register("views/content/tracks/all_tracks_view", function(exports, require, module) {
-var AllTracksView, Menu, TracksTableView;
-
-Menu = require('./tracks_menu/tracks_menu_view');
-
-TracksTableView = require('./table_tracks/tracks_view');
-
-module.exports = AllTracksView = (function() {
-  AllTracksView.prototype.skeleton = require('./templates/all_tracks_skel');
-
-  function AllTracksView(options) {
-    _.extend(this, Backbone.Events);
-    this.selectedTracksList = options.selectedTracksList;
-    this.baseCollection = options.baseCollection;
-    this.frame = $('#content-screen');
-    this.frame.append(this.skeleton());
-    this.menu = new Menu({
-      selection: this.selectedTracksList
-    });
-    this.tracks = new TracksTableView({
-      collection: this.baseCollection,
-      selection: this.selectedTracksList
-    });
-    this.listenTo(this.tracks, 'selection-menu-options', this.menu.manageOptionsMenu);
-  }
-
-  AllTracksView.prototype.render = function() {
-    this.menu.render();
-    return this.tracks.render();
-  };
-
-  AllTracksView.prototype.attach = function() {
-    this.frame.append(this.menu.el);
-    return this.frame.append(this.tracks.el);
-  };
-
-  AllTracksView.prototype.detach = function() {
-    this.menu.$el.detach();
-    return this.tracks.$el.detach();
-  };
-
-  AllTracksView.prototype.clearSelection = function() {
-    this.selectedTracksList.emptySelection();
-    return this.menu.manageOptionsMenu('empty');
-  };
-
-  return AllTracksView;
-
-})();
-});
-
-;require.register("views/content/tracks/playlist_view", function(exports, require, module) {
-var PlaylistView,
-  __hasProp = {}.hasOwnProperty,
-  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
-
-module.exports = PlaylistView = (function(_super) {
-  __extends(PlaylistView, _super);
-
-  function PlaylistView() {
-    return PlaylistView.__super__.constructor.apply(this, arguments);
-  }
-
-  PlaylistView.prototype.template = require('./templates/playlist');
-
-  PlaylistView.prototype.el = '#playlist-header';
-
-  PlaylistView.prototype.render = function() {
-    console.log('model: ', this.model);
-    return PlaylistView.__super__.render.apply(this, arguments);
-  };
-
-  return PlaylistView;
-
-})(Backbone.View);
-});
-
-;require.register("views/content/tracks/table_tracks/templates/track", function(exports, require, module) {
-var __templateData = function template(locals) {
-var buf = [];
-var jade_mixins = {};
-var jade_interp;
-var locals_ = (locals || {}),model = locals_.model,album = locals_.album;
-buf.push("<td>" + (jade.escape((jade_interp = model.title) == null ? '' : jade_interp)) + "</td>");
-if ( model.artist)
-{
-buf.push("<td>" + (jade.escape((jade_interp = model.artist) == null ? '' : jade_interp)) + "</td>");
-}
-else
-{
-buf.push("<td>" + (jade.escape((jade_interp = album.artist) == null ? '' : jade_interp)) + "</td>");
-}
-if ( album)
-{
-buf.push("<td>" + (jade.escape((jade_interp = album.name) == null ? '' : jade_interp)) + "</td>");
-}
-else
-{
-buf.push("<td></td>");
-}
-buf.push("<td>" + (jade.escape((jade_interp = model.plays) == null ? '' : jade_interp)) + "</td><td>" + (jade.escape((jade_interp = model.time) == null ? '' : jade_interp)) + "</td>");;return buf.join("");
-};
-if (typeof define === 'function' && define.amd) {
-  define([], function() {
-    return __templateData;
-  });
-} else if (typeof module === 'object' && module && module.exports) {
-  module.exports = __templateData;
-} else {
-  __templateData;
-}
-});
-
-;require.register("views/content/tracks/table_tracks/templates/tracks", function(exports, require, module) {
-var __templateData = function template(locals) {
-var buf = [];
-var jade_mixins = {};
-var jade_interp;
-
-buf.push("<table class=\"table table-striped\"><thead><tr><th>Title</th><th>Artist</th><th>Album</th><th>#</th><th>Time</th></tr></thead><tbody id=\"table-items-content\"></tbody></table>");;return buf.join("");
-};
-if (typeof define === 'function' && define.amd) {
-  define([], function() {
-    return __templateData;
-  });
-} else if (typeof module === 'object' && module && module.exports) {
-  module.exports = __templateData;
-} else {
-  __templateData;
-}
-});
-
-;require.register("views/content/tracks/table_tracks/track_view", function(exports, require, module) {
-var BaseView, TrackView,
-  __hasProp = {}.hasOwnProperty,
-  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
-
-BaseView = require('../../../../lib/base_view');
-
-
-/*
- * Each TrackView represent a track in a collection
- */
-
-module.exports = TrackView = (function(_super) {
-  __extends(TrackView, _super);
-
-  function TrackView() {
-    return TrackView.__super__.constructor.apply(this, arguments);
-  }
-
-  TrackView.prototype.template = require('./templates/track');
-
-  TrackView.prototype.className = 'track-row';
-
-  TrackView.prototype.tagName = 'tr';
-
-  TrackView.prototype._selectedStatus = false;
-
-  TrackView.prototype.getRenderData = function() {
-    var _ref, _ref1, _ref2;
-    return {
-      model: (_ref = this.model) != null ? _ref.toJSON() : void 0,
-      album: (_ref1 = this.model) != null ? (_ref2 = _ref1.album) != null ? _ref2.toJSON() : void 0 : void 0
-    };
-  };
-
-  TrackView.prototype.afterRender = function() {
-    this.$el.data('cid', this.model.cid);
-    if (this.model.isUploading()) {
-      return this.$el.addClass('warning');
-    } else if (this.model.isUploaded()) {
-      return this.$el.removeClass('warning');
-    } else if (this.model.isErrored()) {
-      return this.$el.addClass('danger');
-    } else if (this.model.isConflict()) {
-      return this.$el.addClass('info');
-    }
-  };
-
-  TrackView.prototype.refresh = function() {
-    return this.render();
-  };
-
-  TrackView.prototype.setAsSelected = function() {
-    return this.$el.addClass('success');
-  };
-
-  TrackView.prototype.setAsNoSelected = function() {
-    return this.$el.removeClass('success');
-  };
-
-  TrackView.prototype.changeSelectStat = function() {
-    if (this.isTrackSelected()) {
-      this.setTrackAsNoSelected();
-    } else {
-      this.setTrackAsSelected();
-    }
-    return this._selectedStatus;
-  };
-
-  TrackView.prototype.isSelected = function() {
-    return this._selectedStatus;
-  };
-
-  TrackView.prototype.setAsSelected = function() {
-    this.$el.addClass('success');
-    return this._selectedStatus = true;
-  };
-
-  TrackView.prototype.setAsNoSelected = function() {
-    this.$el.removeClass('success');
-    return this._selectedStatus = false;
-  };
-
-  return TrackView;
-
-})(BaseView);
-});
-
-;require.register("views/content/tracks/table_tracks/tracks_view", function(exports, require, module) {
-var TrackView, TracksView, ViewCollection,
+;require.register("views/content/views/tracks_list_view", function(exports, require, module) {
+var TracksListView, TracksRowView, ViewCollection,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
 ViewCollection = require('../../../../lib/view_collection');
 
-TrackView = require('./track_view');
+TracksRowView = require('./tracks_row_view');
 
 
 /*
  * TracksView is the structure for put tracks in content view
  */
 
-module.exports = TracksView = (function(_super) {
-  __extends(TracksView, _super);
+module.exports = TracksListView = (function(_super) {
+  __extends(TracksListView, _super);
 
-  function TracksView() {
-    return TracksView.__super__.constructor.apply(this, arguments);
+  function TracksListView() {
+    return TracksListView.__super__.constructor.apply(this, arguments);
   }
 
-  TracksView.prototype.template = require('./templates/tracks');
+  TracksListView.prototype.template = require('../templates/tracks_list');
 
-  TracksView.prototype.el = '#table-screen';
+  TracksListView.prototype.el = '#table-screen';
 
-  TracksView.prototype.itemview = TrackView;
+  TracksListView.prototype.itemview = TracksRowView;
 
-  TracksView.prototype.collectionEl = '#table-items-content';
+  TracksListView.prototype.collectionEl = '#table-items-content';
 
-  TracksView.prototype.events = {
+  TracksListView.prototype.events = {
     'click tr.track-row': 'manageSelectionEvent'
   };
 
-  TracksView.prototype._lastTrackSelected = null;
+  TracksListView.prototype._lastTrackSelected = null;
 
-  TracksView.prototype.initialize = function(options) {
+  TracksListView.prototype.initialize = function(options) {
     this.selection = options.selection;
     this.collection = options.collection;
-    TracksView.__super__.initialize.apply(this, arguments);
+    TracksListView.__super__.initialize.apply(this, arguments);
     this.listenTo(this.selection, 'remove', _.partial(this.viewProxy, 'setAsNoSelected'));
     this.listenTo(this.selection, 'add', _.partial(this.viewProxy, 'setAsSelected'));
     return this.listenTo(this.collection, 'change', _.partial(this.viewProxy, 'refresh'));
   };
 
-  TracksView.prototype.triggerMenuOption = function() {
+  TracksListView.prototype.triggerMenuOption = function() {
     switch (this.selection.length) {
       case 0:
         return this.trigger('selection-menu-options', 'empty');
@@ -2001,7 +1996,7 @@ module.exports = TracksView = (function(_super) {
     }
   };
 
-  TracksView.prototype.manageSelectionEvent = function(event) {
+  TracksListView.prototype.manageSelectionEvent = function(event) {
     var cid, view, _manageListTracksSelection;
     cid = this.$(event.target).parents('tr').data('cid');
     view = _.find(this.views, function(view) {
@@ -2039,86 +2034,18 @@ module.exports = TracksView = (function(_super) {
     return this.triggerMenuOption();
   };
 
-  return TracksView;
+  return TracksListView;
 
 })(ViewCollection);
 });
 
-;require.register("views/content/tracks/templates/all_tracks_skel", function(exports, require, module) {
-var __templateData = function template(locals) {
-var buf = [];
-var jade_mixins = {};
-var jade_interp;
-
-buf.push("<div id=\"tracks-menu\"></div><div id=\"table-screen\"></div>");;return buf.join("");
-};
-if (typeof define === 'function' && define.amd) {
-  define([], function() {
-    return __templateData;
-  });
-} else if (typeof module === 'object' && module && module.exports) {
-  module.exports = __templateData;
-} else {
-  __templateData;
-}
-});
-
-;require.register("views/content/tracks/templates/playlist", function(exports, require, module) {
-var __templateData = function template(locals) {
-var buf = [];
-var jade_mixins = {};
-var jade_interp;
-var locals_ = (locals || {}),model = locals_.model;
-buf.push("<h1>" + (jade.escape((jade_interp = model.name) == null ? '' : jade_interp)) + "</h1><h2>plop</h2>");;return buf.join("");
-};
-if (typeof define === 'function' && define.amd) {
-  define([], function() {
-    return __templateData;
-  });
-} else if (typeof module === 'object' && module && module.exports) {
-  module.exports = __templateData;
-} else {
-  __templateData;
-}
-});
-
-;require.register("views/content/tracks/tracks_menu/tracks_menu", function(exports, require, module) {
-var __templateData = function template(locals) {
-var buf = [];
-var jade_mixins = {};
-var jade_interp;
-var locals_ = (locals || {}),statMenu = locals_.statMenu;
-buf.push("<ul class=\"nav nav-tabs\"><input id=\"upload-files\" name=\"upload-files\" type=\"file\" multiple=\"multiple\" accept=\"audio/*\" role=\"presentation\" class=\"btn btn-default btn-file\"/><li id=\"fetch\" role=\"presentation\" class=\"btn btn-default\">FETCH</li>");
-if ( statMenu.playlist)
-{
-buf.push("<li id=\"playlist\" role=\"presentation\" class=\"btn btn-default\">Add TO PLAYLIST</li>");
-}
-if ( statMenu.edition)
-{
-buf.push("<li id=\"edit-tracks\" role=\"presentation\" class=\"btn btn-default\">EDIT</li>");
-}
-buf.push("</ul>");;return buf.join("");
-};
-if (typeof define === 'function' && define.amd) {
-  define([], function() {
-    return __templateData;
-  });
-} else if (typeof module === 'object' && module && module.exports) {
-  module.exports = __templateData;
-} else {
-  __templateData;
-}
-});
-
-;require.register("views/content/tracks/tracks_menu/tracks_menu_view", function(exports, require, module) {
-var BaseView, ContextMenu, PlaylistList,
+;require.register("views/content/views/tracks_menu_view", function(exports, require, module) {
+var BaseView, TracksMenuView,
   __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
 BaseView = require('../../../../lib/base_view');
-
-PlaylistList = require('../../../../collections/playlists_list');
 
 
 /*
@@ -2127,24 +2054,24 @@ PlaylistList = require('../../../../collections/playlists_list');
  * one or several song in the tracks display.
  */
 
-module.exports = ContextMenu = (function(_super) {
-  __extends(ContextMenu, _super);
+module.exports = TracksMenuView = (function(_super) {
+  __extends(TracksMenuView, _super);
 
-  function ContextMenu() {
+  function TracksMenuView() {
     this.manageOptionsMenu = __bind(this.manageOptionsMenu, this);
-    return ContextMenu.__super__.constructor.apply(this, arguments);
+    return TracksMenuView.__super__.constructor.apply(this, arguments);
   }
 
-  ContextMenu.prototype.el = '#tracks-menu';
+  TracksMenuView.prototype.template = require('../templates/tracks_menu');
 
-  ContextMenu.prototype.template = require('./tracks_menu');
+  TracksMenuView.prototype.el = '#tracks-menu';
 
-  ContextMenu.prototype.statMenu = {
+  TracksMenuView.prototype.statMenu = {
     edition: false,
     playlist: false
   };
 
-  ContextMenu.prototype.events = {
+  TracksMenuView.prototype.events = {
     'change #upload-files': 'lauchUploadFiles',
     'click #edit-tracks': function(e) {
       return this.trigger('menu-trackEdition-lauch');
@@ -2152,25 +2079,25 @@ module.exports = ContextMenu = (function(_super) {
     'click #fetch': 'fetchBaseCollection'
   };
 
-  ContextMenu.prototype.initialize = function(options) {
+  TracksMenuView.prototype.initialize = function(options) {
     return this.selection = options.selection;
   };
 
-  ContextMenu.prototype.afterRender = function() {
+  TracksMenuView.prototype.afterRender = function() {
     return this.uploader = $('#uploader');
   };
 
-  ContextMenu.prototype.fetchBaseCollection = function() {
+  TracksMenuView.prototype.fetchBaseCollection = function() {
     return window.app.baseCollection.fetch();
   };
 
-  ContextMenu.prototype.getRenderData = function() {
+  TracksMenuView.prototype.getRenderData = function() {
     return {
       statMenu: this.statMenu
     };
   };
 
-  ContextMenu.prototype.lauchUploadFiles = function(event) {
+  TracksMenuView.prototype.lauchUploadFiles = function(event) {
     var files, target, _ref;
     files = ((_ref = event.dataTransfert) != null ? _ref.files : void 0) || event.target.files;
     if (files.length) {
@@ -2182,7 +2109,7 @@ module.exports = ContextMenu = (function(_super) {
     }
   };
 
-  ContextMenu.prototype.manageOptionsMenu = function(status) {
+  TracksMenuView.prototype.manageOptionsMenu = function(status) {
     if (status === 'empty') {
       this.statMenu.playlist = false;
       this.statMenu.edition = false;
@@ -2196,19 +2123,107 @@ module.exports = ContextMenu = (function(_super) {
     return this.render();
   };
 
-  return ContextMenu;
+  return TracksMenuView;
+
+})(BaseView);
+});
+
+;require.register("views/content/views/tracks_row_view", function(exports, require, module) {
+var BaseView, TrackRowView,
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+BaseView = require('../../../../lib/base_view');
+
+
+/*
+ * Each TrackView represent a track in a collection
+ */
+
+module.exports = TrackRowView = (function(_super) {
+  __extends(TrackRowView, _super);
+
+  function TrackRowView() {
+    return TrackRowView.__super__.constructor.apply(this, arguments);
+  }
+
+  TrackRowView.prototype.template = require('../templates/track_row');
+
+  TrackRowView.prototype.className = 'track-row';
+
+  TrackRowView.prototype.tagName = 'tr';
+
+  TrackRowView.prototype._selectedStatus = false;
+
+  TrackRowView.prototype.getRenderData = function() {
+    var _ref, _ref1, _ref2;
+    return {
+      model: (_ref = this.model) != null ? _ref.toJSON() : void 0,
+      album: (_ref1 = this.model) != null ? (_ref2 = _ref1.album) != null ? _ref2.toJSON() : void 0 : void 0
+    };
+  };
+
+  TrackRowView.prototype.afterRender = function() {
+    this.$el.data('cid', this.model.cid);
+    if (this.model.isUploading()) {
+      return this.$el.addClass('warning');
+    } else if (this.model.isUploaded()) {
+      return this.$el.removeClass('warning');
+    } else if (this.model.isErrored()) {
+      return this.$el.addClass('danger');
+    } else if (this.model.isConflict()) {
+      return this.$el.addClass('info');
+    }
+  };
+
+  TrackRowView.prototype.refresh = function() {
+    return this.render();
+  };
+
+  TrackRowView.prototype.setAsSelected = function() {
+    return this.$el.addClass('success');
+  };
+
+  TrackRowView.prototype.setAsNoSelected = function() {
+    return this.$el.removeClass('success');
+  };
+
+  TrackRowView.prototype.changeSelectStat = function() {
+    if (this.isTrackSelected()) {
+      this.setTrackAsNoSelected();
+    } else {
+      this.setTrackAsSelected();
+    }
+    return this._selectedStatus;
+  };
+
+  TrackRowView.prototype.isSelected = function() {
+    return this._selectedStatus;
+  };
+
+  TrackRowView.prototype.setAsSelected = function() {
+    this.$el.addClass('success');
+    return this._selectedStatus = true;
+  };
+
+  TrackRowView.prototype.setAsNoSelected = function() {
+    this.$el.removeClass('success');
+    return this._selectedStatus = false;
+  };
+
+  return TrackRowView;
 
 })(BaseView);
 });
 
 ;require.register("views/menu/menu_view", function(exports, require, module) {
-var BaseView, MenuView, PlaylistsView,
+var BaseView, MenuView, PlaylistsListView,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
 BaseView = require('../../lib/base_view');
 
-PlaylistsView = require('./playlist/playlists_view');
+PlaylistsListView = require('./playlist/playlists_list_view');
 
 
 /*
@@ -2240,7 +2255,7 @@ module.exports = MenuView = (function(_super) {
   };
 
   MenuView.prototype.afterRender = function() {
-    this.playlistsViews = new PlaylistsView({
+    this.playlistsViews = new PlaylistsListView({
       collection: this.playlistsCollection
     });
     return this.playlistsViews.render();
@@ -2259,64 +2274,31 @@ module.exports = MenuView = (function(_super) {
 })(BaseView);
 });
 
-;require.register("views/menu/playlist/playlist_view", function(exports, require, module) {
-var BaseView, PlaylistView,
-  __hasProp = {}.hasOwnProperty,
-  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
-
-BaseView = require('../../../lib/base_view');
-
-module.exports = PlaylistView = (function(_super) {
-  __extends(PlaylistView, _super);
-
-  function PlaylistView() {
-    return PlaylistView.__super__.constructor.apply(this, arguments);
-  }
-
-  PlaylistView.prototype.template = require('./templates/playlist');
-
-  PlaylistView.prototype.className = 'playlist-row';
-
-  PlaylistView.prototype.tagName = 'li';
-
-  PlaylistView.prototype.initialize = function() {
-    return this.$el.click((function(_this) {
-      return function() {
-        return window.app.menuScreen.trigger('content-print-playlist', _this.model);
-      };
-    })(this));
-  };
-
-  return PlaylistView;
-
-})(BaseView);
-});
-
-;require.register("views/menu/playlist/playlists_view", function(exports, require, module) {
-var PlaylistView, PlaylistsView, ViewCollection,
+;require.register("views/menu/playlist/playlists_list_view", function(exports, require, module) {
+var PlaylistRowView, PlaylistsListView, ViewCollection,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
 ViewCollection = require('../../../lib/view_collection');
 
-PlaylistView = require('./playlist_view');
+PlaylistRowView = require('./playlists_row_view');
 
-module.exports = PlaylistsView = (function(_super) {
-  __extends(PlaylistsView, _super);
+module.exports = PlaylistsListView = (function(_super) {
+  __extends(PlaylistsListView, _super);
 
-  function PlaylistsView() {
-    return PlaylistsView.__super__.constructor.apply(this, arguments);
+  function PlaylistsListView() {
+    return PlaylistsListView.__super__.constructor.apply(this, arguments);
   }
 
-  PlaylistsView.prototype.template = require('./templates/playlists');
+  PlaylistsListView.prototype.template = require('./templates/playlists');
 
-  PlaylistsView.prototype.el = '#menu-playlist';
+  PlaylistsListView.prototype.el = '#menu-playlist';
 
-  PlaylistsView.prototype.itemview = PlaylistView;
+  PlaylistsListView.prototype.itemview = PlaylistRowView;
 
-  PlaylistsView.prototype.collectionEl = '#menu-playlist-list';
+  PlaylistsListView.prototype.collectionEl = '#menu-playlist-list';
 
-  PlaylistsView.prototype.test = function(event) {
+  PlaylistsListView.prototype.test = function(event) {
     var playlist;
     playlist = this.$(event.target).console.log('playlist 1: ', playlist);
     playlist = this.$(event.target).parents('li');
@@ -2328,9 +2310,42 @@ module.exports = PlaylistsView = (function(_super) {
     return console.log('event: ', event);
   };
 
-  return PlaylistsView;
+  return PlaylistsListView;
 
 })(ViewCollection);
+});
+
+;require.register("views/menu/playlist/playlists_row_view", function(exports, require, module) {
+var BaseView, PlaylistRowView,
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+BaseView = require('../../../lib/base_view');
+
+module.exports = PlaylistRowView = (function(_super) {
+  __extends(PlaylistRowView, _super);
+
+  function PlaylistRowView() {
+    return PlaylistRowView.__super__.constructor.apply(this, arguments);
+  }
+
+  PlaylistRowView.prototype.template = require('./templates/playlist');
+
+  PlaylistRowView.prototype.className = 'playlist-row';
+
+  PlaylistRowView.prototype.tagName = 'li';
+
+  PlaylistRowView.prototype.initialize = function() {
+    return this.$el.click((function(_this) {
+      return function() {
+        return window.app.menuScreen.trigger('content-print-playlist', _this.model);
+      };
+    })(this));
+  };
+
+  return PlaylistRowView;
+
+})(BaseView);
 });
 
 ;require.register("views/menu/playlist/templates/playlist", function(exports, require, module) {

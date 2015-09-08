@@ -6,12 +6,12 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 15:30:40 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/08 12:45:10 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/08 23:28:54 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 BaseView = require '../../lib/base_view'
-PlaylistsView = require './playlist/playlists_view'
+PlaylistsListView = require './playlist/playlists_list_view'
 
 ###
 # MenuView represent the main panel view. His goal is trigger the changing
@@ -37,7 +37,7 @@ module.exports = class MenuView extends BaseView
 
     afterRender: ->
         # Create a collection of playlist view based on the collection
-        @playlistsViews = new PlaylistsView
+        @playlistsViews = new PlaylistsListView
             collection: @playlistsCollection
         @playlistsViews.render()
 

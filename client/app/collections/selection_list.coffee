@@ -1,12 +1,12 @@
 # **************************************************************************** #
 #                                                                              #
 #                                                         :::      ::::::::    #
-#    selected_list.coffee                               :+:      :+:    :+:    #
+#    selection_list.coffee                              :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
-#    Created: 2015/09/05 19:01:38 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/08 22:27:10 by ppeltier         ###   ########.fr        #
+#    Created: 2015/09/08 23:06:43 by ppeltier          #+#    #+#              #
+#    Updated: 2015/09/08 23:29:20 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -19,7 +19,7 @@ Track = require './../models/track'
 # view.It's the same collection for all content screen (playlist/all tracks/etc...)
 # which is refresh.
 ###
-module.exports = class SelectedTracksList extends Backbone.Collection
+module.exports = class SelectionList extends Backbone.Collection
     model: Track
     url: 'tracks'
 
@@ -28,7 +28,7 @@ module.exports = class SelectedTracksList extends Backbone.Collection
         super
         # Create a shortcute for each track view can access to the selected
         # tracks list to trigger an event when they are selected
-        window.selectedTracksList = @
+        window.selection = @
 
     emptySelection: ->
         loop

@@ -1,17 +1,16 @@
 # **************************************************************************** #
 #                                                                              #
 #                                                         :::      ::::::::    #
-#    menu_screen.coffee                                 :+:      :+:    :+:    #
+#    menu_manager.coffee                                :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
-#    Created: 2015/08/26 22:17:02 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/08 12:44:49 by ppeltier         ###   ########.fr        #
+#    Created: 2015/09/08 23:07:41 by ppeltier          #+#    #+#              #
+#    Updated: 2015/09/08 23:33:26 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 MenuView = require '../views/menu/menu_view'
-PlaylistsList = require '../collections/playlists_list'
 Playlist = require './playlist'
 
 ###
@@ -20,7 +19,7 @@ Playlist = require './playlist'
 # Menu communicate with the content section by events which trigger some action
 # as print playlist / print all tracks / etc...
 ###
-module.exports = class Menu_Screen
+module.exports = class MenuManager
 
     currentPlaylist: null
 

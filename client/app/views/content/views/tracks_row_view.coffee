@@ -1,12 +1,12 @@
 # **************************************************************************** #
 #                                                                              #
 #                                                         :::      ::::::::    #
-#    track_view.coffee                                  :+:      :+:    :+:    #
+#    tracks_row_view.coffee                             :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
-#    Created: 2015/08/20 18:08:58 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/08 22:32:08 by ppeltier         ###   ########.fr        #
+#    Created: 2015/09/08 23:13:31 by ppeltier          #+#    #+#              #
+#    Updated: 2015/09/08 23:26:02 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -15,8 +15,8 @@ BaseView = require '../../../../lib/base_view'
 ###
 # Each TrackView represent a track in a collection
 ###
-module.exports = class TrackView extends BaseView
-    template: require './templates/track'
+module.exports = class TrackRowView extends BaseView
+    template: require '../templates/track_row'
 
     className: 'track-row'
     tagName: 'tr'

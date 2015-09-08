@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/25 19:58:03 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/08 19:57:21 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/08 23:37:02 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -14,10 +14,10 @@ BaseView = require '../../../lib/base_view'
 
 ###
 # Edition View is the view manager of the tracks edition screen. It handle the
-# processing of the data's selectedTracksList tracks to merge it and in case of
+# processing of the data's selection tracks to merge it and in case of
 ###
 module.exports = class EditionView extends BaseView
-    template: require './templates/edition'
+    template: require '../templates/edition'
 
     el: '#edition-screen'
 
@@ -33,7 +33,7 @@ module.exports = class EditionView extends BaseView
 
 
     initialize: ->
-        @selection = window.selectedTracksList
+        @selection = window.selection
 
 
     beforeRender: ->

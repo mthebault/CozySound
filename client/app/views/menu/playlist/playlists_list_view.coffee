@@ -1,23 +1,23 @@
 # **************************************************************************** #
 #                                                                              #
 #                                                         :::      ::::::::    #
-#    playlists_view.coffee                              :+:      :+:    :+:    #
+#    playlists_list_view.coffee                         :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
-#    Created: 2015/08/26 20:40:51 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/08 14:42:22 by ppeltier         ###   ########.fr        #
+#    Created: 2015/09/08 23:17:16 by ppeltier          #+#    #+#              #
+#    Updated: 2015/09/08 23:19:35 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 ViewCollection = require '../../../lib/view_collection'
-PlaylistView = require './playlist_view'
+PlaylistRowView = require './playlists_row_view'
 
-module.exports = class PlaylistsView extends ViewCollection
+module.exports = class PlaylistsListView extends ViewCollection
     template: require './templates/playlists'
     el: '#menu-playlist'
 
-    itemview: PlaylistView
+    itemview: PlaylistRowView
 
     collectionEl: '#menu-playlist-list'
 

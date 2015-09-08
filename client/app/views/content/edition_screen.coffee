@@ -6,15 +6,15 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/09/08 19:28:24 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/08 22:49:38 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/08 23:26:41 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
-EditionView = require './edition/edition_view'
+EditionView = require './views/edition_view'
 
 
 module.exports = class EditionScreen
-    skeleton: require './edition/templates/edition_skel'
+    skeleton: require './skeletons/edition_skel'
 
     constructor: ->
         _.extend @, Backbone.Events

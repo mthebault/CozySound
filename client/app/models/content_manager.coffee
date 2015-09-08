@@ -1,19 +1,19 @@
 # **************************************************************************** #
 #                                                                              #
 #                                                         :::      ::::::::    #
-#    content_screen.coffee                              :+:      :+:    :+:    #
+#    content_manager.coffee                             :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
-#    Created: 2015/08/25 09:53:27 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/08 22:49:36 by ppeltier         ###   ########.fr        #
+#    Created: 2015/09/08 23:06:49 by ppeltier          #+#    #+#              #
+#    Updated: 2015/09/08 23:46:08 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
-AllTracksView = require '../views/content/tracks/all_tracks_view'
-PlaylistView = require '../views/content/tracks/playlist_view'
-EditionView = require '../views/content/edition_screen'
-SelectedTracksList = require '../collections/selected_list'
+AllTracksScreen = require '../views/content/all_tracks_screen'
+PlaylistScreen = require '../views/content/playlist_screen'
+EditionScreen = require '../views/content/edition_screen'
+SelectionList = require '../collections/selection_list'
 
 ###
 # ContenScreen is the main screen where all tracks are printed. This is a
@@ -43,7 +43,7 @@ SelectedTracksList = require '../collections/selected_list'
 # in argument
 #
 ###
-module.exports = class ContentScreen
+module.exports = class ContentManager
 
     currentView: null
 
@@ -56,13 +56,13 @@ module.exports = class ContentScreen
         @baseCollection = window.app.baseCollection
         @menu = window.app.menuScreen
 
-        # SelectedTracksList is a collection of all tracks selected by the user,
+        # SelectionList is a collection of all tracks selected by the user,
         # all actions on tracks must be handle by it
-        @selectedTracksList = new SelectedTracksList
-        @selectedTracksList.baseCollection = @baseCollection
+        @selection= new SelectionList
+        @selection.baseCollection = @baseCollection
 
         # An array of all view currently prompt
-        @loadedViews = new Array
+        @loadedScreens = []
 
     ################################ EVENTS #####################################
         # *** content-print-playlist ***
@@ -104,17 +104,17 @@ module.exports = class ContentScreen
         @removeTracks()
 
     renderTracks: ->
-        if @loadedViews['allTracks']?
-            @loadedViews['allTracks'].attach()
+        if @loadedScreens['allTracks']?
+            @loadedScreens['allTracks'].attach()
             return
 
         # Initialize the tracks displayed
-        allTracks = new AllTracksView
-            selectedTracksList: @selectedTracksList
+        allTracks = new AllTracksScreen
+            selection: @selection
             baseCollection: @baseCollection
 
 
-        @loadedViews['allTracks'] = allTracks
+        @loadedScreens['allTracks'] = allTracks
 
         allTracks.render()
 
@@ -126,7 +126,7 @@ module.exports = class ContentScreen
 
 
     removeTracks: ->
-        @loadedViews['allTracks'].detach()
+        @loadedScreens['allTracks'].detach()
     ###################### END - ALL TRACKS - END ###############################
 
 
@@ -156,23 +156,23 @@ module.exports = class ContentScreen
 
 
     renderEdition: ->
-        if @loadedViews['trackEdition']?
-            @loadedViews['trackEdition'].attach()
+        if @loadedScreens['trackEdition']?
+            @loadedScreens['trackEdition'].attach()
             return
 
         # Initialize the Edition view
-        editionView = new EditionView
+        editionScreen = new EditionScreen
 
-        @loadedViews['trackEdition'] = editionView
+        @loadedScreens['trackEdition'] = editionScreen
 
-        editionView.render()
+        editionScreen.render()
 
         # Listen the end of the edition
-        @listenTo editionView.view, 'edition-end', @renderAllTracks
+        @listenTo editionScreen.view, 'edition-end', @renderAllTracks
 
 
     removeTrackEdition: ->
-        @selectedTracksList.emptySelection()
-        @loadedViews['trackEdition']?.detach()
-        @loadedViews['allTracks']?.clearSelection()
+        @selection.emptySelection()
+        @loadedScreens['trackEdition']?.detach()
+        @loadedScreens['allTracks']?.clearSelection()
     ###################### END - TRACKS EDITION - END ###########################

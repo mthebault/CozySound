@@ -1,17 +1,16 @@
 # **************************************************************************** #
 #                                                                              #
 #                                                         :::      ::::::::    #
-#    context_menu.coffee                                :+:      :+:    :+:    #
+#    tracks_menu_view.coffee                            :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
-#    Created: 2015/08/18 15:30:42 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/08 21:51:44 by ppeltier         ###   ########.fr        #
+#    Created: 2015/09/08 23:09:44 by ppeltier          #+#    #+#              #
+#    Updated: 2015/09/08 23:44:32 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 BaseView = require '../../../../lib/base_view'
-PlaylistList = require '../../../../collections/playlists_list'
 
 
 ###
@@ -19,10 +18,10 @@ PlaylistList = require '../../../../collections/playlists_list'
 # with tracks_display. It must display the dynamiques option when the user select
 # one or several song in the tracks display.
 ###
-module.exports = class ContextMenu extends BaseView
+module.exports = class TracksMenuView extends BaseView
 
+    template: require '../templates/tracks_menu'
     el: '#tracks-menu'
-    template: require './tracks_menu'
 
     statMenu:
         edition: false
@@ -40,7 +39,6 @@ module.exports = class ContextMenu extends BaseView
 
     initialize: (options) ->
         @selection = options.selection
-
 
     afterRender: ->
         @uploader = $('#uploader')

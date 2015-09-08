@@ -1,37 +1,37 @@
 # **************************************************************************** #
 #                                                                              #
 #                                                         :::      ::::::::    #
-#    tracks_view.coffee                                 :+:      :+:    :+:    #
+#    all_tracks_screen.coffee                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
-#    Created: 2015/09/08 17:13:40 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/08 22:49:39 by ppeltier         ###   ########.fr        #
+#    Created: 2015/09/08 23:13:43 by ppeltier          #+#    #+#              #
+#    Updated: 2015/09/08 23:41:06 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
-Menu = require './tracks_menu/tracks_menu_view'
-TracksTableView = require './table_tracks/tracks_view'
+TracksMenuView = require './views/tracks_menu_view'
+TracksListView = require './views/tracks_list_view'
 
 module.exports = class AllTracksView
-    skeleton: require './templates/all_tracks_skel'
+    skeleton: require './skeletons/all_tracks_skel'
 
 
     constructor: (options) ->
         _.extend @, Backbone.Events
 
-        @selectedTracksList = options.selectedTracksList
+        @selection = options.selection
         @baseCollection = options.baseCollection
         @frame = $('#content-screen')
 
         @frame.append @skeleton()
 
-        @menu = new Menu
-            selection : @selectedTracksList
+        @menu = new TracksMenuView
+            selection : @selection
 
-        @tracks = new TracksTableView
+        @tracks = new TracksListView
             collection: @baseCollection
-            selection: @selectedTracksList
+            selection: @selection
 
         # *** menu-editMenu-prompte ***
         # from: onTrackClicker - collections/selected_list.coffee
@@ -40,6 +40,7 @@ module.exports = class AllTracksView
 
 
     render: ->
+        console.log 'menu: ', @menu
         @menu.render()
         @tracks.render()
 
@@ -53,6 +54,6 @@ module.exports = class AllTracksView
         @tracks.$el.detach()
 
     clearSelection: ->
-        @selectedTracksList.emptySelection()
+        @selection.emptySelection()
         @menu.manageOptionsMenu 'empty'
 

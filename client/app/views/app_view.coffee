@@ -6,13 +6,13 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 15:30:07 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/07 20:16:07 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/08 23:18:49 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 BaseView = require '../lib/base_view'
-Menu = require '../models/menu_screen'
-ContentScreen = require '../models/content_screen'
+MenuManager = require '../models/menu_manager'
+ContentManager = require '../models/content_manager'
 PlayerScreen = require './player_screen'
 
 ###
@@ -30,7 +30,7 @@ module.exports = class AppView extends BaseView
     afterRender: ->
 
         # Create and render the left menu
-        @menuScreen = new Menu
+        @menuScreen = new MenuManager
         @menuScreen.render()
 
         # Create and render the player screen
@@ -38,5 +38,5 @@ module.exports = class AppView extends BaseView
         @playerScreen.render()
 
         # Create and render the content screen
-        @contentScreen = new ContentScreen
+        @contentScreen = new ContentManager
         @contentScreen.renderAllTracks()
