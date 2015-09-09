@@ -355,8 +355,6 @@ module.exports = PlaylistList = (function(_super) {
 
   PlaylistList.prototype.url = 'playlist-list';
 
-  PlaylistList.prototype.render = function(playlist) {};
-
   return PlaylistList;
 
 })(Backbone.Collection);
@@ -1223,6 +1221,21 @@ module.exports = Playlist = (function(_super) {
     return this.fetchTracks();
   };
 
+  Playlist.prototype.addToPlaylist = function() {
+    var listTracksId, selection, track;
+    selection = window.selection;
+    listTracksId = this.get('tracks');
+    while (true) {
+      if (selection.length === 0) {
+        break;
+      }
+      track = selection.pop();
+      this.collection.add(track);
+      listTracksId.push(track.id);
+    }
+    return this.save();
+  };
+
   return Playlist;
 
 })(Backbone.Model);
@@ -2023,6 +2036,14 @@ module.exports = MenuRowView = (function(_super) {
   MenuRowView.prototype.className = 'tracks-menu-playlist-row';
 
   MenuRowView.prototype.tagName = 'li';
+
+  MenuRowView.prototype.initialize = function() {
+    return this.$el.click((function(_this) {
+      return function() {
+        return _this.model.addToPlaylist();
+      };
+    })(this));
+  };
 
   return MenuRowView;
 

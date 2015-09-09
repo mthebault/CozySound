@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/09/08 23:09:44 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/09 16:03:35 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/09 16:05:16 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -86,10 +86,6 @@ module.exports = class TracksMenuView extends BaseView
 
 
     ######################## ACTION TRACKS MENU #################################
-    # Check if the selection list is used or not. If it used the action track
-    # menu pop in the context menu. If it's not used anymore the menu disapear
-    # isUser is a bollean
-    # TODO: improve it
     manageOptionsMenu: (status) =>
         if status == 'unique'
             if @currentStatus == 'empty'

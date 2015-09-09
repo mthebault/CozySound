@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/26 17:16:29 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/08 16:10:47 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/09 16:57:48 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -16,6 +16,3 @@ module.exports = class PlaylistList extends Backbone.Collection
 
     model: Playlist
     url: 'playlist-list'
-
-
-    render: (playlist) ->

@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/09/09 12:36:43 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/09 13:39:35 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/09 16:56:10 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -17,3 +17,6 @@ module.exports = class MenuRowView extends BaseView
 
     className: 'tracks-menu-playlist-row'
     tagName: 'li'
+
+    initialize: ->
+        @$el.click => @model.addToPlaylist()
