@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/09/08 23:07:41 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/08 23:33:26 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/09 12:05:53 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -25,6 +25,8 @@ module.exports = class MenuManager
 
     constructor: ->
         _.extend @, Backbone.Events
+
+        @playlistsCollection =  window.app.playlistsCollection
 
         # Set a shortcut
         window.app.menuScreen = @

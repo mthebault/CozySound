@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/09/08 23:13:43 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/08 23:41:06 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/09 11:09:26 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -40,7 +40,6 @@ module.exports = class AllTracksView
 
 
     render: ->
-        console.log 'menu: ', @menu
         @menu.render()
         @tracks.render()
 
@@ -56,4 +55,3 @@ module.exports = class AllTracksView
     clearSelection: ->
         @selection.emptySelection()
         @menu.manageOptionsMenu 'empty'
-

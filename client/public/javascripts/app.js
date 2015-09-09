@@ -1160,6 +1160,7 @@ module.exports = MenuManager = (function() {
 
   function MenuManager() {
     _.extend(this, Backbone.Events);
+    this.playlistsCollection = window.app.playlistsCollection;
     window.app.menuScreen = this;
     this.menuView = new MenuView;
     this.listenTo(this.menuView, 'playlist-create', this.createNewPlaylist);
@@ -1487,7 +1488,6 @@ module.exports = AllTracksView = (function() {
   }
 
   AllTracksView.prototype.render = function() {
-    console.log('menu: ', this.menu);
     this.menu.render();
     return this.tracks.render();
   };
@@ -1786,17 +1786,40 @@ var __templateData = function template(locals) {
 var buf = [];
 var jade_mixins = {};
 var jade_interp;
-var locals_ = (locals || {}),statMenu = locals_.statMenu;
-buf.push("<ul class=\"nav nav-tabs\"><input id=\"upload-files\" name=\"upload-files\" type=\"file\" multiple=\"multiple\" accept=\"audio/*\" role=\"presentation\" class=\"btn btn-default btn-file\"/><li id=\"fetch\" role=\"presentation\" class=\"btn btn-default\">FETCH</li>");
-if ( statMenu.playlist)
+var locals_ = (locals || {}),statMenu = locals_.statMenu,listPlaylists = locals_.listPlaylists;
+buf.push("<div class=\"nav nav-tabs\"><input id=\"upload-files\" name=\"upload-files\" type=\"file\" multiple=\"multiple\" accept=\"audio/*\" role=\"presentation\" class=\"btn btn-default btn-file\"/><button id=\"menu-fetch\" role=\"presentation\" class=\"btn btn-default\">FETCH</button>");
+if ( statMenu != 'empty' && statMenu != null)
 {
-buf.push("<li id=\"playlist\" role=\"presentation\" class=\"btn btn-default\">Add TO PLAYLIST</li>");
+buf.push("<div class=\"btn-group\"><button id=\"menu-playlist\" type=\"button\" data-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\" class=\"btn btn-default dropdown-toggle\"><Add>TO PLAYLIST</Add><span class=\"caret\"></span></button><ul class=\"dropdown-menu\"><li></li>");
+// iterate listPlaylists
+;(function(){
+  var $$obj = listPlaylists;
+  if ('number' == typeof $$obj.length) {
+
+    for (var $index = 0, $$l = $$obj.length; $index < $$l; $index++) {
+      var playlist = $$obj[$index];
+
+buf.push("<li><a>" + (jade.escape((jade_interp = playlist.get('name')) == null ? '' : jade_interp)) + "</a></li>");
+    }
+
+  } else {
+    var $$l = 0;
+    for (var $index in $$obj) {
+      $$l++;      var playlist = $$obj[$index];
+
+buf.push("<li><a>" + (jade.escape((jade_interp = playlist.get('name')) == null ? '' : jade_interp)) + "</a></li>");
+    }
+
+  }
+}).call(this);
+
+buf.push("</ul></div>");
 }
-if ( statMenu.edition)
+if ( statMenu == 'unique')
 {
-buf.push("<li id=\"edit-tracks\" role=\"presentation\" class=\"btn btn-default\">EDIT</li>");
+buf.push("<button id=\"menu-edit\" role=\"presentation\" class=\"btn btn-default\">EDIT</button>");
 }
-buf.push("</ul>");;return buf.join("");
+buf.push("</div>");;return buf.join("");
 };
 if (typeof define === 'function' && define.amd) {
   define([], function() {
@@ -2066,21 +2089,20 @@ module.exports = TracksMenuView = (function(_super) {
 
   TracksMenuView.prototype.el = '#tracks-menu';
 
-  TracksMenuView.prototype.statMenu = {
-    edition: false,
-    playlist: false
-  };
+  TracksMenuView.statMenu = null;
 
   TracksMenuView.prototype.events = {
     'change #upload-files': 'lauchUploadFiles',
-    'click #edit-tracks': function(e) {
+    'click #menu-edit': function(e) {
       return this.trigger('menu-trackEdition-lauch');
     },
-    'click #fetch': 'fetchBaseCollection'
+    'click #menu-fetch': 'fetchBaseCollection'
   };
 
   TracksMenuView.prototype.initialize = function(options) {
-    return this.selection = options.selection;
+    this.selection = options.selection;
+    this.listPlaylists = window.app.playlistsCollection;
+    return console.log('playlists: ', this.listPlaylists);
   };
 
   TracksMenuView.prototype.afterRender = function() {
@@ -2092,8 +2114,10 @@ module.exports = TracksMenuView = (function(_super) {
   };
 
   TracksMenuView.prototype.getRenderData = function() {
+    console.log('playlists: ', this.listPlaylists.models);
     return {
-      statMenu: this.statMenu
+      statMenu: this.statMenu,
+      listPlaylists: this.listPlaylists.models
     };
   };
 
@@ -2110,16 +2134,7 @@ module.exports = TracksMenuView = (function(_super) {
   };
 
   TracksMenuView.prototype.manageOptionsMenu = function(status) {
-    if (status === 'empty') {
-      this.statMenu.playlist = false;
-      this.statMenu.edition = false;
-    } else if (status === 'unique') {
-      this.statMenu.playlist = true;
-      this.statMenu.edition = true;
-    } else if (status === 'several') {
-      this.statMenu.playlist = true;
-      this.statMenu.edition = false;
-    }
+    this.statMenu = status;
     return this.render();
   };
 
@@ -2297,18 +2312,6 @@ module.exports = PlaylistsListView = (function(_super) {
   PlaylistsListView.prototype.itemview = PlaylistRowView;
 
   PlaylistsListView.prototype.collectionEl = '#menu-playlist-list';
-
-  PlaylistsListView.prototype.test = function(event) {
-    var playlist;
-    playlist = this.$(event.target).console.log('playlist 1: ', playlist);
-    playlist = this.$(event.target).parents('li');
-    console.log('playlist 1: ', playlist);
-    playlist = this.$(event.currentTarget).data();
-    console.log('playlist 1: ', playlist);
-    playlist = this.$(event.currentTarget).data();
-    console.log('playlist 1: ', playlist);
-    return console.log('event: ', event);
-  };
 
   return PlaylistsListView;
 

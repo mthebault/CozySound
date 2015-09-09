@@ -6,12 +6,11 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/09/08 23:09:44 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/08 23:44:32 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/09 12:03:20 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 BaseView = require '../../../../lib/base_view'
-
 
 ###
 # Context_menu represent the menu on the top of the app. His goal is to work
@@ -23,22 +22,25 @@ module.exports = class TracksMenuView extends BaseView
     template: require '../templates/tracks_menu'
     el: '#tracks-menu'
 
-    statMenu:
-        edition: false
-        playlist: false
+    @statMenu = null
 
     events:
         # Event trigger when a user valid the files to upload
         'change #upload-files': 'lauchUploadFiles'
         # Lauch Tracks editions
-        'click #edit-tracks': (e) -> @trigger 'menu-trackEdition-lauch'
+        'click #menu-edit': (e) -> @trigger 'menu-trackEdition-lauch'
 
         # Bouton testing
         # TODO: delete it
-        'click #fetch': 'fetchBaseCollection'
+        'click #menu-fetch': 'fetchBaseCollection'
+
 
     initialize: (options) ->
         @selection = options.selection
+
+        @listPlaylists = window.app.playlistsCollection
+
+        console.log 'playlists: ', @listPlaylists
 
     afterRender: ->
         @uploader = $('#uploader')
@@ -50,7 +52,10 @@ module.exports = class TracksMenuView extends BaseView
 
 
     getRenderData: ->
-        return { statMenu: @statMenu }
+        console.log 'playlists: ', @listPlaylists.models
+        return {
+            statMenu: @statMenu
+            listPlaylists: @listPlaylists.models}
 
 
     ############################## UPLOAD #####################################
@@ -75,15 +80,9 @@ module.exports = class TracksMenuView extends BaseView
     # isUser is a bollean
     # TODO: improve it
     manageOptionsMenu: (status) =>
-        if status is 'empty'
-            @statMenu.playlist = false
-            @statMenu.edition = false
-        else if status is 'unique'
-            @statMenu.playlist = true
-            @statMenu.edition = true
-        else if status is 'several'
-            @statMenu.playlist = true
-            @statMenu.edition = false
+        @statMenu = status
         @render()
     ################### END - ACTION TRACKS MENU - END ##########################
+
+
 

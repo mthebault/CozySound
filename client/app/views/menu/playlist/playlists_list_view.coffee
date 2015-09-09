@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/09/08 23:17:16 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/08 23:19:35 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/09 11:33:53 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -20,18 +20,3 @@ module.exports = class PlaylistsListView extends ViewCollection
     itemview: PlaylistRowView
 
     collectionEl: '#menu-playlist-list'
-
-    #events:
-        #'click li.playlist-row': 'test'
-
-    test: (event) ->
-        playlist = @$(event.target).
-        console.log 'playlist 1: ', playlist
-        playlist = @$(event.target).parents('li')
-        console.log 'playlist 1: ', playlist
-        playlist = @$(event.currentTarget).data()
-        console.log 'playlist 1: ', playlist
-        playlist = @$(event.currentTarget).data()
-        console.log 'playlist 1: ', playlist
-        console.log 'event: ', event
-        #@trigger 'content-print-playlist',
