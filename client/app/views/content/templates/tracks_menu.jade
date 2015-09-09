@@ -1,21 +1,11 @@
-div.nav.nav-tabs
-    input#upload-files.btn.btn-default.btn-file(
+div#tracks-menu-button.nav.nav-tabs
+    input#tracks-menu-upload.btn.btn-default.btn-file(
         name='upload-files'
         type='file'
         multiple='multiple'
         accept='audio/*'
         role='presentation'
         )
-    button#menu-fetch.btn.btn-default(role='presentation') FETCH
-    if statMenu != 'empty' && statMenu != null
-        div.btn-group
-            button#menu-playlist.btn.btn-default.dropdown-toggle(type='button' data-toggle='dropdown' aria-haspopup="true" aria-expanded="false")
-                Add TO PLAYLIST
-                span.caret
-            ul.dropdown-menu
-                li
-                for  playlist in listPlaylists
-                    li
-                        a #{playlist.get('name')}
-    if statMenu == 'unique'
-        button#menu-edit.btn.btn-default(role='presentation') EDIT
+    button#tracks-menu-fetch.btn.btn-default(role='presentation') FETCH
+    div#tracks-menu-playlist.btn-group
+    button#tracks-menu-edit.btn.btn-default(role='presentation') EDIT

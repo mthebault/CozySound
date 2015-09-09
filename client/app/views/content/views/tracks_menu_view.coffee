@@ -6,11 +6,12 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/09/08 23:09:44 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/09 12:03:20 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/09 16:03:35 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 BaseView = require '../../../../lib/base_view'
+MenuListView = require './menu_list_view'
 
 ###
 # Context_menu represent the menu on the top of the app. His goal is to work
@@ -22,28 +23,38 @@ module.exports = class TracksMenuView extends BaseView
     template: require '../templates/tracks_menu'
     el: '#tracks-menu'
 
-    @statMenu = null
+    currentStatus: 'empty'
 
     events:
         # Event trigger when a user valid the files to upload
-        'change #upload-files': 'lauchUploadFiles'
+        'change #tracks-menu-uploadfiles': 'lauchUploadFiles'
         # Lauch Tracks editions
-        'click #menu-edit': (e) -> @trigger 'menu-trackEdition-lauch'
+        'click #tracks-menu-edit': (e) -> @trigger 'menu-trackEdition-lauch'
 
         # Bouton testing
         # TODO: delete it
-        'click #menu-fetch': 'fetchBaseCollection'
+        'click #tracks-menu-fetch': 'fetchBaseCollection'
+
 
 
     initialize: (options) ->
         @selection = options.selection
 
-        @listPlaylists = window.app.playlistsCollection
-
-        console.log 'playlists: ', @listPlaylists
 
     afterRender: ->
-        @uploader = $('#uploader')
+        @menu = $('#tracks-menu-button')
+        @uploader = $('#tracks-menu-upload')
+        @editionButton = $('#tracks-menu-edit')
+        @playlistButton = $('#tracks-menu-playlist')
+
+        @listPlaylistsViews = new MenuListView
+        @listPlaylistsViews.render()
+
+        @editionButton.detach()
+        @playlistButton.detach()
+
+
+
 
     # Testing function
     # TODO: delete it
@@ -51,11 +62,11 @@ module.exports = class TracksMenuView extends BaseView
         window.app.baseCollection.fetch()
 
 
-    getRenderData: ->
-        console.log 'playlists: ', @listPlaylists.models
-        return {
-            statMenu: @statMenu
-            listPlaylists: @listPlaylists.models}
+    addToPlaylist: (event) ->
+        console.log 'event: ', event
+        cid = @$(event.target).parents('li').data 'cid'
+        console.log 'cid: ', cid
+
 
 
     ############################## UPLOAD #####################################
@@ -80,8 +91,27 @@ module.exports = class TracksMenuView extends BaseView
     # isUser is a bollean
     # TODO: improve it
     manageOptionsMenu: (status) =>
-        @statMenu = status
-        @render()
+        if status == 'unique'
+            if @currentStatus == 'empty'
+                @menu.append @playlistButton
+                @menu.append @editionButton
+            else if @currentStatus == 'several'
+                @menu.append @editionButton
+            @currentStatus = status
+        else if status == 'empty'
+            if @currentStatus == 'unique'
+                @editionButton.detach()
+                @playlistButton.detach()
+            else if @currentStatus == 'several'
+                @playlistButton.detach()
+            @currentStatus = status
+        else if status == 'several'
+            if @currentStatus == 'empty'
+                @menu.append @playlistButton
+            else if @currentStatus == 'unique'
+                @editionButton.detach()
+                @menu.append @playlistButton
+            @currentStatus = status
     ################### END - ACTION TRACKS MENU - END ##########################
 
 
