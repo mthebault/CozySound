@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 18:42:03 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/09 22:57:38 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/09 23:45:31 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -68,17 +68,18 @@ module.exports = class TracksList extends Backbone.Collection
         loop
             break if models.length == 0
             model = models.pop()
-            albumId = @getAlbumId(model)
-            album = window.app.albumCollection.get albumId
-            if not album?
-                newQueue = []
-                newQueue.push model
-                models.forEach (modelQueue) =>
-                    if albumId == @getAlbumId(modelQueue)
-                        newQueue.push models.splice(models.indexOf(modelQueue), 1)[0]
-                @newWorker albumId, newQueue, options, callback
-            else
-                @setAlbum model, album, options, callback
+            if not (model.id? and @get(model.id))
+                albumId = @getAlbumId(model)
+                album = window.app.albumCollection.get albumId
+                if not album?
+                    newQueue = []
+                    newQueue.push model
+                    models.forEach (modelQueue) =>
+                        if albumId == @getAlbumId(modelQueue)
+                            newQueue.push models.splice(models.indexOf(modelQueue), 1)[0]
+                    @newWorker albumId, newQueue, options, callback
+                else
+                    @setAlbum model, album, options, callback
 
 
     # Change to fetch data by range, it ask the server to retrieve the number of

@@ -493,21 +493,25 @@ module.exports = TracksList = (function(_super) {
         break;
       }
       model = models.pop();
-      albumId = this.getAlbumId(model);
-      album = window.app.albumCollection.get(albumId);
-      if (album == null) {
-        newQueue = [];
-        newQueue.push(model);
-        models.forEach((function(_this) {
-          return function(modelQueue) {
-            if (albumId === _this.getAlbumId(modelQueue)) {
-              return newQueue.push(models.splice(models.indexOf(modelQueue), 1)[0]);
-            }
-          };
-        })(this));
-        _results.push(this.newWorker(albumId, newQueue, options, callback));
+      if (!((model.id != null) && this.get(model.id))) {
+        albumId = this.getAlbumId(model);
+        album = window.app.albumCollection.get(albumId);
+        if (album == null) {
+          newQueue = [];
+          newQueue.push(model);
+          models.forEach((function(_this) {
+            return function(modelQueue) {
+              if (albumId === _this.getAlbumId(modelQueue)) {
+                return newQueue.push(models.splice(models.indexOf(modelQueue), 1)[0]);
+              }
+            };
+          })(this));
+          _results.push(this.newWorker(albumId, newQueue, options, callback));
+        } else {
+          _results.push(this.setAlbum(model, album, options, callback));
+        }
       } else {
-        _results.push(this.setAlbum(model, album, options, callback));
+        _results.push(void 0);
       }
     }
     return _results;
