@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/19 06:50:00 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/09 18:49:41 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/09 23:26:08 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -17,6 +17,7 @@ log = require('printit')
     prefix: 'track'
 Track = require './../models/track'
 moment = require 'moment'
+async = require 'async'
 
 
 # Fetch params.nbTracks tracks from params.start
@@ -36,9 +37,22 @@ fetchRange = (req, res, next) ->
 
 
 fetchListTracks = (req, res, next) ->
-    Track.find req.query.listId, (err, listTracks) ->
-        return next err if err
-        res.status(200).send(listTracks)
+    data = []
+
+
+    processSearch = (id, next) =>
+        Track.find id, (err, track) =>
+            return next err if err
+            data.push track
+            next()
+
+    queue = async.queue processSearch, 10
+
+    queue.drain = ->
+        res.status(200).send(data)
+
+
+    queue.push req.query.listId
 
 
 
@@ -150,7 +164,6 @@ create = (req, res, next) ->
             part.pipe checksum
             metadata = name: "track"
             uploadStream = track.attachBinary part, metadata, (err) ->
-                upload = false
                 # rollback if there was an error
                 return rollback track, err if err #and not canceled
 
@@ -164,7 +177,6 @@ create = (req, res, next) ->
 
                     data =
                         checksum: checksum
-                        uploading: false
 
                     track.updateAttributes data, (err) ->
                         # we ignore checksum storing errors

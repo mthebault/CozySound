@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/26 17:19:49 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/09 19:11:20 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/09 22:57:48 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -47,8 +47,8 @@ module.exports = class Playlist extends Backbone.Model
             error: (xhr) ->
                 console.error xhr
             success: (data) =>
-                @baseCollection.add data, (tracks) ->
-                    @collection.add newData
+                @baseCollection.add data, null, (tracks) =>
+                    @collection.add tracks
 
 
     addToPlaylist: ->

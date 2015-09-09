@@ -465,7 +465,7 @@ module.exports = TracksList = (function(_super) {
       this.trigger('add', model);
     }
     if (callback != null) {
-      return callback();
+      return callback(model);
     }
   };
 
@@ -658,7 +658,6 @@ module.exports = UploadQueue = (function() {
       model.save(null, {
         success: (function(_this) {
           return function(model) {
-            model.track = null;
             window.app.albumCollection.addTrackToAlbum(model);
             model.loaded = model.total;
             model.markAsUploaded();
@@ -1238,8 +1237,8 @@ module.exports = Playlist = (function(_super) {
       },
       success: (function(_this) {
         return function(data) {
-          return _this.baseCollection.add(data, function(tracks) {
-            return this.collection.add(newData);
+          return _this.baseCollection.add(data, null, function(tracks) {
+            return _this.collection.add(tracks);
           });
         };
       })(this)
@@ -2267,7 +2266,7 @@ module.exports = TracksMenuView = (function(_super) {
   TracksMenuView.prototype.currentStatus = 'empty';
 
   TracksMenuView.prototype.events = {
-    'change #tracks-menu-uploadfiles': 'lauchUploadFiles',
+    'change #tracks-menu-upload': 'lauchUploadFiles',
     'click #tracks-menu-edit': function(e) {
       return this.trigger('menu-trackEdition-lauch');
     },

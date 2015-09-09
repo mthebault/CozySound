@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 23:50:03 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/08 23:29:39 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/09 22:57:52 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -156,7 +156,6 @@ module.exports = class UploadQueue
         if not model.isErrored() and not model.isConflict()
             model.save null,
                 success: (model) =>
-                    model.track = null
                     window.app.albumCollection.addTrackToAlbum model
                     # Make sure progress is uniform, we force it a 100%
                     model.loaded = model.total

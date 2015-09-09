@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/09/08 23:09:44 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/09 17:50:43 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/09 20:01:12 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -27,7 +27,7 @@ module.exports = class TracksMenuView extends BaseView
 
     events:
         # Event trigger when a user valid the files to upload
-        'change #tracks-menu-uploadfiles': 'lauchUploadFiles'
+        'change #tracks-menu-upload': 'lauchUploadFiles'
         # Lauch Tracks editions
         'click #tracks-menu-edit': (e) -> @trigger 'menu-trackEdition-lauch'
 

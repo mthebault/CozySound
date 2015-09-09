@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 18:42:03 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/09 19:08:58 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/09 22:57:38 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -51,7 +51,7 @@ module.exports = class TracksList extends Backbone.Collection
         if not (options?.silent == true)
             @trigger 'add', model
         if callback?
-            callback()
+            callback model
 
 
     newWorker: (albumId, queue, options, callback) ->
