@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/19 06:50:00 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/04 15:10:44 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/09 18:49:41 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -33,6 +33,12 @@ fetchRange = (req, res, next) ->
                 , 500
         else
             res.status(200).send(data)
+
+
+fetchListTracks = (req, res, next) ->
+    Track.find req.query.listId, (err, listTracks) ->
+        return next err if err
+        res.status(200).send(listTracks)
 
 
 
@@ -228,3 +234,4 @@ module.exports =
     all: all
     update: update
     create: create
+    fetchListTracks: fetchListTracks

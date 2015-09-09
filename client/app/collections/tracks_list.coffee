@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 18:42:03 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/07 16:14:35 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/09 19:08:58 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -44,22 +44,24 @@ module.exports = class TracksList extends Backbone.Collection
             model.album
 
 
-    setAlbum: (model, album, options) ->
+    setAlbum: (model, album, options, callback) ->
         allOptions = _.extend({add: true, remove: false, silent: true}, options)
         model = @set model, allOptions
         model.album = album
         if not (options?.silent == true)
             @trigger 'add', model
+        if callback?
+            callback()
 
 
-    newWorker: (albumId, queue, options) ->
+    newWorker: (albumId, queue, options, callback) ->
         window.app.albumCollection.fetchAlbumById albumId, (err, album) =>
             return console.error err if err
             queue.forEach (model) =>
-                @setAlbum model, album, options
+                @setAlbum model, album, options, callback
 
 
-    add: (models, options) ->
+    add: (models, options, callback) ->
         if !_.isArray(models)
             models = [models]
 
@@ -74,9 +76,9 @@ module.exports = class TracksList extends Backbone.Collection
                 models.forEach (modelQueue) =>
                     if albumId == @getAlbumId(modelQueue)
                         newQueue.push models.splice(models.indexOf(modelQueue), 1)[0]
-                @newWorker albumId, newQueue, options
+                @newWorker albumId, newQueue, options, callback
             else
-                @setAlbum model, album, options
+                @setAlbum model, album, options, callback
 
 
     # Change to fetch data by range, it ask the server to retrieve the number of

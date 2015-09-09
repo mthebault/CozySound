@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/19 06:48:47 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/09 17:03:21 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/09 18:12:13 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -19,6 +19,9 @@ module.exports =
         get: track.all
         post: track.create
         put: track.update
+
+    'tracks/fetch':
+        get: track.fetchListTracks
 
     'track/:start/:nbTracks':
         get: track.fetchRange

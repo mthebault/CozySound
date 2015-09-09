@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/09/08 23:06:49 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/09 15:52:41 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/09 19:29:25 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -97,20 +97,13 @@ module.exports = class ContentManager
     renderAllTracks: ->
         @removeCurrentView()
         @currentView = 'allTracks'
-        @renderTracks()
 
-    removeAllTracks: ->
-        @currentView = null
-        @removeTracks()
-
-    renderTracks: ->
         if @loadedScreens['allTracks']?
             @loadedScreens['allTracks'].attach()
             return
 
         # Initialize the tracks displayed
         allTracks = new AllTracksScreen
-            selection: @selection
             baseCollection: @baseCollection
 
 
@@ -125,8 +118,10 @@ module.exports = class ContentManager
         @listenTo allTracks.menu, 'menu-trackEdition-lauch', @renderTrackEdition
 
 
-    removeTracks: ->
+
+    removeAllTracks: ->
         @loadedScreens['allTracks'].detach()
+        @currentView = null
     ###################### END - ALL TRACKS - END ###############################
 
 
@@ -134,15 +129,31 @@ module.exports = class ContentManager
     ############################## PLAYLIST #####################################
 
     renderPlaylist: (playlist) ->
+        playlistId = playlist.id
         @removeCurrentView()
         @currentView = 'playlist'
-        playlist.render()
-        @playlistPrinted = playlist
 
+        if @loadedScreens[playlistId]
+            @loadedScreens[playlistId].attach()
+
+        view = new PlaylistScreen
+            playlist: playlist
+
+        @loadedScreens[playlistId] = view
+
+        view.render()
+        @playlistPrinted = view
+
+        # Initialize the tracksMenu
+        # *** menu-trackEdition-lauch ***
+        # from: events - views/content/tracks_menu/tracks_menu.coffee
+        # argument:
+        @listenTo view.menu, 'menu-trackEdition-lauch', @renderTrackEdition
 
     removePlaylist: ->
-        @playlistPrinted.remove()
+        @playlistPrinted.detach()
         @playlistPrinted = null
+        @currentView = null
     ######################## END - PLAYLIST END - ###############################
 
 
@@ -152,10 +163,7 @@ module.exports = class ContentManager
     renderTrackEdition: ->
         @removeCurrentView()
         @currentView =  'trackEdition'
-        @renderEdition()
 
-
-    renderEdition: ->
         if @loadedScreens['trackEdition']?
             @loadedScreens['trackEdition'].attach()
             return
@@ -172,7 +180,6 @@ module.exports = class ContentManager
 
 
     removeTrackEdition: ->
-        @selection.emptySelection()
         @loadedScreens['trackEdition']?.detach()
-        @loadedScreens['allTracks']?.clearSelection()
+        @currentView = null
     ###################### END - TRACKS EDITION - END ###########################

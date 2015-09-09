@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/26 17:19:49 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/09 17:11:05 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/09 19:11:20 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -24,22 +24,32 @@ module.exports = class Playlist extends Backbone.Model
 
     initialize: ->
         @collection = new PlaylistItems
+        @baseCollection = window.app.baseCollection
 
 
     fetchTracks: ->
-        console.log 'tracks: ', @get 'tracks'
+        remoteList = []
+        listTracksId = @get 'tracks'
+        listTracksId.forEach (id) =>
+            track = @baseCollection.get id
+            if track
+                @collection.push track
+            else
+                remoteList.push id
+        if remoteList.length > 0
+            @fetchRemoteTracks remoteList
 
+    fetchRemoteTracks: (listId) ->
+        $.ajax
+            url: "tracks/fetch"
+            data: {listId: listId}
+            type: 'GET'
+            error: (xhr) ->
+                console.error xhr
+            success: (data) =>
+                @baseCollection.add data, (tracks) ->
+                    @collection.add newData
 
-    render: ->
-        if @playlistView?
-            $('playlist-header').append @playlistView.el
-            return
-
-        @playlistView = new PlaylistScreen
-            model: @
-        @playlistView.render()
-
-        @fetchTracks()
 
     addToPlaylist: ->
         selection = window.selection

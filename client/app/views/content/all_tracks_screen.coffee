@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/09/08 23:13:43 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/09 16:05:17 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/09 19:30:19 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -20,7 +20,7 @@ module.exports = class AllTracksView
     constructor: (options) ->
         _.extend @, Backbone.Events
 
-        @selection = options.selection
+        @selection = window.selection
         @baseCollection = options.baseCollection
         @frame = $('#content-screen')
 
@@ -40,11 +40,14 @@ module.exports = class AllTracksView
 
 
     render: ->
+        @selection.emptySelection()
         @menu.render()
         @tracks.render()
 
 
     attach: ->
+        @selection.emptySelection()
+        @menu.manageOptionsMenu 'empty'
         @frame.append @menu.el
         @frame.append @tracks.el
 
@@ -52,6 +55,3 @@ module.exports = class AllTracksView
         @menu.$el.detach()
         @tracks.$el.detach()
 
-    clearSelection: ->
-        @selection.emptySelection()
-        @menu.manageOptionsMenu 'empty'
