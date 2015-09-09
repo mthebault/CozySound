@@ -1559,27 +1559,27 @@ module.exports = EditionScreen = (function() {
 });
 
 ;require.register("views/content/playlist_screen", function(exports, require, module) {
-var PlaylistView,
+var PlaylistScreen, PlaylistView,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
-module.exports = PlaylistView = (function(_super) {
-  __extends(PlaylistView, _super);
+PlaylistView = require('./views/playlist_view');
 
-  function PlaylistView() {
-    return PlaylistView.__super__.constructor.apply(this, arguments);
+module.exports = PlaylistScreen = (function(_super) {
+  __extends(PlaylistScreen, _super);
+
+  PlaylistScreen.prototype.skeleton = require('./skeletons/playlist_skel');
+
+  PlaylistScreen.prototype.el = '#playlist-header';
+
+  function PlaylistScreen() {
+    _.extend(this, Backbone.Events);
+    this.frame = $('#content-screen');
+    this.frame.html(this.skeleton());
+    this.view = new PlaylistView;
   }
 
-  PlaylistView.prototype.template = require('./templates/playlist');
-
-  PlaylistView.prototype.el = '#playlist-header';
-
-  PlaylistView.prototype.render = function() {
-    console.log('model: ', this.model);
-    return PlaylistView.__super__.render.apply(this, arguments);
-  };
-
-  return PlaylistView;
+  return PlaylistScreen;
 
 })(Backbone.View);
 });
@@ -1764,7 +1764,7 @@ var buf = [];
 var jade_mixins = {};
 var jade_interp;
 var locals_ = (locals || {}),model = locals_.model;
-buf.push("<h1>" + (jade.escape((jade_interp = model.name) == null ? '' : jade_interp)) + "</h1><h2>plop</h2>");;return buf.join("");
+buf.push("<h1>" + (jade.escape((jade_interp = model.name) == null ? '' : jade_interp)) + "</h1>");;return buf.join("");
 };
 if (typeof define === 'function' && define.amd) {
   define([], function() {

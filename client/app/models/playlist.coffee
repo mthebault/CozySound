@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/26 17:19:49 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/09 17:05:10 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/09 17:11:05 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -38,6 +38,7 @@ module.exports = class Playlist extends Backbone.Model
         @playlistView = new PlaylistScreen
             model: @
         @playlistView.render()
+
         @fetchTracks()
 
     addToPlaylist: ->

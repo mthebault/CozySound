@@ -6,15 +6,24 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/09/08 23:14:16 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/09 17:05:19 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/09 17:14:58 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
-module.exports = class PlaylistView extends Backbone.View
-    template: require './templates/playlist'
+PlaylistView = require './views/playlist_view'
+
+module.exports = class PlaylistScreen extends Backbone.View
+    skeleton: require './skeletons/playlist_skel'
+
+    #template: require './templates/playlist'
     el: '#playlist-header'
 
 
-    render: ->
-        console.log 'model: ', @model
-        super
+    constructor: ->
+        _.extend @, Backbone.Events
+
+        @frame = $('#content-screen')
+
+        @frame.html @skeleton()
+
+        @view = new PlaylistView
