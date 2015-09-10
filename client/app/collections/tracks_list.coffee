@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 18:42:03 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/10 19:44:58 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/10 22:57:33 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -65,10 +65,12 @@ module.exports = class TracksList extends Backbone.Collection
         if !_.isArray(models)
             models = [models]
 
+
         loop
             break if models.length == 0
             model = models.pop()
-            if not (model.id? and @get(model.id))
+            isExist = _.find @models, (elem) -> elem == model
+            if not isExist
                 albumId = @getAlbumId(model)
                 album = window.app.albumCollection.get albumId
                 if not album?
@@ -90,7 +92,7 @@ module.exports = class TracksList extends Backbone.Collection
         loop
             break if index >= listIds.length
             playlist = listPlaylists.get listIds[index]
-            playlist.removeTrackIds model.id
+            playlist.removeTrackId model.id
             index++
 
     remove: (models, options) ->

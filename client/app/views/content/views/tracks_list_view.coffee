@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/09/08 23:09:28 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/10 19:42:20 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/10 20:30:53 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -54,7 +54,10 @@ module.exports = class TracksListView extends ViewCollection
             else
                 @trigger 'selection-menu-options', 'several'
 
-                #TODO: improve it, it's not very pretty
+
+
+
+    #TODO: improve it, it's not very pretty
     manageSelectionEvent: (event) ->
         cid = @$(event.target).parents('tr').data 'cid'
         view = _.find @views, (view) -> view.model.cid is cid

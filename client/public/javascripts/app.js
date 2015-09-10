@@ -486,7 +486,7 @@ module.exports = TracksList = (function(_super) {
   };
 
   TracksList.prototype.add = function(models, options, callback) {
-    var album, albumId, model, newQueue, _results;
+    var album, albumId, isExist, model, newQueue, _results;
     if (!_.isArray(models)) {
       models = [models];
     }
@@ -496,7 +496,10 @@ module.exports = TracksList = (function(_super) {
         break;
       }
       model = models.pop();
-      if (!((model.id != null) && this.get(model.id))) {
+      isExist = _.find(this.models, function(elem) {
+        return elem === model;
+      });
+      if (!isExist) {
         albumId = this.getAlbumId(model);
         album = window.app.albumCollection.get(albumId);
         if (album == null) {
@@ -531,7 +534,7 @@ module.exports = TracksList = (function(_super) {
         break;
       }
       playlist = listPlaylists.get(listIds[index]);
-      playlist.removeTrackIds(model.id);
+      playlist.removeTrackId(model.id);
       _results.push(index++);
     }
     return _results;
@@ -914,6 +917,7 @@ module.exports = ViewCollection = (function(_super) {
   ViewCollection.prototype.initialize = function() {
     var collectionEl;
     ViewCollection.__super__.initialize.apply(this, arguments);
+    this.views = {};
     this.listenTo(this.collection, "reset", this.onReset);
     this.listenTo(this.collection, "add", this.addItem);
     this.listenTo(this.collection, "remove", this.removeItem);
@@ -1312,30 +1316,19 @@ module.exports = Playlist = (function(_super) {
     });
   };
 
-  Playlist.prototype.removeTrackIds = function(listTrackIds, options) {
-    var index, modelIndex, tracksId;
-    if (!_.isArray(listTrackIds)) {
-      listTrackIds = [listTrackIds];
-    }
-    tracksId = this.get('tracksId');
-    index = 0;
-    while (true) {
-      console.log('index remove tracks ids loop: ', index);
-      if (index >= listTrackIds.length) {
-        break;
-      }
-      modelIndex = tracksId.findIndex((function(_this) {
-        return function(elem) {
-          return elem === listTrackIds[index];
-        };
-      })(this));
-      tracksId = tracksId.splice(modelIndex, 1);
-      index++;
-    }
+  Playlist.prototype.removeTrackId = function(trackId, options) {
+    var modelIndex, playlistTracksId;
+    playlistTracksId = this.get('tracksId');
+    modelIndex = playlistTracksId.findIndex((function(_this) {
+      return function(elem) {
+        return elem === trackId;
+      };
+    })(this));
+    playlistTracksId.splice(modelIndex, 1);
     this.save({
-      tracksId: tracksId
+      tracksId: playlistTracksId
     });
-    return this.collection.remove(listTrackIds, options);
+    return this.collection.remove(trackId, options);
   };
 
   Playlist.prototype.addToPlaylist = function() {
@@ -1608,16 +1601,16 @@ module.exports = AppView = (function(_super) {
 });
 
 ;require.register("views/content/all_tracks_screen", function(exports, require, module) {
-var AllTracksView, TracksListView, TracksMenuView;
+var AllTracksScreen, TracksListView, TracksMenuView;
 
 TracksMenuView = require('./views/tracks_menu_view');
 
 TracksListView = require('./views/tracks_list_view');
 
-module.exports = AllTracksView = (function() {
-  AllTracksView.prototype.skeleton = require('./skeletons/all_tracks_skel');
+module.exports = AllTracksScreen = (function() {
+  AllTracksScreen.prototype.skeleton = require('./skeletons/all_tracks_skel');
 
-  function AllTracksView(options) {
+  function AllTracksScreen(options) {
     _.extend(this, Backbone.Events);
     this.selection = window.selection;
     this.baseCollection = options.baseCollection;
@@ -1634,25 +1627,25 @@ module.exports = AllTracksView = (function() {
     this.listenTo(this.menu, 'track-management-remove', this.baseCollection.removeTracksFromSelection);
   }
 
-  AllTracksView.prototype.render = function() {
+  AllTracksScreen.prototype.render = function() {
     this.selection.emptySelection();
     this.menu.render();
     return this.tracks.render();
   };
 
-  AllTracksView.prototype.attach = function() {
+  AllTracksScreen.prototype.attach = function() {
     this.selection.emptySelection();
     this.menu.manageOptionsMenu('empty');
     this.frame.append(this.menu.el);
     return this.frame.append(this.tracks.el);
   };
 
-  AllTracksView.prototype.detach = function() {
+  AllTracksScreen.prototype.detach = function() {
     this.menu.$el.detach();
     return this.tracks.$el.detach();
   };
 
-  return AllTracksView;
+  return AllTracksScreen;
 
 })();
 });
