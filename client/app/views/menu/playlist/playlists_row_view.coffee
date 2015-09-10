@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/09/08 23:20:14 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/09 16:54:04 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/10 11:20:49 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -21,3 +21,4 @@ module.exports = class PlaylistRowView extends BaseView
     initialize: ->
         @$el.click => window.app.menuScreen.trigger 'content-print-playlist', @model
 
+        @listenTo @model, 'change:name', @render

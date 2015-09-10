@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/09/08 23:06:49 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/09 19:29:25 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/10 19:58:59 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -135,6 +135,8 @@ module.exports = class ContentManager
 
         if @loadedScreens[playlistId]
             @loadedScreens[playlistId].attach()
+            @playlistPrinted = @loadedScreens[playlistId]
+            return
 
         view = new PlaylistScreen
             playlist: playlist
@@ -143,12 +145,6 @@ module.exports = class ContentManager
 
         view.render()
         @playlistPrinted = view
-
-        # Initialize the tracksMenu
-        # *** menu-trackEdition-lauch ***
-        # from: events - views/content/tracks_menu/tracks_menu.coffee
-        # argument:
-        @listenTo view.menu, 'menu-trackEdition-lauch', @renderTrackEdition
 
     removePlaylist: ->
         @playlistPrinted.detach()

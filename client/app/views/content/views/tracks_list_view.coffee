@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/09/08 23:09:28 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/09 19:27:36 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/10 19:42:20 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -54,16 +54,18 @@ module.exports = class TracksListView extends ViewCollection
             else
                 @trigger 'selection-menu-options', 'several'
 
+                #TODO: improve it, it's not very pretty
     manageSelectionEvent: (event) ->
         cid = @$(event.target).parents('tr').data 'cid'
         view = _.find @views, (view) -> view.model.cid is cid
 
-        _manageListTracksSelection = (lastView) =>
-            startIndex = @views.indexOf @_lastTrackSelected
-            endIndex = @views.indexOf lastView
+        _manageListTracksSelection = (clickedView) =>
+            keys = _.keys @views
+            startIndex = keys.indexOf @_lastTrackSelected.model.cid
+            endIndex = keys.indexOf clickedView.model.cid
             loop
                 if startIndex < endIndex then startIndex++ else startIndex--
-                @selection.push @views[startIndex].model
+                @selection.push @views[keys[startIndex]].model
                 break if startIndex == endIndex
 
 

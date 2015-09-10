@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 15:31:19 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/07 23:44:45 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/10 19:42:56 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -29,7 +29,8 @@ module.exports = class ViewCollection extends BaseView
 
     itemview: null
 
-    views: []
+    #views: []
+    views: {}
 
     template: -> ''
 
@@ -48,7 +49,6 @@ module.exports = class ViewCollection extends BaseView
     # bind listeners to the collection
     initialize: ->
         super
-        @views = []
         @listenTo @collection, "reset",   @onReset
         @listenTo @collection, "add",     @addItem
         @listenTo @collection, "remove",  @removeItem
@@ -58,15 +58,15 @@ module.exports = class ViewCollection extends BaseView
 
     # if we have views before a render call, we detach them
     render: ->
-        #view.$el.detach() for id, view of @views
-        @views.forEach (view) -> view.$el.detach()
+        view.$el.detach() for id, view of @views
+        #@views.forEach (view) -> view.$el.detach()
         super
 
     # after render, we reattach the views
     afterRender: ->
         @$collectionEl = $(@collectionEl)
-        #@appendView view.$el for id, view of @views
-        @views.forEach (view) => @appendView view.$el
+        @appendView view.$el for id, view of @views
+        #@views.forEach (view) => @appendView view.$el
         @onReset @collection
         @onChange @views
 
@@ -77,16 +77,16 @@ module.exports = class ViewCollection extends BaseView
 
     # event listener for reset
     onReset: (newcollection) ->
-        #view.remove() for id, view of @views
-        @views.forEach (view) -> view.remove()
+        view.remove() for id, view of @views
+        #@views.forEach (view) -> view.remove()
         newcollection.forEach @addItem
 
     # event listeners for add
     addItem: (model) =>
         options = _.extend {}, {model: model}, @itemViewOptions(model)
         view = new @itemview(options)
-        #@views[model.cid] = view.render()
-        @views.push view.render()
+        @views[model.cid] = view.render()
+        #@views.push view.render()
         @appendView view
         @onChange @views
 

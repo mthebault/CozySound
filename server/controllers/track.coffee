@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/19 06:50:00 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/09 23:26:08 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/10 18:20:52 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -66,6 +66,13 @@ all = (req, res, next) ->
             , 500
         else
             res.status(200).send(data)
+
+remove = (req, res, next) ->
+    Track.find req.params.id, (err, track) ->
+        return next err if err
+        track.destroy (err) ->
+            return next err if err
+            res.status(200).send({})
 
 
 update = (req, res, next) ->
@@ -247,3 +254,4 @@ module.exports =
     update: update
     create: create
     fetchListTracks: fetchListTracks
+    remove: remove

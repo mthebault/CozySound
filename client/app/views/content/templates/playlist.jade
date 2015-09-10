@@ -1,1 +1,7 @@
-h1 #{playlist.name}
+div.page-header
+    h1 #{playlist.name}
+    div.form-inline
+        div.form-group
+            label.sr-only(for='playlist-change-name') Playlist Name
+            input#playlist-change-name.form-control(type='text')
+            button#playlist-send-name.btn.btn-primary.btn-log Change Name

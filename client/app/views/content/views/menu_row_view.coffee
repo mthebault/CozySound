@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/09/09 12:36:43 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/09 16:56:10 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/10 11:35:57 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -20,3 +20,4 @@ module.exports = class MenuRowView extends BaseView
 
     initialize: ->
         @$el.click => @model.addToPlaylist()
+        @listenTo @model, 'change:name', @render

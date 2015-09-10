@@ -411,6 +411,7 @@ module.exports = SelectionList = (function(_super) {
 
 ;require.register("collections/tracks_list", function(exports, require, module) {
 var Track, TracksList,
+  __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
@@ -427,6 +428,8 @@ module.exports = TracksList = (function(_super) {
   __extends(TracksList, _super);
 
   function TracksList() {
+    this.removeTracksFromSelection = __bind(this.removeTracksFromSelection, this);
+    this.removeTrackFromPlaylists = __bind(this.removeTrackFromPlaylists, this);
     return TracksList.__super__.constructor.apply(this, arguments);
   }
 
@@ -513,6 +516,58 @@ module.exports = TracksList = (function(_super) {
       } else {
         _results.push(void 0);
       }
+    }
+    return _results;
+  };
+
+  TracksList.prototype.removeTrackFromPlaylists = function(model) {
+    var index, listIds, listPlaylists, playlist, _results;
+    listIds = model.get('playlistsId');
+    listPlaylists = window.app.playlistsCollection;
+    index = 0;
+    _results = [];
+    while (true) {
+      if (index >= listIds.length) {
+        break;
+      }
+      playlist = listPlaylists.get(listIds[index]);
+      playlist.removeTrackIds(model.id);
+      _results.push(index++);
+    }
+    return _results;
+  };
+
+  TracksList.prototype.remove = function(models, options) {
+    var index, ret, _results;
+    if (!_.isArray(models)) {
+      models = [models];
+    }
+    index = 0;
+    _results = [];
+    while (true) {
+      if (index >= models.length) {
+        break;
+      }
+      this.removeTrackFromPlaylists(models[index]);
+      ret = TracksList.__super__.remove.call(this, models[index], options);
+      ret.destroy({
+        url: "track/" + ret.id
+      });
+      _results.push(index++);
+    }
+    return _results;
+  };
+
+  TracksList.prototype.removeTracksFromSelection = function() {
+    var model, selection, _results;
+    selection = window.selection;
+    _results = [];
+    while (true) {
+      if (selection.length === 0) {
+        break;
+      }
+      model = selection.pop();
+      _results.push(this.remove(model));
     }
     return _results;
   };
@@ -838,7 +893,7 @@ module.exports = ViewCollection = (function(_super) {
 
   ViewCollection.prototype.itemview = null;
 
-  ViewCollection.prototype.views = [];
+  ViewCollection.prototype.views = {};
 
   ViewCollection.prototype.template = function() {
     return '';
@@ -859,7 +914,6 @@ module.exports = ViewCollection = (function(_super) {
   ViewCollection.prototype.initialize = function() {
     var collectionEl;
     ViewCollection.__super__.initialize.apply(this, arguments);
-    this.views = [];
     this.listenTo(this.collection, "reset", this.onReset);
     this.listenTo(this.collection, "add", this.addItem);
     this.listenTo(this.collection, "remove", this.removeItem);
@@ -869,19 +923,23 @@ module.exports = ViewCollection = (function(_super) {
   };
 
   ViewCollection.prototype.render = function() {
-    this.views.forEach(function(view) {
-      return view.$el.detach();
-    });
+    var id, view, _ref;
+    _ref = this.views;
+    for (id in _ref) {
+      view = _ref[id];
+      view.$el.detach();
+    }
     return ViewCollection.__super__.render.apply(this, arguments);
   };
 
   ViewCollection.prototype.afterRender = function() {
+    var id, view, _ref;
     this.$collectionEl = $(this.collectionEl);
-    this.views.forEach((function(_this) {
-      return function(view) {
-        return _this.appendView(view.$el);
-      };
-    })(this));
+    _ref = this.views;
+    for (id in _ref) {
+      view = _ref[id];
+      this.appendView(view.$el);
+    }
     this.onReset(this.collection);
     return this.onChange(this.views);
   };
@@ -892,9 +950,12 @@ module.exports = ViewCollection = (function(_super) {
   };
 
   ViewCollection.prototype.onReset = function(newcollection) {
-    this.views.forEach(function(view) {
-      return view.remove();
-    });
+    var id, view, _ref;
+    _ref = this.views;
+    for (id in _ref) {
+      view = _ref[id];
+      view.remove();
+    }
     return newcollection.forEach(this.addItem);
   };
 
@@ -904,7 +965,7 @@ module.exports = ViewCollection = (function(_super) {
       model: model
     }, this.itemViewOptions(model));
     view = new this.itemview(options);
-    this.views.push(view.render());
+    this.views[model.cid] = view.render();
     this.appendView(view);
     return this.onChange(this.views);
   };
@@ -1098,14 +1159,15 @@ module.exports = ContentManager = (function() {
     this.currentView = 'playlist';
     if (this.loadedScreens[playlistId]) {
       this.loadedScreens[playlistId].attach();
+      this.playlistPrinted = this.loadedScreens[playlistId];
+      return;
     }
     view = new PlaylistScreen({
       playlist: playlist
     });
     this.loadedScreens[playlistId] = view;
     view.render();
-    this.playlistPrinted = view;
-    return this.listenTo(view.menu, 'menu-trackEdition-lauch', this.renderTrackEdition);
+    return this.playlistPrinted = view;
   };
 
   ContentManager.prototype.removePlaylist = function() {
@@ -1206,13 +1268,14 @@ module.exports = Playlist = (function(_super) {
 
   Playlist.prototype.initialize = function() {
     this.collection = new PlaylistItems;
-    return this.baseCollection = window.app.baseCollection;
+    this.baseCollection = window.app.baseCollection;
+    return this.selection = window.selection;
   };
 
   Playlist.prototype.fetchTracks = function() {
     var listTracksId, remoteList;
     remoteList = [];
-    listTracksId = this.get('tracks');
+    listTracksId = this.get('tracksId');
     listTracksId.forEach((function(_this) {
       return function(id) {
         var track;
@@ -1249,19 +1312,49 @@ module.exports = Playlist = (function(_super) {
     });
   };
 
-  Playlist.prototype.addToPlaylist = function() {
-    var listTracksId, selection, track;
-    selection = window.selection;
-    listTracksId = this.get('tracks');
+  Playlist.prototype.removeTrackIds = function(listTrackIds, options) {
+    var index, modelIndex, tracksId;
+    if (!_.isArray(listTrackIds)) {
+      listTrackIds = [listTrackIds];
+    }
+    tracksId = this.get('tracksId');
+    index = 0;
     while (true) {
-      if (selection.length === 0) {
+      console.log('index remove tracks ids loop: ', index);
+      if (index >= listTrackIds.length) {
         break;
       }
-      track = selection.pop();
-      this.collection.add(track);
-      listTracksId.push(track.id);
+      modelIndex = tracksId.findIndex((function(_this) {
+        return function(elem) {
+          return elem === listTrackIds[index];
+        };
+      })(this));
+      tracksId = tracksId.splice(modelIndex, 1);
+      index++;
     }
-    return this.save();
+    this.save({
+      tracksId: tracksId
+    });
+    return this.collection.remove(listTrackIds, options);
+  };
+
+  Playlist.prototype.addToPlaylist = function() {
+    var listTracksId, track;
+    listTracksId = this.get('tracksId');
+    while (true) {
+      if (this.selection.length === 0) {
+        break;
+      }
+      track = this.selection.pop();
+      if (!(_.find(listTracksId, function(elem) {
+        return elem === track.id;
+      }))) {
+        this.collection.add(track);
+        listTracksId.push(track.id);
+        track.addPlaylist(this);
+      }
+    }
+    return this.save('tracksId', listTracksId);
   };
 
   return Playlist;
@@ -1417,6 +1510,18 @@ module.exports = Track = (function(_super) {
     return Backbone.sync.apply(this, arguments);
   };
 
+  Track.prototype.addPlaylist = function(playlist) {
+    var currentPlaylist, listPlaylist;
+    listPlaylist = this.get('playlistsId');
+    currentPlaylist = _.find(listPlaylist, function(elem) {
+      return elem === playlist.id;
+    });
+    if (currentPlaylist == null) {
+      listPlaylist.push(playlist.id);
+      return this.save('playlistsId', listPlaylist);
+    }
+  };
+
   return Track;
 
 })(Backbone.Model);
@@ -1526,6 +1631,7 @@ module.exports = AllTracksView = (function() {
       selection: this.selection
     });
     this.listenTo(this.tracks, 'selection-menu-options', this.menu.manageOptionsMenu);
+    this.listenTo(this.menu, 'track-management-remove', this.baseCollection.removeTracksFromSelection);
   }
 
   AllTracksView.prototype.render = function() {
@@ -1605,9 +1711,6 @@ module.exports = PlaylistScreen = (function() {
     this.header = new PlaylistView({
       playlist: this.playlist
     });
-    this.menu = new TracksMenuView({
-      selection: this.selection
-    });
     this.tracks = new TracksListView({
       collection: this.playlist.collection,
       selection: this.selection
@@ -1617,22 +1720,18 @@ module.exports = PlaylistScreen = (function() {
   PlaylistScreen.prototype.render = function() {
     this.selection.emptySelection();
     this.header.render();
-    this.menu.render();
     this.tracks.render();
     return this.playlist.fetchTracks();
   };
 
   PlaylistScreen.prototype.attach = function() {
     this.selection.emptySelection();
-    this.menu.manageOptionsMenu('empty');
     this.frame.append(this.header.el);
-    this.frame.append(this.menu.el);
     return this.frame.append(this.tracks.el);
   };
 
   PlaylistScreen.prototype.detach = function() {
     this.header.$el.detach();
-    this.menu.$el.detach();
     return this.tracks.$el.detach();
   };
 
@@ -1685,7 +1784,7 @@ var buf = [];
 var jade_mixins = {};
 var jade_interp;
 
-buf.push("<div id=\"playlist-header\"></div><div id=\"tracks-menu\"></div><div id=\"table-screen\"></div>");;return buf.join("");
+buf.push("<div id=\"playlist-header\"></div><div id=\"table-screen\"></div>");;return buf.join("");
 };
 if (typeof define === 'function' && define.amd) {
   define([], function() {
@@ -1821,7 +1920,7 @@ var buf = [];
 var jade_mixins = {};
 var jade_interp;
 var locals_ = (locals || {}),playlist = locals_.playlist;
-buf.push("<h1>" + (jade.escape((jade_interp = playlist.name) == null ? '' : jade_interp)) + "</h1>");;return buf.join("");
+buf.push("<div class=\"page-header\"><h1>" + (jade.escape((jade_interp = playlist.name) == null ? '' : jade_interp)) + "</h1><div class=\"form-inline\"><div class=\"form-group\"><label for=\"playlist-change-name\" class=\"sr-only\">Playlist Name</label><input id=\"playlist-change-name\" type=\"text\" class=\"form-control\"/><button id=\"playlist-send-name\" class=\"btn btn-primary btn-log\">Change Name</button></div></div></div>");;return buf.join("");
 };
 if (typeof define === 'function' && define.amd) {
   define([], function() {
@@ -1895,7 +1994,7 @@ var buf = [];
 var jade_mixins = {};
 var jade_interp;
 
-buf.push("<div id=\"tracks-menu-button\" class=\"nav nav-tabs\"><input id=\"tracks-menu-upload\" name=\"upload-files\" type=\"file\" multiple=\"multiple\" accept=\"audio/*\" role=\"presentation\" class=\"btn btn-default btn-file\"/><button id=\"tracks-menu-fetch\" role=\"presentation\" class=\"btn btn-default\">FETCH</button><div id=\"tracks-menu-playlist\" class=\"btn-group\"></div><button id=\"tracks-menu-edit\" role=\"presentation\" class=\"btn btn-default\">EDIT</button></div>");;return buf.join("");
+buf.push("<div id=\"tracks-menu-button\" class=\"nav nav-tabs\"><input id=\"tracks-menu-upload\" name=\"upload-files\" type=\"file\" multiple=\"multiple\" accept=\"audio/*\" role=\"presentation\" class=\"btn btn-default btn-file\"/><button id=\"tracks-menu-fetch\" role=\"presentation\" class=\"btn btn-default\">FETCH</button><div id=\"tracks-menu-playlist\" class=\"btn-group\"></div><button id=\"tracks-menu-edit\" role=\"presentation\" class=\"btn btn-default\">EDIT</button><button id=\"tracks-menu-remove\" role=\"presentation\" class=\"btn btn-default\">REMOVE</button></div>");;return buf.join("");
 };
 if (typeof define === 'function' && define.amd) {
   define([], function() {
@@ -2095,11 +2194,12 @@ module.exports = MenuRowView = (function(_super) {
   MenuRowView.prototype.tagName = 'li';
 
   MenuRowView.prototype.initialize = function() {
-    return this.$el.click((function(_this) {
+    this.$el.click((function(_this) {
       return function() {
         return _this.model.addToPlaylist();
       };
     })(this));
+    return this.listenTo(this.model, 'change:name', this.render);
   };
 
   return MenuRowView;
@@ -2125,14 +2225,28 @@ module.exports = PlaylistView = (function(_super) {
 
   PlaylistView.prototype.el = '#playlist-header';
 
+  PlaylistView.prototype.events = function() {
+    return {
+      'click #playlist-send-name': 'changePlaylistName'
+    };
+  };
+
   PlaylistView.prototype.initialize = function(options) {
-    return this.playlist = options.playlist;
+    this.playlist = options.playlist;
+    return this.listenTo(this.playlist, 'change:name', this.render);
   };
 
   PlaylistView.prototype.getRenderData = function() {
     return {
       playlist: this.playlist.toJSON()
     };
+  };
+
+  PlaylistView.prototype.changePlaylistName = function() {
+    var data;
+    data = this.$('#playlist-change-name').val();
+    this.playlist.set('name', data);
+    return this.playlist.save();
   };
 
   return PlaylistView;
@@ -2202,10 +2316,11 @@ module.exports = TracksListView = (function(_super) {
       return view.model.cid === cid;
     });
     _manageListTracksSelection = (function(_this) {
-      return function(lastView) {
-        var endIndex, startIndex, _results;
-        startIndex = _this.views.indexOf(_this._lastTrackSelected);
-        endIndex = _this.views.indexOf(lastView);
+      return function(clickedView) {
+        var endIndex, keys, startIndex, _results;
+        keys = _.keys(_this.views);
+        startIndex = keys.indexOf(_this._lastTrackSelected.model.cid);
+        endIndex = keys.indexOf(clickedView.model.cid);
         _results = [];
         while (true) {
           if (startIndex < endIndex) {
@@ -2213,7 +2328,7 @@ module.exports = TracksListView = (function(_super) {
           } else {
             startIndex--;
           }
-          _this.selection.push(_this.views[startIndex].model);
+          _this.selection.push(_this.views[keys[startIndex]].model);
           if (startIndex === endIndex) {
             break;
           } else {
@@ -2274,6 +2389,9 @@ module.exports = TracksMenuView = (function(_super) {
     'click #tracks-menu-edit': function(e) {
       return this.trigger('menu-trackEdition-lauch');
     },
+    'click #tracks-menu-remove': function(e) {
+      return this.trigger('track-management-remove');
+    },
     'click #tracks-menu-fetch': 'fetchBaseCollection'
   };
 
@@ -2286,21 +2404,16 @@ module.exports = TracksMenuView = (function(_super) {
     this.uploader = $('#tracks-menu-upload');
     this.editionButton = $('#tracks-menu-edit');
     this.playlistButton = $('#tracks-menu-playlist');
+    this.removeButton = $('#tracks-menu-remove');
     this.listPlaylistsViews = new MenuListView;
     this.listPlaylistsViews.render();
     this.editionButton.detach();
-    return this.playlistButton.detach();
+    this.playlistButton.detach();
+    return this.removeButton.detach();
   };
 
   TracksMenuView.prototype.fetchBaseCollection = function() {
     return window.app.baseCollection.fetch();
-  };
-
-  TracksMenuView.prototype.addToPlaylist = function(event) {
-    var cid;
-    console.log('event: ', event);
-    cid = this.$(event.target).parents('li').data('cid');
-    return console.log('cid: ', cid);
   };
 
   TracksMenuView.prototype.lauchUploadFiles = function(event) {
@@ -2318,6 +2431,7 @@ module.exports = TracksMenuView = (function(_super) {
   TracksMenuView.prototype.manageOptionsMenu = function(status) {
     if (status === 'unique') {
       if (this.currentStatus === 'empty') {
+        this.menu.append(this.removeButton);
         this.menu.append(this.playlistButton);
         this.menu.append(this.editionButton);
       } else if (this.currentStatus === 'several') {
@@ -2328,15 +2442,19 @@ module.exports = TracksMenuView = (function(_super) {
       if (this.currentStatus === 'unique') {
         this.editionButton.detach();
         this.playlistButton.detach();
+        this.removeButton.detach();
       } else if (this.currentStatus === 'several') {
         this.playlistButton.detach();
+        this.removeButton.detach();
       }
       return this.currentStatus = status;
     } else if (status === 'several') {
       if (this.currentStatus === 'empty') {
+        this.menu.append(this.removeButton);
         this.menu.append(this.playlistButton);
       } else if (this.currentStatus === 'unique') {
         this.editionButton.detach();
+        this.menu.append(this.removeButton);
         this.menu.append(this.playlistButton);
       }
       return this.currentStatus = status;
@@ -2544,11 +2662,12 @@ module.exports = PlaylistRowView = (function(_super) {
   PlaylistRowView.prototype.tagName = 'li';
 
   PlaylistRowView.prototype.initialize = function() {
-    return this.$el.click((function(_this) {
+    this.$el.click((function(_this) {
       return function() {
         return window.app.menuScreen.trigger('content-print-playlist', _this.model);
       };
     })(this));
+    return this.listenTo(this.model, 'change:name', this.render);
   };
 
   return PlaylistRowView;

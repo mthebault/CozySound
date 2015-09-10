@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 22:06:02 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/07 16:14:28 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/10 19:45:02 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -131,3 +131,9 @@ module.exports = class Track extends Backbone.Model
 
         Backbone.sync.apply @, arguments
 
+    addPlaylist: (playlist) ->
+        listPlaylist = @get 'playlistsId'
+        currentPlaylist = _.find listPlaylist, (elem) -> elem is playlist.id
+        if not currentPlaylist?
+            listPlaylist.push playlist.id
+            @save 'playlistsId', listPlaylist

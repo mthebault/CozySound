@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 18:42:03 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/09 23:45:31 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/10 19:44:58 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -21,13 +21,13 @@ module.exports = class TracksList extends Backbone.Collection
     model: Track
     url: 'track'
 
-
     # Number of tracks downloaded to each call of fetch
     sizeFrameDownload: 5
 
     # Set the number of tracks downloaded, each call of fetch will increment it
     # by sizeFrameDownload
     cursorFrameDownload: 0
+
 
     # Returns an existing model if a track with a similar id or a similar
     # tack is already in the queue.
@@ -80,6 +80,40 @@ module.exports = class TracksList extends Backbone.Collection
                     @newWorker albumId, newQueue, options, callback
                 else
                     @setAlbum model, album, options, callback
+
+
+    removeTrackFromPlaylists: (model) =>
+        listIds = model.get 'playlistsId'
+        listPlaylists = window.app.playlistsCollection
+
+        index = 0
+        loop
+            break if index >= listIds.length
+            playlist = listPlaylists.get listIds[index]
+            playlist.removeTrackIds model.id
+            index++
+
+    remove: (models, options) ->
+
+        if !_.isArray(models)
+            models = [models]
+
+        index = 0
+        loop
+            break if index >= models.length
+            @removeTrackFromPlaylists models[index]
+            ret = super models[index], options
+            ret.destroy
+                url: "track/#{ret.id}"
+            index++
+
+
+    removeTracksFromSelection: =>
+        selection = window.selection
+        loop
+            break if selection.length == 0
+            model = selection.pop()
+            @remove model
 
 
     # Change to fetch data by range, it ask the server to retrieve the number of

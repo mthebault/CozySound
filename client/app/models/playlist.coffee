@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/26 17:19:49 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/09 23:29:31 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/10 20:01:53 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -25,11 +25,12 @@ module.exports = class Playlist extends Backbone.Model
     initialize: ->
         @collection = new PlaylistItems
         @baseCollection = window.app.baseCollection
+        @selection = window.selection
 
 
     fetchTracks: ->
         remoteList = []
-        listTracksId = @get 'tracks'
+        listTracksId = @get 'tracksId'
         listTracksId.forEach (id) =>
             track = @baseCollection.get id
             if track
@@ -51,13 +52,35 @@ module.exports = class Playlist extends Backbone.Model
                     @collection.add tracks
 
 
-    addToPlaylist: ->
-        selection = window.selection
+    removeTrackIds: (listTrackIds, options) ->
+        if !_.isArray(listTrackIds)
+            listTrackIds = [listTrackIds]
 
-        listTracksId = @get 'tracks'
+        tracksId = @get 'tracksId'
+
+        index = 0
         loop
-            break if selection.length == 0
-            track = selection.pop()
-            @collection.add track
-            listTracksId.push track.id
-        @save()
+            console.log 'index remove tracks ids loop: ', index
+            break if index >= listTrackIds.length
+            modelIndex = tracksId.findIndex (elem) =>
+                elem is listTrackIds[index]
+            tracksId = tracksId.splice modelIndex, 1
+            index++
+
+        @save {tracksId: tracksId}
+        @collection.remove listTrackIds, options
+
+
+    addToPlaylist: ->
+
+        listTracksId = @get 'tracksId'
+        loop
+            break if @selection.length == 0
+            track = @selection.pop()
+
+            if not (_.find listTracksId, (elem) -> elem is track.id)
+                @collection.add track
+                listTracksId.push track.id
+                track.addPlaylist @
+        @save 'tracksId', listTracksId
+

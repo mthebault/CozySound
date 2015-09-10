@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/09/08 23:09:44 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/09 20:01:12 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/10 12:30:44 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -31,6 +31,8 @@ module.exports = class TracksMenuView extends BaseView
         # Lauch Tracks editions
         'click #tracks-menu-edit': (e) -> @trigger 'menu-trackEdition-lauch'
 
+        'click #tracks-menu-remove': (e) -> @trigger 'track-management-remove'
+
         # Bouton testing
         # TODO: delete it
         'click #tracks-menu-fetch': 'fetchBaseCollection'
@@ -46,12 +48,14 @@ module.exports = class TracksMenuView extends BaseView
         @uploader = $('#tracks-menu-upload')
         @editionButton = $('#tracks-menu-edit')
         @playlistButton = $('#tracks-menu-playlist')
+        @removeButton = $('#tracks-menu-remove')
 
         @listPlaylistsViews = new MenuListView
         @listPlaylistsViews.render()
 
         @editionButton.detach()
         @playlistButton.detach()
+        @removeButton.detach()
 
 
 
@@ -60,12 +64,6 @@ module.exports = class TracksMenuView extends BaseView
     # TODO: delete it
     fetchBaseCollection: ->
         window.app.baseCollection.fetch()
-
-
-    addToPlaylist: (event) ->
-        console.log 'event: ', event
-        cid = @$(event.target).parents('li').data 'cid'
-        console.log 'cid: ', cid
 
 
 
@@ -89,6 +87,7 @@ module.exports = class TracksMenuView extends BaseView
     manageOptionsMenu: (status) =>
         if status == 'unique'
             if @currentStatus == 'empty'
+                @menu.append @removeButton
                 @menu.append @playlistButton
                 @menu.append @editionButton
             else if @currentStatus == 'several'
@@ -98,14 +97,18 @@ module.exports = class TracksMenuView extends BaseView
             if @currentStatus == 'unique'
                 @editionButton.detach()
                 @playlistButton.detach()
+                @removeButton.detach()
             else if @currentStatus == 'several'
                 @playlistButton.detach()
+                @removeButton.detach()
             @currentStatus = status
         else if status == 'several'
             if @currentStatus == 'empty'
+                @menu.append @removeButton
                 @menu.append @playlistButton
             else if @currentStatus == 'unique'
                 @editionButton.detach()
+                @menu.append @removeButton
                 @menu.append @playlistButton
             @currentStatus = status
     ################### END - ACTION TRACKS MENU - END ##########################

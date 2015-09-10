@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/09/08 23:13:43 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/09 19:30:19 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/10 20:05:00 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -37,6 +37,8 @@ module.exports = class AllTracksView
         # from: onTrackClicker - collections/selected_list.coffee
         # argument: bool (state)
         @listenTo @tracks, 'selection-menu-options', @menu.manageOptionsMenu
+
+        @listenTo @menu, 'track-management-remove', @baseCollection.removeTracksFromSelection
 
 
     render: ->

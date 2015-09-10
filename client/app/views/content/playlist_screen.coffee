@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/09/08 23:14:16 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/09 19:30:12 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/10 20:02:57 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -32,8 +32,6 @@ module.exports = class PlaylistScreen
         @header = new PlaylistView
             playlist: @playlist
 
-        @menu = new TracksMenuView
-            selection : @selection
 
         @tracks = new TracksListView
             collection: @playlist.collection
@@ -43,19 +41,15 @@ module.exports = class PlaylistScreen
     render: ->
         @selection.emptySelection()
         @header.render()
-        @menu.render()
         @tracks.render()
         @playlist.fetchTracks()
 
     attach: ->
         @selection.emptySelection()
-        @menu.manageOptionsMenu 'empty'
         @frame.append @header.el
-        @frame.append @menu.el
         @frame.append @tracks.el
 
     detach: ->
         @header.$el.detach()
-        @menu.$el.detach()
         @tracks.$el.detach()
 
