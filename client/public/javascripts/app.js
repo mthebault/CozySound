@@ -540,6 +540,13 @@ module.exports = TracksList = (function(_super) {
     return _results;
   };
 
+  TracksList.prototype.removeTrackFromAlbum = function(model) {
+    var album, albumId;
+    albumId = model.get('album');
+    album = window.app.albumCollection.get(albumId);
+    return album.removeTrackId(model.id);
+  };
+
   TracksList.prototype.remove = function(models, options) {
     var index, ret, _results;
     if (!_.isArray(models)) {
@@ -552,6 +559,7 @@ module.exports = TracksList = (function(_super) {
         break;
       }
       this.removeTrackFromPlaylists(models[index]);
+      this.removeTrackFromAlbum(models[index]);
       ret = TracksList.__super__.remove.call(this, models[index], options);
       ret.destroy({
         url: "track/" + ret.id
@@ -1049,6 +1057,20 @@ module.exports = Album = (function(_super) {
       });
     }
     return Album.__super__.set.call(this, attr, options);
+  };
+
+  Album.prototype.removeTrackId = function(trackId) {
+    var listIds, modelIndex;
+    listIds = this.get('tracks');
+    modelIndex = listIds.findIndex((function(_this) {
+      return function(elem) {
+        return elem === trackId;
+      };
+    })(this));
+    listIds.splice(modelIndex, 1);
+    return this.save({
+      trackIds: listIds
+    });
   };
 
   return Album;

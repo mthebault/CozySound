@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 18:42:03 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/10 22:57:33 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/11 14:19:41 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -95,6 +95,13 @@ module.exports = class TracksList extends Backbone.Collection
             playlist.removeTrackId model.id
             index++
 
+
+    removeTrackFromAlbum: (model) ->
+        albumId = model.get 'album'
+        album = window.app.albumCollection.get albumId
+        album.removeTrackId model.id
+
+
     remove: (models, options) ->
 
         if !_.isArray(models)
@@ -104,6 +111,7 @@ module.exports = class TracksList extends Backbone.Collection
         loop
             break if index >= models.length
             @removeTrackFromPlaylists models[index]
+            @removeTrackFromAlbum models[index]
             ret = super models[index], options
             ret.destroy
                 url: "track/#{ret.id}"
