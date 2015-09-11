@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/09/08 23:06:49 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/10 21:38:50 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/11 15:18:28 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -143,8 +143,11 @@ module.exports = class ContentManager
 
         @loadedScreens[playlistId] = view
 
+        @listenTo view, 'playlist-end', @renderAllTracks
+
         view.render()
         @playlistPrinted = view
+
 
     removePlaylist: ->
         @playlistPrinted.detach()

@@ -6,12 +6,12 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/09/08 23:09:44 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/10 21:56:45 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/11 15:09:23 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
-BaseView = require '../../../../lib/base_view'
-MenuListView = require './menu_list_view'
+BaseView = require '../../../../../lib/base_view'
+MenuListView = require './tracks_menu_list_view'
 
 ###
 # Context_menu represent the menu on the top of the app. His goal is to work
@@ -20,7 +20,7 @@ MenuListView = require './menu_list_view'
 ###
 module.exports = class TracksMenuView extends BaseView
 
-    template: require '../templates/tracks_menu'
+    template: require '../../templates/tracks_menu/tracks_menu'
     el: '#tracks-menu'
 
     currentStatus: 'empty'

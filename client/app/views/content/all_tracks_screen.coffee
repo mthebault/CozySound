@@ -6,11 +6,11 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/09/08 23:13:43 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/10 22:17:13 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/11 15:04:52 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
-TracksMenuView = require './views/tracks_menu_view'
+TracksMenuView = require './views/tracks_menu/tracks_menu_view'
 TracksListView = require './views/tracks_list_view'
 
 module.exports = class AllTracksScreen

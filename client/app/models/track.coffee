@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 22:06:02 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/10 19:45:02 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/11 15:32:52 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -137,3 +137,15 @@ module.exports = class Track extends Backbone.Model
         if not currentPlaylist?
             listPlaylist.push playlist.id
             @save 'playlistsId', listPlaylist
+
+
+    removePlaylistId: (playlistId) ->
+        console.log 'track: ', @get 'title'
+        console.log 'playlist id: ', playlistId
+        listIds = @get 'playlistsId'
+
+        modelIndex = listIds.findIndex (elem) => elem is playlistId
+        listIds.splice modelIndex, 1
+
+        @save {playlistsId: listIds}
+

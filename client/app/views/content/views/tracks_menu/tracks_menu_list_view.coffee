@@ -1,23 +1,26 @@
 # **************************************************************************** #
 #                                                                              #
 #                                                         :::      ::::::::    #
-#    menu_row_view.coffee                               :+:      :+:    :+:    #
+#    tracks_menu_list_view.coffee                       :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
-#    Created: 2015/09/09 12:36:43 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/10 11:35:57 by ppeltier         ###   ########.fr        #
+#    Created: 2015/09/11 14:50:44 by ppeltier          #+#    #+#              #
+#    Updated: 2015/09/11 14:59:50 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
-BaseView = require '../../../../lib/base_view'
 
-module.exports = class MenuRowView extends BaseView
-    template: require '../templates/menu_row'
+ViewCollection = require '../../../../../lib/view_collection'
+MenuRowView = require './tracks_menu_row_view'
 
-    className: 'tracks-menu-playlist-row'
-    tagName: 'li'
+module.exports = class TracksMenuListView extends ViewCollection
+    template: require '../../templates/tracks_menu/tracks_menu_list'
+    el: '#tracks-menu-playlist'
+
+    itemview: MenuRowView
+    collectionEl:  '#tracks-menu-playlist-content'
 
     initialize: ->
-        @$el.click => @model.addToPlaylist()
-        @listenTo @model, 'change:name', @render
+        @collection = window.app.playlistsCollection
+        super

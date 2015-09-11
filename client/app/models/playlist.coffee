@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/26 17:19:49 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/10 22:56:51 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/11 15:39:42 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -75,3 +75,13 @@ module.exports = class Playlist extends Backbone.Model
                 track.addPlaylist @
         @save 'tracksId', listTracksId
 
+
+    remove: (options) ->
+        listTracksId = @get 'tracksId'
+
+        loop
+            break if listTracksId.length == 0
+            trackId = listTracksId.pop()
+            track = @baseCollection.get trackId
+            track.removePlaylistId @id
+        super options
