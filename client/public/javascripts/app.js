@@ -356,7 +356,7 @@ module.exports = PlaylistList = (function(_super) {
   PlaylistList.prototype.url = 'playlist-list';
 
   PlaylistList.prototype.remove = function(model, options) {
-    var listTracksId, track, trackId;
+    var listTracksId, modelDel, track, trackId;
     listTracksId = model.get('tracksId');
     while (true) {
       if (listTracksId.length === 0) {
@@ -364,9 +364,17 @@ module.exports = PlaylistList = (function(_super) {
       }
       trackId = listTracksId.pop();
       track = window.app.baseCollection.get(trackId);
-      track.removePlaylistId(model.id);
+      if (track != null) {
+        track.removePlaylistId(model.id);
+      }
     }
-    return PlaylistList.__super__.remove.call(this, model, options);
+    modelDel = PlaylistList.__super__.remove.call(this, model, options);
+    return modelDel.destroy({
+      url: "playlist-list/" + modelDel.id,
+      error: function(error) {
+        return console.error(error);
+      }
+    });
   };
 
   return PlaylistList;
@@ -513,7 +521,7 @@ module.exports = TracksList = (function(_super) {
       isExist = _.find(this.models, function(elem) {
         return elem === model;
       });
-      if (!isExist) {
+      if (!isExist && (model != null)) {
         albumId = this.getAlbumId(model);
         album = window.app.albumCollection.get(albumId);
         if (album == null) {
@@ -576,7 +584,10 @@ module.exports = TracksList = (function(_super) {
       this.removeTrackFromAlbum(models[index]);
       ret = TracksList.__super__.remove.call(this, models[index], options);
       ret.destroy({
-        url: "track/" + ret.id
+        url: "track/" + ret.id,
+        error: function(error) {
+          return console.error(error);
+        }
       });
       _results.push(index++);
     }
@@ -1285,6 +1296,7 @@ module.exports = MenuManager = (function() {
 
 ;require.register("models/playlist", function(exports, require, module) {
 var Playlist, PlaylistItems, PlaylistScreen,
+  __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
@@ -1296,6 +1308,7 @@ module.exports = Playlist = (function(_super) {
   __extends(Playlist, _super);
 
   function Playlist() {
+    this.removeTracksFromSelection = __bind(this.removeTracksFromSelection, this);
     return Playlist.__super__.constructor.apply(this, arguments);
   }
 
@@ -1353,7 +1366,7 @@ module.exports = Playlist = (function(_super) {
     });
   };
 
-  Playlist.prototype.removeTrackId = function(trackId, options) {
+  Playlist.prototype.removeTrackId = function(trackId) {
     var modelIndex, playlistTracksId;
     playlistTracksId = this.get('tracksId');
     modelIndex = playlistTracksId.findIndex((function(_this) {
@@ -1365,7 +1378,7 @@ module.exports = Playlist = (function(_super) {
     this.save({
       tracksId: playlistTracksId
     });
-    return this.collection.remove(trackId, options);
+    return this.collection.remove(trackId);
   };
 
   Playlist.prototype.addToPlaylist = function() {
@@ -1399,6 +1412,20 @@ module.exports = Playlist = (function(_super) {
       track.removePlaylistId(this.id);
     }
     return Playlist.__super__.remove.call(this, options);
+  };
+
+  Playlist.prototype.removeTracksFromSelection = function() {
+    var track, _results;
+    _results = [];
+    while (true) {
+      if (this.selection.length === 0) {
+        break;
+      }
+      track = this.selection.pop();
+      this.removeTrackId(track.id);
+      _results.push(track.removePlaylistId(this.id));
+    }
+    return _results;
   };
 
   return Playlist;
@@ -1773,10 +1800,12 @@ module.exports = PlaylistScreen = (function() {
     });
     this.menu = new PlaylistMenuView;
     this.listenTo(this.menu, 'remove-current-playlist', this.removePlaylist);
+    this.listenTo(this.menu, 'remove-track-playlist', this.playlist.removeTracksFromSelection);
     this.tracks = new TracksListView({
       collection: this.playlist.collection,
       selection: this.selection
     });
+    this.listenTo(this.tracks, 'selection-menu-options', this.menu.manageOptionsMenu);
   }
 
   PlaylistScreen.prototype.render = function() {
@@ -1801,7 +1830,7 @@ module.exports = PlaylistScreen = (function() {
   };
 
   PlaylistScreen.prototype.removePlaylist = function() {
-    window.playlistsCollection.remove(this.menu);
+    window.app.playlistsCollection.remove(this.playlist);
     return this.trigger('playlist-end');
   };
 
@@ -1971,7 +2000,7 @@ var buf = [];
 var jade_mixins = {};
 var jade_interp;
 
-buf.push("<div id=\"playlist-menu-button\" class=\"nav nav-tabs\"><button id=\"playlist-menu-remove\" role=\"presentation\" class=\"btn btn-default\">Remove</button></div>");;return buf.join("");
+buf.push("<div id=\"playlist-menu-button\" class=\"nav nav-tabs\"><button id=\"playlist-menu-remove-playlist\" role=\"presentation\" class=\"btn btn-default\">Remove Playlist</button><button id=\"playlist-menu-remove-track\" role=\"presentation\" class=\"btn btn-default\">Remove Track</button></div>");;return buf.join("");
 };
 if (typeof define === 'function' && define.amd) {
   define([], function() {
@@ -2230,6 +2259,7 @@ module.exports = EditionView = (function(_super) {
 
 ;require.register("views/content/views/playlist_menu_view", function(exports, require, module) {
 var BaseView, PlaylistMenuView,
+  __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
@@ -2239,6 +2269,7 @@ module.exports = PlaylistMenuView = (function(_super) {
   __extends(PlaylistMenuView, _super);
 
   function PlaylistMenuView() {
+    this.manageOptionsMenu = __bind(this.manageOptionsMenu, this);
     return PlaylistMenuView.__super__.constructor.apply(this, arguments);
   }
 
@@ -2246,9 +2277,34 @@ module.exports = PlaylistMenuView = (function(_super) {
 
   PlaylistMenuView.prototype.el = '#playlist-menu';
 
+  PlaylistMenuView.prototype.currentStatus = 'empty';
+
   PlaylistMenuView.prototype.events = {
-    'click #playlist-menu-remove': function() {
+    'click #playlist-menu-remove-playlist': function() {
       return this.trigger('remove-current-playlist');
+    },
+    'click #playlist-menu-remove-track': function() {
+      return this.trigger('remove-track-playlist');
+    }
+  };
+
+  PlaylistMenuView.prototype.afterRender = function() {
+    this.menu = this.$('#playlist-menu-button');
+    this.removeTrackButton = this.$('#playlist-menu-remove-track');
+    return this.removeTrackButton.detach();
+  };
+
+  PlaylistMenuView.prototype.manageOptionsMenu = function(status) {
+    if (status === 'empty') {
+      if (this.currentStatus === 'several' || this.currentStatus === 'unique') {
+        this.removeTrackButton.detach();
+      }
+      return this.currentStatus = status;
+    } else if (status === 'several' || status === 'unique') {
+      if (this.currentStatus === 'empty') {
+        this.menu.append(this.removeTrackButton);
+      }
+      return this.currentStatus = status;
     }
   };
 
@@ -2518,11 +2574,11 @@ module.exports = TracksMenuView = (function(_super) {
   };
 
   TracksMenuView.prototype.afterRender = function() {
-    this.menu = $('#tracks-menu-button');
-    this.uploader = $('#tracks-menu-upload');
-    this.editionButton = $('#tracks-menu-edit');
-    this.playlistButton = $('#tracks-menu-playlist');
-    this.removeButton = $('#tracks-menu-remove');
+    this.menu = this.$('#tracks-menu-button');
+    this.uploader = this.$('#tracks-menu-upload');
+    this.editionButton = this.$('#tracks-menu-edit');
+    this.playlistButton = this.$('#tracks-menu-playlist');
+    this.removeButton = this.$('#tracks-menu-remove');
     this.listPlaylistsViews = new MenuListView;
     this.listPlaylistsViews.render();
     this.editionButton.detach();

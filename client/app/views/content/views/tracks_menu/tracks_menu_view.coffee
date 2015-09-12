@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/09/08 23:09:44 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/11 15:09:23 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/12 11:45:08 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -44,11 +44,11 @@ module.exports = class TracksMenuView extends BaseView
 
 
     afterRender: ->
-        @menu = $('#tracks-menu-button')
-        @uploader = $('#tracks-menu-upload')
-        @editionButton = $('#tracks-menu-edit')
-        @playlistButton = $('#tracks-menu-playlist')
-        @removeButton = $('#tracks-menu-remove')
+        @menu = @$('#tracks-menu-button')
+        @uploader = @$('#tracks-menu-upload')
+        @editionButton = @$('#tracks-menu-edit')
+        @playlistButton = @$('#tracks-menu-playlist')
+        @removeButton = @$('#tracks-menu-remove')
 
         @listPlaylistsViews = new MenuListView
         @listPlaylistsViews.render()

@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/26 17:19:49 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/11 15:39:42 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/12 12:03:12 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -52,14 +52,14 @@ module.exports = class Playlist extends Backbone.Model
                     @collection.add tracks
 
 
-    removeTrackId: (trackId, options) ->
+    removeTrackId: (trackId) ->
         playlistTracksId = @get 'tracksId'
 
         modelIndex = playlistTracksId.findIndex (elem) => elem is trackId
         playlistTracksId.splice modelIndex, 1
 
         @save {tracksId: playlistTracksId}
-        @collection.remove trackId, options
+        @collection.remove trackId
 
 
     addToPlaylist: ->
@@ -85,3 +85,10 @@ module.exports = class Playlist extends Backbone.Model
             track = @baseCollection.get trackId
             track.removePlaylistId @id
         super options
+
+    removeTracksFromSelection: =>
+        loop
+            break if @selection.length == 0
+            track = @selection.pop()
+            @removeTrackId track.id
+            track.removePlaylistId @id
