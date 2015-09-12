@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/19 06:48:47 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/12 11:32:31 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/12 20:52:40 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -25,6 +25,9 @@ module.exports =
 
     'tracks/fetch':
         get: track.fetchListTracks
+
+    'track/binary/:id':
+        get: track.getBinary
 
     'track/:start/:nbTracks':
         get: track.fetchRange

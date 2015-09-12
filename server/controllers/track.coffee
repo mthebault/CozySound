@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/19 06:50:00 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/12 11:34:03 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/12 21:08:00 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -53,6 +53,13 @@ fetchListTracks = (req, res, next) ->
 
 
     queue.push req.query.listId
+
+
+getBinary = (req, res, next) ->
+    Track.find req.params.id, (err, track) ->
+        stream = track.getBinary 'track', (err) ->
+            return next err if err
+        stream.pipe res
 
 
 
@@ -255,3 +262,4 @@ module.exports =
     create: create
     fetchListTracks: fetchListTracks
     remove: remove
+    getBinary: getBinary

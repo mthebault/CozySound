@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/09/08 23:13:43 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/12 11:42:32 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/12 16:20:33 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -21,6 +21,7 @@ module.exports = class AllTracksScreen
         _.extend @, Backbone.Events
 
         @selection = window.selection
+        @queue = window.app.queueList
         @baseCollection = options.baseCollection
         @frame = $('#content-screen')
 
@@ -28,17 +29,19 @@ module.exports = class AllTracksScreen
 
         @menu = new TracksMenuView
             selection : @selection
+        @listenTo @menu, 'track-management-remove', @baseCollection.removeTracksFromSelection
+        @listenTo @menu, 'track-add-queue', @sendSelectionToQueue
+
 
         @tracks = new TracksListView
             collection: @baseCollection
             selection: @selection
-
-        # *** menu-editMenu-prompte ***
-        # from: onTrackClicker - collections/selected_list.coffee
-        # argument: bool (state)
         @listenTo @tracks, 'selection-menu-options', @menu.manageOptionsMenu
 
-        @listenTo @menu, 'track-management-remove', @baseCollection.removeTracksFromSelection
+    sendSelectionToQueue: ->
+        @queue.addSelection()
+        @menu.manageOptionsMenu 'empty'
+
 
 
     render: ->

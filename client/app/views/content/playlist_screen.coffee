@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/09/08 23:14:16 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/12 11:54:00 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/12 13:21:42 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -20,10 +20,11 @@ module.exports = class PlaylistScreen
 
 
     constructor: (options) ->
+        _.extend @, Backbone.Events
+
         @playlist = options.playlist
         @selection = window.selection
 
-        _.extend @, Backbone.Events
 
         @frame = $('#content-screen')
 

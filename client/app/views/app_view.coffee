@@ -6,14 +6,14 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 15:30:07 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/08 23:18:49 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/12 18:56:45 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 BaseView = require '../lib/base_view'
 MenuManager = require '../models/menu_manager'
 ContentManager = require '../models/content_manager'
-PlayerScreen = require './player_screen'
+PlayerScreen = require './player/player_screen'
 
 ###
 #  Represent the app context. It contain and lauch the four big parts:
@@ -25,7 +25,7 @@ PlayerScreen = require './player_screen'
 module.exports = class AppView extends BaseView
 
     el: 'body.application'
-    template: require './templates/home'
+    template: require './home'
 
     afterRender: ->
 
