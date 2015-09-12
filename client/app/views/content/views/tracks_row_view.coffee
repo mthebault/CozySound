@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/09/08 23:13:31 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/10 22:06:31 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/13 01:10:08 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -21,9 +21,6 @@ module.exports = class TrackRowView extends BaseView
     className: 'track-row'
     tagName: 'tr'
 
-    _selectedStatus: false
-
-
     getRenderData: ->
         return { model: @model?.toJSON(), album: @model?.album?.toJSON()}
 
@@ -37,6 +34,24 @@ module.exports = class TrackRowView extends BaseView
             @$el.addClass 'danger'
         else if @model.isConflict()
             @$el.addClass 'info'
+
+        clicks = 0
+        @$el.click (event) =>
+            clicks++
+            if clicks == 1
+                if event.shiftKey
+                    clicks = 0
+                    return @collection.selectListTracks @
+                @collection.selectTrack @
+                setTimeout =>
+                    if clicks > 1
+                        window.app.player.onTrackDbClick @model, @collection
+                    clicks = 0
+                , 300
+
+
+    doubleClick: (event) ->
+        console.log 'event double: ', event
 
     refresh: ->
         @render()
@@ -55,16 +70,11 @@ module.exports = class TrackRowView extends BaseView
             @setTrackAsSelected()
         return @_selectedStatus
 
-    isSelected: ->
-        return @_selectedStatus
-
     setAsSelected: ->
         @$el.addClass 'success'
-        @_selectedStatus = true
 
     setAsNoSelected: ->
         @$el.removeClass 'success'
-        @_selectedStatus = false
 
 
     ##################### END - Manage Select Stat - END #########################

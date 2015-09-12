@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 15:30:38 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/12 20:51:59 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/12 23:12:34 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -15,7 +15,6 @@ TracksList = require './collections/tracks_list'
 UploadQueue = require './collections/upload_queue'
 AlbumList = require './collections/album_list'
 PlaylistList = require './collections/playlists_list'
-QueueList = require './collections/queue_list'
 
 ###
 # Represent the app, all global variables must be set in it and not in window
@@ -36,7 +35,6 @@ module.exports =
         @playlistsCollection = new PlaylistList
         @playlistsCollection.fetch()
 
-        @queueList = new QueueList()
 
         @soundManager = soundManager
 

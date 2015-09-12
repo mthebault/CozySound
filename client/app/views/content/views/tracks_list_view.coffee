@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/09/08 23:09:28 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/12 14:23:16 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/13 01:07:13 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -22,10 +22,6 @@ module.exports = class TracksListView extends ViewCollection
 
     itemview: TracksRowView
     collectionEl: '#table-items-content'
-
-    events:
-        # Event delegation
-        'click tr.track-row': 'manageSelectionEvent'
 
 
     # Keep the last track selected to have a starting point with shift. track is
@@ -47,6 +43,7 @@ module.exports = class TracksListView extends ViewCollection
         @listenTo @collection, 'change', _.partial(@viewProxy, 'refresh')
 
 
+
     triggerMenuOption: ->
         switch @selection.length
             when 0 then @trigger 'selection-menu-options', 'empty'
@@ -55,27 +52,21 @@ module.exports = class TracksListView extends ViewCollection
                 @trigger 'selection-menu-options', 'several'
 
 
-
-
-    #TODO: improve it, it's not very pretty
-    manageSelectionEvent: (event) ->
-        cid = @$(event.target).parents('tr').data 'cid'
-        view = _.find @views, (view) -> view.model.cid is cid
-
-        _manageListTracksSelection = (clickedView) =>
-            keys = _.keys @views
-            startIndex = keys.indexOf @_lastTrackSelected.model.cid
-            endIndex = keys.indexOf clickedView.model.cid
-            loop
-                if startIndex < endIndex then startIndex++ else startIndex--
-                @selection.push @views[keys[startIndex]].model
-                break if startIndex == endIndex
-
-
-        if event.shiftKey && @_lastTrackSelected != null
-            _manageListTracksSelection view
-        else
-            @selection.emptySelection()
-            @selection.push view.model
+    selectTrack: (view) ->
+        @selection.emptySelection()
+        @selection.push view.model
         @_lastTrackSelected = view
         @triggerMenuOption()
+
+    selectListTracks: (view) ->
+        @selection.emptySelection()
+        if @_lastTrackSelected == null
+            return @selectTrack view
+
+        keys = _.keys @views
+        startIndex = keys.indexOf @_lastTrackSelected.model.cid
+        endIndex = keys.indexOf view.model.cid
+        loop
+            @selection.push @views[keys[startIndex]].model
+            break if startIndex == endIndex
+            if startIndex < endIndex then startIndex++ else startIndex--

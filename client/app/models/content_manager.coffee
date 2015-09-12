@@ -6,14 +6,13 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/09/08 23:06:49 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/12 16:13:06 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/12 23:13:22 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 AllTracksScreen = require '../views/content/all_tracks_screen'
 PlaylistScreen = require '../views/content/playlist_screen'
 EditionScreen = require '../views/content/edition_screen'
-QueueScreen = require '../views/content/queue_screen'
 SelectionList = require '../collections/selection_list'
 
 ###
@@ -188,24 +187,3 @@ module.exports = class ContentManager
         @loadedScreens['trackEdition']?.detach()
         @currentView = null
     ###################### END - TRACKS EDITION - END ###########################
-
-
-
-    ############################# QUEUE EDITION #################################
-    renderQueue: ->
-        @removeCurrentView()
-        @currentView = 'queue'
-
-        if @loadedScreens['queue']?
-            @loadedScreens['queue'].attach()
-            return
-
-        view = new QueueScreen
-        @loadedScreens['queue'] = view
-        view.render()
-
-    removeQueue: ->
-        @loadedScreens['queue']?.detach()
-        @currentView = null
-
-    ####################### END - QUEUE EDITION - END ###########################

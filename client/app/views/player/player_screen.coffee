@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 15:58:59 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/12 23:05:34 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/13 01:27:52 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -23,9 +23,14 @@ module.exports = class PlayerScreen extends BaseView
     volume: 50
     currentSound: null
 
+    trackIndex: null
+
+    collection: null
+
     status: 'stop'
 
     initialize: ->
+        window.app.player = @
         @queueList = window.app.queueList
         @soundManager = window.app.soundManager
 
@@ -42,18 +47,18 @@ module.exports = class PlayerScreen extends BaseView
         console.log 'timeout'
 
 
-    onClickPlay: ->
-        switch @status
-            when 'stop' then @playTrack()
-            when 'play' then @pauseTrack()
-            when 'pause' then @currentSound.play()
+    onTrackDbClick: (track, collection) ->
+        @collection = collection
+        @stopCurrentTrack()
+        @lauchTrack track
+        console.log 'track: ', track
+        @trackIndex = _.findIndex @collection, (elem) => elem is track
+        console.log 'track: ', @trackIndex
 
-
-    playTrack: ->
-        console.log 'sound start'
-        if @queueList.length == 0
+    lauchTrack: (track) ->
+        if @status != 'stop'
             return
-        track = @queueList.at 0
+        console.log 'sound start'
         @currentSound = @soundManager.createSound
             id: "sound-#{track.id}"
             url: "track/binary/#{track.id}"
@@ -69,8 +74,8 @@ module.exports = class PlayerScreen extends BaseView
         @status = 'pause'
 
 
-    stopTrack: ->
-        if @status is 'play' or 'pause'
+    stopCurrentTrack: ->
+        if @status is 'play' || @status is 'pause'
             @currentSound.destruct()
             @currentSound = null
             @queueList.shift()
@@ -79,11 +84,9 @@ module.exports = class PlayerScreen extends BaseView
     nextTrack: ->
         @currentSound.destruct()
         @currentSound = null
-        @queueList.shift()
-        if @queueList.length > 0
-            @playTrack()
-        else
-            @status = 'stop'
+        @indexTrack++
+        if not @indexTrack > @collection.length
+            @lauchTrack @collection[indexTrack]
 
     prevTrack: ->
         @currentSound.destruct()

@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/09/08 23:09:44 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/12 13:09:33 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/12 23:14:07 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -40,7 +40,6 @@ module.exports = class TracksMenuView extends BaseView
         # Lauch Tracks editions
         'click #tracks-menu-edit': (e) -> @trigger 'menu-trackEdition-lauch'
         'click #tracks-menu-remove': (e) -> @trigger 'track-management-remove'
-        'click #tracks-menu-queue': (e) -> @trigger 'track-add-queue'
 
         # Bouton testing
         # TODO: delete it

@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 15:31:19 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/10 22:06:30 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/13 00:00:53 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -80,7 +80,7 @@ module.exports = class ViewCollection extends BaseView
 
     # event listeners for add
     addItem: (model) =>
-        options = _.extend {}, {model: model}, @itemViewOptions(model)
+        options = _.extend {}, {model: model, collection: @}, @itemViewOptions(model)
         view = new @itemview(options)
         @views[model.cid] = view.render()
         @appendView view
