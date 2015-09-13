@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/09/08 23:06:49 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/12 23:13:22 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/13 02:16:16 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -52,7 +52,7 @@ module.exports = class ContentManager
     constructor: ->
         _.extend @, Backbone.Events
 
-        window.app.contentScreen = @
+        window.app.contentManager = @
         @baseCollection = window.app.baseCollection
         @menu = window.app.menuScreen
 
@@ -94,7 +94,6 @@ module.exports = class ContentManager
             when 'allTracks' then @removeAllTracks()
             when 'trackEdition' then @removeTrackEdition()
             when 'playlist' then @removePlaylist()
-            when 'queue' then @removeQueue()
     ###################### END - GENERIQUE - END ################################
 
 
@@ -187,3 +186,10 @@ module.exports = class ContentManager
         @loadedScreens['trackEdition']?.detach()
         @currentView = null
     ###################### END - TRACKS EDITION - END ###########################
+
+
+    getPrintedCollection: ->
+        if @currentView == 'allTracks'
+            @baseCollection
+        else if @currentView == 'playlist'
+            @playlistPrinted.playlist.collection

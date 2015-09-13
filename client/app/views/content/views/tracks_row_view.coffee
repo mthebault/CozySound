@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/09/08 23:13:31 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/13 01:10:08 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/13 02:43:47 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -34,6 +34,10 @@ module.exports = class TrackRowView extends BaseView
             @$el.addClass 'danger'
         else if @model.isConflict()
             @$el.addClass 'info'
+        if @model.played == true
+            @$el.addClass 'info'
+        else
+            @$el.removeClass 'info'
 
         clicks = 0
         @$el.click (event) =>
@@ -45,7 +49,7 @@ module.exports = class TrackRowView extends BaseView
                 @collection.selectTrack @
                 setTimeout =>
                     if clicks > 1
-                        window.app.player.onTrackDbClick @model, @collection
+                        window.app.player.onTrackDbClick @model
                     clicks = 0
                 , 300
 

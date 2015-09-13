@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 15:58:59 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/13 01:27:52 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/13 02:51:20 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -22,6 +22,8 @@ module.exports = class PlayerScreen extends BaseView
 
     volume: 50
     currentSound: null
+
+    currentTrack: null
 
     trackIndex: null
 
@@ -47,18 +49,23 @@ module.exports = class PlayerScreen extends BaseView
         console.log 'timeout'
 
 
-    onTrackDbClick: (track, collection) ->
-        @collection = collection
+    onTrackDbClick: (track) ->
         @stopCurrentTrack()
         @lauchTrack track
-        console.log 'track: ', track
-        @trackIndex = _.findIndex @collection, (elem) => elem is track
-        console.log 'track: ', @trackIndex
+        @collection = window.app.contentManager.getPrintedCollection()
+        index = 0
+        loop
+            break if index == @collection.length
+            if @collection.at(index) == track
+                @trackIndex = index
+                return
+            index++
+
+
 
     lauchTrack: (track) ->
-        if @status != 'stop'
-            return
-        console.log 'sound start'
+        track.markAsPlayed()
+        @currentTrack = track
         @currentSound = @soundManager.createSound
             id: "sound-#{track.id}"
             url: "track/binary/#{track.id}"
@@ -75,25 +82,23 @@ module.exports = class PlayerScreen extends BaseView
 
 
     stopCurrentTrack: ->
+        @currentTrack?.markAsNoPlayed()
         if @status is 'play' || @status is 'pause'
             @currentSound.destruct()
             @currentSound = null
-            @queueList.shift()
             @status = 'stop'
 
     nextTrack: ->
-        @currentSound.destruct()
-        @currentSound = null
-        @indexTrack++
-        if not @indexTrack > @collection.length
-            @lauchTrack @collection[indexTrack]
+        @stopCurrentTrack()
+        @trackIndex++
+        if @trackIndex < @collection.length
+            console.log 'index: ', @trackIndex, ' / length: ', @collection.length
+            @lauchTrack @collection.at @trackIndex
 
     prevTrack: ->
-        @currentSound.destruct()
-        @currentSound = null
-        @queueList.shift()
-        if @queueList.length > 0
-            @playTrack()
-        else
-            @status = 'stop'
+        @stopCurrentTrack()
+        if @trackIndex > 0
+            @trackIndex--
+            console.log 'index: ', @trackIndex
+            @lauchTrack @collection.at @trackIndex
 

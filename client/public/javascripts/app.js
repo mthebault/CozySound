@@ -1168,7 +1168,7 @@ module.exports = ContentManager = (function() {
 
   function ContentManager() {
     _.extend(this, Backbone.Events);
-    window.app.contentScreen = this;
+    window.app.contentManager = this;
     this.baseCollection = window.app.baseCollection;
     this.menu = window.app.menuScreen;
     this.selection = new SelectionList;
@@ -1197,8 +1197,6 @@ module.exports = ContentManager = (function() {
         return this.removeTrackEdition();
       case 'playlist':
         return this.removePlaylist();
-      case 'queue':
-        return this.removeQueue();
     }
   };
 
@@ -1268,6 +1266,14 @@ module.exports = ContentManager = (function() {
       _ref.detach();
     }
     return this.currentView = null;
+  };
+
+  ContentManager.prototype.getPrintedCollection = function() {
+    if (this.currentView === 'allTracks') {
+      return this.baseCollection;
+    } else if (this.currentView === 'playlist') {
+      return this.playlistPrinted.playlist.collection;
+    }
   };
 
   return ContentManager;
@@ -1484,6 +1490,8 @@ module.exports = Track = (function(_super) {
 
   Track.prototype.uploadStatus = null;
 
+  Track.prototype.played = false;
+
   Track.prototype.error = null;
 
   Track.VALID_STATUSES = [null, 'uploading', 'uploaded', 'errored'];
@@ -1509,6 +1517,10 @@ module.exports = Track = (function(_super) {
     return this.uploadStatus === 'conflict';
   };
 
+  Track.prototype.isPlayed = function() {
+    return this.played === true;
+  };
+
 
   /*
    * Setters for the local state. Semantic wrapper for _setUploadStatus.
@@ -1528,6 +1540,16 @@ module.exports = Track = (function(_super) {
 
   Track.prototype.markAsErrored = function(error) {
     return this._setUploadStatus('errored', error);
+  };
+
+  Track.prototype.markAsPlayed = function() {
+    this.played = true;
+    return this.trigger('change', this);
+  };
+
+  Track.prototype.markAsNoPlayed = function() {
+    this.played = false;
+    return this.trigger('change', this);
   };
 
 
@@ -2738,6 +2760,11 @@ module.exports = TrackRowView = (function(_super) {
     } else if (this.model.isConflict()) {
       this.$el.addClass('info');
     }
+    if (this.model.played === true) {
+      this.$el.addClass('info');
+    } else {
+      this.$el.removeClass('info');
+    }
     clicks = 0;
     return this.$el.click((function(_this) {
       return function(event) {
@@ -2750,7 +2777,7 @@ module.exports = TrackRowView = (function(_super) {
           _this.collection.selectTrack(_this);
           return setTimeout(function() {
             if (clicks > 1) {
-              window.app.player.onTrackDbClick(_this.model, _this.collection);
+              window.app.player.onTrackDbClick(_this.model);
             }
             return clicks = 0;
           }, 300);
@@ -3020,6 +3047,8 @@ module.exports = PlayerScreen = (function(_super) {
 
   PlayerScreen.prototype.currentSound = null;
 
+  PlayerScreen.prototype.currentTrack = null;
+
   PlayerScreen.prototype.trackIndex = null;
 
   PlayerScreen.prototype.collection = null;
@@ -3046,24 +3075,27 @@ module.exports = PlayerScreen = (function(_super) {
     return console.log('timeout');
   };
 
-  PlayerScreen.prototype.onTrackDbClick = function(track, collection) {
-    this.collection = collection;
+  PlayerScreen.prototype.onTrackDbClick = function(track) {
+    var index;
     this.stopCurrentTrack();
     this.lauchTrack(track);
-    console.log('track: ', track);
-    this.trackIndex = _.findIndex(this.collection, (function(_this) {
-      return function(elem) {
-        return elem === track;
-      };
-    })(this));
-    return console.log('track: ', this.trackIndex);
+    this.collection = window.app.contentManager.getPrintedCollection();
+    index = 0;
+    while (true) {
+      if (index === this.collection.length) {
+        break;
+      }
+      if (this.collection.at(index) === track) {
+        this.trackIndex = index;
+        return;
+      }
+      index++;
+    }
   };
 
   PlayerScreen.prototype.lauchTrack = function(track) {
-    if (this.status !== 'stop') {
-      return;
-    }
-    console.log('sound start');
+    track.markAsPlayed();
+    this.currentTrack = track;
     this.currentSound = this.soundManager.createSound({
       id: "sound-" + track.id,
       url: "track/binary/" + track.id,
@@ -3081,31 +3113,32 @@ module.exports = PlayerScreen = (function(_super) {
   };
 
   PlayerScreen.prototype.stopCurrentTrack = function() {
+    var _ref;
+    if ((_ref = this.currentTrack) != null) {
+      _ref.markAsNoPlayed();
+    }
     if (this.status === 'play' || this.status === 'pause') {
       this.currentSound.destruct();
       this.currentSound = null;
-      this.queueList.shift();
       return this.status = 'stop';
     }
   };
 
   PlayerScreen.prototype.nextTrack = function() {
-    this.currentSound.destruct();
-    this.currentSound = null;
-    this.indexTrack++;
-    if (!this.indexTrack > this.collection.length) {
-      return this.lauchTrack(this.collection[indexTrack]);
+    this.stopCurrentTrack();
+    this.trackIndex++;
+    if (this.trackIndex < this.collection.length) {
+      console.log('index: ', this.trackIndex, ' / length: ', this.collection.length);
+      return this.lauchTrack(this.collection.at(this.trackIndex));
     }
   };
 
   PlayerScreen.prototype.prevTrack = function() {
-    this.currentSound.destruct();
-    this.currentSound = null;
-    this.queueList.shift();
-    if (this.queueList.length > 0) {
-      return this.playTrack();
-    } else {
-      return this.status = 'stop';
+    this.stopCurrentTrack();
+    if (this.trackIndex > 0) {
+      this.trackIndex--;
+      console.log('index: ', this.trackIndex);
+      return this.lauchTrack(this.collection.at(this.trackIndex));
     }
   };
 

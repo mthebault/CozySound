@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 22:06:02 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/12 11:40:41 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/13 02:48:52 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -30,6 +30,8 @@ module.exports = class Track extends Backbone.Model
     # Local state. Handled through `markAs*` and `is*` methods.
     uploadStatus: null
 
+    played: false
+
     # Local stat. Handled throught nothing for the moment
     error: null
 
@@ -48,6 +50,8 @@ module.exports = class Track extends Backbone.Model
     isErrored: -> return @uploadStatus is 'errored'
     isConflict: -> return @uploadStatus is 'conflict'
 
+    isPlayed: -> return @played is true
+
     ###
     # Setters for the local state. Semantic wrapper for _setUploadStatus.
     ###
@@ -57,7 +61,13 @@ module.exports = class Track extends Backbone.Model
     markAsErrored: (error) -> @_setUploadStatus 'errored', error
 
 
+    markAsPlayed: ->
+        @played = true
+        @trigger 'change', @
 
+    markAsNoPlayed: ->
+        @played = false
+        @trigger 'change', @
 
     ###
         Trigger change for each status update because Backbone only triggers
