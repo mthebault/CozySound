@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/09/08 23:13:31 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/13 02:43:47 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/13 19:11:40 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -53,9 +53,6 @@ module.exports = class TrackRowView extends BaseView
                     clicks = 0
                 , 300
 
-
-    doubleClick: (event) ->
-        console.log 'event double: ', event
 
     refresh: ->
         @render()

@@ -1,62 +1,56 @@
 # **************************************************************************** #
 #                                                                              #
 #                                                         :::      ::::::::    #
-#    all_tracks_screen.coffee                           :+:      :+:    :+:    #
+#    queue_screen.coffee                                :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
-#    Created: 2015/09/08 23:13:43 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/13 18:20:48 by ppeltier         ###   ########.fr        #
+#    Created: 2015/09/13 15:57:35 by ppeltier          #+#    #+#              #
+#    Updated: 2015/09/13 18:38:10 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
-TracksMenuView = require './views/tracks_menu/tracks_menu_view'
 TracksListView = require './views/tracks_list_view'
 
-module.exports = class AllTracksScreen
-    skeleton: require './skeletons/all_tracks_skel'
+module.exports = class QueueScreen
+    skeleton: require './skeletons/queue_skel'
+
 
 
     constructor: (options) ->
         _.extend @, Backbone.Events
 
-        @selection = window.selection
         @queue = window.app.queue
-        @baseCollection = options.baseCollection
+        @queuePrev = window.app.queuePrev
+        @selection = window.selection
+        @player = window.app.player
+
         @frame = $('#content-screen')
 
         @frame.append @skeleton()
 
-        @menu = new TracksMenuView
-            selection : @selection
-        @listenTo @menu, 'track-management-remove', @baseCollection.removeTracksFromSelection
-        @listenTo @menu, 'track-add-queue', @sendSelectionToQueue
-
-
         @tracks = new TracksListView
-            collection: @baseCollection
+            collection: @queue
             selection: @selection
-        @listenTo @tracks, 'selection-menu-options', @menu.manageOptionsMenu
 
-    sendSelectionToQueue: ->
-        @queue.addSelection()
-        @menu.manageOptionsMenu 'empty'
-
+        console.log 'queue Prev: ', @queuePrev.models
+        @queuePrevViews = new TracksListView
+            collection: @queuePrev
+            selection: @selection
+            el: '#table-screen-prev'
 
 
     render: ->
         @selection.emptySelection()
-        @menu.render()
+        @queuePrevViews.render()
         @tracks.render()
-
 
     attach: ->
         @selection.emptySelection()
-        @menu.manageOptionsMenu 'empty'
-        @frame.append @menu.el
         @frame.append @tracks.el
+        @frame.append @queuePrevViews.el
+
 
     detach: ->
-        @menu.$el.detach()
         @tracks.$el.detach()
-
+        @queuePrevViews.$el.detach()

@@ -6,7 +6,7 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 15:30:38 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/12 23:12:34 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/13 17:31:30 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -15,6 +15,9 @@ TracksList = require './collections/tracks_list'
 UploadQueue = require './collections/upload_queue'
 AlbumList = require './collections/album_list'
 PlaylistList = require './collections/playlists_list'
+QueueList = require './collections/queue_list'
+QueuePrevList = require './collections/queue_prev_list'
+SelectionList = require '../collections/selection_list'
 
 ###
 # Represent the app, all global variables must be set in it and not in window
@@ -38,6 +41,16 @@ module.exports =
 
         @soundManager = soundManager
 
+
+        # SelectionList is a collection of all tracks selected by the user,
+        # all actions on tracks must be handle by it
+        @selection= new SelectionList
+        @selection.baseCollection = @baseCollection
+
+        @queue = new QueueList
+        @queuePrev = new QueuePrevList
+
+
         # Print the main structure
         mainView = new AppView
         mainView.render()
@@ -45,8 +58,6 @@ module.exports =
 
 
         # Routing management
-        #Router = require 'router'
-        #@router = new Router()
         @baseCollection.fetch()
 
 

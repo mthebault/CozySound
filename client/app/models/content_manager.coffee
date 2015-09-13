@@ -6,14 +6,14 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/09/08 23:06:49 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/13 02:16:16 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/13 18:53:23 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 AllTracksScreen = require '../views/content/all_tracks_screen'
 PlaylistScreen = require '../views/content/playlist_screen'
 EditionScreen = require '../views/content/edition_screen'
-SelectionList = require '../collections/selection_list'
+QueueScreen = require '../views/content/queue_screen'
 
 ###
 # ContenScreen is the main screen where all tracks are printed. This is a
@@ -56,10 +56,7 @@ module.exports = class ContentManager
         @baseCollection = window.app.baseCollection
         @menu = window.app.menuScreen
 
-        # SelectionList is a collection of all tracks selected by the user,
-        # all actions on tracks must be handle by it
-        @selection= new SelectionList
-        @selection.baseCollection = @baseCollection
+        @selection = window.selection
 
         # An array of all view currently prompt
         @loadedScreens = []
@@ -94,6 +91,7 @@ module.exports = class ContentManager
             when 'allTracks' then @removeAllTracks()
             when 'trackEdition' then @removeTrackEdition()
             when 'playlist' then @removePlaylist()
+            when 'queue' then @removeQueue()
     ###################### END - GENERIQUE - END ################################
 
 
@@ -187,9 +185,29 @@ module.exports = class ContentManager
         @currentView = null
     ###################### END - TRACKS EDITION - END ###########################
 
+    ################################ QUEUE ######################################
+    renderQueue: ->
+        @removeCurrentView()
+        @currentView = 'queue'
+
+        if @loadedScreens['queue']?
+            @loadedScreens['queue'].attach()
+            return
+
+        view = new QueueScreen
+
+        @loadedScreens['queue'] = view
+
+        view.render()
+
+
+    removeQueue: ->
+        @loadedScreens['queue']?.detach()
+        @currentView = null
+    ########################## END - QUEUE - END ################################
 
     getPrintedCollection: ->
-        if @currentView == 'allTracks'
-            @baseCollection
-        else if @currentView == 'playlist'
-            @playlistPrinted.playlist.collection
+        switch @currentView
+            when 'allTracks' then {collection: @baseCollection, name: 'AllTracks'}
+            when 'playlist' then {collection: @playlistPrinted.playlist.collection, name: @playlistPrinted.playlist.name}
+            when 'queue' then {name: 'queue'}

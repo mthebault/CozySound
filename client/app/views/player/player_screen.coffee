@@ -6,15 +6,12 @@
 #    By: ppeltier <dev@halium.fr>                   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/08/18 15:58:59 by ppeltier          #+#    #+#              #
-#    Updated: 2015/09/13 02:51:20 by ppeltier         ###   ########.fr        #
+#    Updated: 2015/09/13 19:31:43 by ppeltier         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 BaseView = require '../../lib/base_view'
 
-# Context_menu represent the menu on the top of the app. His goal is to work
-# with tracks_screen. It must display the dynamiques option when the user select
-# one or several song in the tracks screen.
 module.exports = class PlayerScreen extends BaseView
 
     template: require('./templates/player_screen')
@@ -25,21 +22,19 @@ module.exports = class PlayerScreen extends BaseView
 
     currentTrack: null
 
-    trackIndex: null
-
-    collection: null
-
     status: 'stop'
 
     initialize: ->
         window.app.player = @
-        @queueList = window.app.queueList
+        @queue = window.app.queue
+        @queuePrev = window.app.queuePrev
         @soundManager = window.app.soundManager
+        @allTracks =  window.app.baseCollection
 
     events:
         'click #player-play': 'onClickPlay'
-        'click #player-stop': 'stopTrack'
         'click #player-next': 'nextTrack'
+        'click #player-prev': 'prevTrack'
 
     onReady: ->
         console.log 'ready'
@@ -49,32 +44,53 @@ module.exports = class PlayerScreen extends BaseView
         console.log 'timeout'
 
 
+    onClickPlay: ->
+        if not @currentTrack?
+            if @queue.length == 0
+                @queue.populate 0, 'allTracks', @allTracks
+            @currentTrack = @queue.shift()
+            @lauchTrack()
+        else if @status == 'play'
+            @pauseTrack()
+        else if @status == 'pause'
+            @currentSound.play()
+            @status = 'play'
+
     onTrackDbClick: (track) ->
-        @stopCurrentTrack()
-        @lauchTrack track
-        @collection = window.app.contentManager.getPrintedCollection()
-        index = 0
-        loop
-            break if index == @collection.length
-            if @collection.at(index) == track
-                @trackIndex = index
-                return
-            index++
+        if @currentTrack?
+            @stopCurrentTrack()
+            @queuePrev.unshift @currentTrack
+
+        {collection, name} = window.app.contentManager.getPrintedCollection()
+
+        if name == 'queue'
+            @queue.jumpInQueue track
+        else
+            index = 0
+            loop
+                break if index > collection.length || collection.at(index) == track
+                index++
+            @queue.populate index, name, collection
+
+        @currentTrack = @queue.shift()
+        @lauchTrack()
 
 
 
-    lauchTrack: (track) ->
-        track.markAsPlayed()
-        @currentTrack = track
+    lauchTrack: ->
+        if not @currentTrack?
+            console.log 'no track'
+            return
+        @status = 'play'
+        @currentTrack.markAsPlayed()
         @currentSound = @soundManager.createSound
-            id: "sound-#{track.id}"
-            url: "track/binary/#{track.id}"
+            id: "sound-#{@currentTrack.id}"
+            url: "track/binary/#{@currentTrack.id}"
             usePolicyFile: true
             autoPlay: true
             onfinish: @nextTrack
-            #onstop: @onTrackStop
+            onstop: @stopCurrentTrack
             multiShot: false
-        @status = 'play'
 
     pauseTrack: ->
         @currentSound.pause()
@@ -83,22 +99,20 @@ module.exports = class PlayerScreen extends BaseView
 
     stopCurrentTrack: ->
         @currentTrack?.markAsNoPlayed()
-        if @status is 'play' || @status is 'pause'
+        if (@status is 'play' || @status is 'pause') && @currentSound?
             @currentSound.destruct()
             @currentSound = null
-            @status = 'stop'
+        @status = 'stop'
 
-    nextTrack: ->
+    nextTrack: =>
         @stopCurrentTrack()
-        @trackIndex++
-        if @trackIndex < @collection.length
-            console.log 'index: ', @trackIndex, ' / length: ', @collection.length
-            @lauchTrack @collection.at @trackIndex
+        @queuePrev.unshift @currentTrack
+        @currentTrack = @queue.shift()
+        @lauchTrack()
 
     prevTrack: ->
         @stopCurrentTrack()
-        if @trackIndex > 0
-            @trackIndex--
-            console.log 'index: ', @trackIndex
-            @lauchTrack @collection.at @trackIndex
+        @queue.unshift @currentTrack
+        @currentTrack = @queuePrev.shift()
+        @lauchTrack()
 
